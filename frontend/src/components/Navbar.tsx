@@ -86,11 +86,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               onClick={onConnect}
               disabled={isConnecting}
-              className="flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 shadow-lg shadow-red-600/30 transition transform active:scale-95 disabled:opacity-50"
+              className="flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 shadow-lg shadow-red-600/30 transition transform active:scale-95 disabled:opacity-50 cursor-pointer"
             >
               <Wallet className="w-4 h-4" />
-              <span>{isConnecting ? 'Connecting...' : 'Connect Core / Web3'}</span>
+              <span>{isConnecting ? 'Connecting...' : 'Connect MetaMask / Core'}</span>
             </button>
+
           )}
         </div>
       </div>
