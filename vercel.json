@@ -1,0 +1,6 @@
+{
+  "framework": "vite",
+  "rootDirectory": "frontend",
+  "buildCommand": "bun run build",
+  "outputDirectory": "dist"
+}
