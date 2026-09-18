@@ -3,10 +3,17 @@ import sys
 import subprocess
 import json
 
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 def deploy():
     print("==========================================")
-    print("🚀 Avalanche Fuji Testnet Deployer")
+    print("[+] Avalanche Fuji Testnet Deployer")
     print("==========================================")
+
     
     # Check if PRIVATE_KEY is set in environment or prompt
     pk = os.environ.get("PRIVATE_KEY")
