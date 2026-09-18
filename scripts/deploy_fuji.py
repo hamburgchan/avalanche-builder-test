@@ -31,7 +31,7 @@ def deploy():
         print("Please export PRIVATE_KEY=0x... or write it to contracts/.env")
         print("Command to deploy manually via forge:")
         print("  cd contracts")
-        print("  forge script script/DeployAvaxAgentVault.s.sol:DeployAvaxAgentVault --rpc-url fuji --broadcast --private-key <YOUR_KEY>")
+        print("  forge script script/DeployAvaxGuard.s.sol:DeployAvaxGuard --rpc-url fuji --broadcast --private-key <YOUR_KEY>")
         return
 
     print("[*] Compiling contracts with forge...")
@@ -40,11 +40,12 @@ def deploy():
     print("[*] Broadcasting deployment to Avalanche Fuji (Chain ID 43113)...")
     cmd = [
         "forge", "script",
-        "script/DeployAvaxAgentVault.s.sol:DeployAvaxAgentVault",
+        "script/DeployAvaxGuard.s.sol:DeployAvaxGuard",
         "--rpc-url", "fuji",
         "--broadcast",
         "--private-key", pk
     ]
+
     res = subprocess.run(cmd, cwd="contracts", capture_output=True, text=True)
     print(res.stdout)
     if res.stderr:

@@ -2,10 +2,10 @@ import json
 import os
 
 def sync():
-    contract_path = "contracts/out/AvaxAgentVault.sol/AvaxAgentVault.json"
+    contract_path = "contracts/out/AvaxGuard.sol/AvaxGuard.json"
     target_dir = "frontend/src/contracts"
     os.makedirs(target_dir, exist_ok=True)
-    target_path = os.path.join(target_dir, "AvaxAgentVault.json")
+    target_path = os.path.join(target_dir, "AvaxGuard.json")
 
     if not os.path.exists(contract_path):
         print(f"File not found: {contract_path}. Please run 'forge build' first.")
@@ -18,10 +18,11 @@ def sync():
     bytecode = data.get("bytecode", {}).get("object", "")
 
     export_data = {
-        "contractName": "AvaxAgentVault",
+        "contractName": "AvaxGuard",
         "abi": abi,
         "bytecode": bytecode
     }
+
 
     with open(target_path, "w", encoding="utf-8") as f:
         json.dump(export_data, f, indent=2)
