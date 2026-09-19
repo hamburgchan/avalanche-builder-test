@@ -450,7 +450,7 @@
       </div>
       <div class="event-meta">
         <span class="live-dot"></span>
-        <span>Avalanche Fuji C-Chain 链上已验证</span>
+        <span>Avalanche Fuji C-Chain · Live Demo</span>
         <span>·</span>
         <span>Team1 Builder Day 深圳站</span>
       </div>
@@ -625,11 +625,11 @@
             <div class="card-body" style="font-family: monospace; font-size: 18px; margin: 16px 0;">
               <div>请求金额: 0.001 AVAX <span style="color: var(--approved-green);">[✓ 金额合法]</span></div>
               <div>收款方:   未知黑客地址 <span style="color: var(--blocked-red);">[✕ 不在白名单]</span></div>
-              <div style="color: var(--system-cyan); margin-top: 8px;">执行机制: Avalanche 智能合约硬编码拦截</div>
+              <div style="color: var(--system-cyan); margin-top: 8px;">执行机制: 智能合约策略强制执行</div>
             </div>
             <div style="border-top: 1px solid var(--border-subtle); padding-top: 18px;">
               <div style="font-size: 22px; font-weight: 800; color: var(--blocked-red);">
-                链上直接拦截 🛡️ (BLOCKED)
+                未授权价值转移被阻止 🛡️ (BLOCKED)
               </div>
               <div style="font-size: 15px; color: var(--text-dim); margin-top: 8px;">
                 交易被 Fuji 接受，但 AvaFence 阻止未授权价值转移。
@@ -707,12 +707,13 @@
         <div class="cta-container">
           <button class="btn-live" onclick="openLiveDemo()">
             <span>打开 Live Demo ↗</span>
+            <span style="font-size: 13px; font-weight: 500; opacity: 0.85; margin-left: 8px;">Avalanche Fuji · Live</span>
           </button>
-          <button id="btn-backup-demo" class="btn-secondary" title="播放备用演示录屏">
+          <button id="btn-backup-demo" class="btn-secondary" style="display: none;" title="播放备用演示录屏">
             <span>播放备用演示 ▷</span>
           </button>
           <div style="font-size: 18px; color: var(--text-muted); margin-left: auto;">
-            每一次允许与拦截，都可以获得链上永久可查证据。
+            每一次允许与拦截，都可以获得链上可验证证据。
           </div>
         </div>
       </div>
@@ -720,7 +721,7 @@
       <!-- SLIDE 6: WHY AVALANCHE (中文主语言) -->
       <div class="slide" id="slide-6" data-title="Why Avalanche">
         <h1 class="slide-title">为什么选择 Avalanche？</h1>
-        <p class="slide-subtitle">自主 AI Agent 的机器工作流需要高可靠、高频、低成本的机器金融底座。</p>
+        <p class="slide-subtitle">自主 AI Agent 的机器工作流，需要快速、低成本、可验证的机器支付基础设施。</p>
 
         <div class="grid-3">
           <div class="card">
@@ -728,7 +729,7 @@
               <div style="font-size: 14px; font-weight: 700; color: var(--system-cyan); text-transform: uppercase; margin-bottom: 8px;">01 · Fast Finality</div>
               <div style="font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 12px;">快速确认</div>
               <div style="font-size: 18px; color: var(--text-muted); line-height: 1.6;">
-                快速终局确认。Agent 是连续执行的机器工作流，完成微支付后需要立即继续下一步任务。
+                快速终局确认。Agent 完成支付后，需要快速继续下一步任务。
               </div>
             </div>
           </div>
@@ -738,7 +739,7 @@
               <div style="font-size: 14px; font-weight: 700; color: var(--system-cyan); text-transform: uppercase; margin-bottom: 8px;">02 · Low-Cost Transactions</div>
               <div style="font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 12px;">低成本交易</div>
               <div style="font-size: 18px; color: var(--text-muted); line-height: 1.6;">
-                极低且可预测的微交易手续费。支撑 Agent 未来极高频地自主购买微型数据、API 与推理服务。
+                低成本交易。适合 Agent 频繁发生的数据、API、算力和推理服务小额支付。
               </div>
             </div>
           </div>
@@ -748,7 +749,7 @@
               <div style="font-size: 14px; font-weight: 700; color: var(--system-cyan); text-transform: uppercase; margin-bottom: 8px;">03 · Verifiable Execution</div>
               <div style="font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 12px;">链上可验证</div>
               <div style="font-size: 18px; color: var(--text-muted); line-height: 1.6;">
-                全链路透明审计。人类、Agent 与商户都能随时独立验证 Policy 状态、支付结果与拦截记录。
+                链上可验证。人类、Agent 与商户可以验证：Policy 状态、支付结果与拦截记录。
               </div>
             </div>
           </div>
@@ -756,7 +757,7 @@
 
         <div class="card" style="margin-top: 36px; padding: 22px 36px; border-left: 4px solid var(--avax-red);">
           <div style="font-size: 22px; font-weight: 700; color: #fff;">
-            AvaFence 需要 Avalanche 提供快速、低成本、可验证的机器支付执行层。
+            AvaFence 利用 Avalanche 快速、低成本、可验证的执行能力，构建 Agent 机器支付闭环。
           </div>
         </div>
       </div>
@@ -838,9 +839,10 @@
     // CONFIGURATION (统一配置项 - 页面其它地方禁止硬编码)
     // =========================================================================
     const CONFIG = {
-      demoUrl: "http://localhost:5173",
+      demoUrl: "https://avalanche-builder-test-ipgp2tk9v-chenhuangjian0319-2315.vercel.app/",
+      onlineDemoUrl: "https://avalanche-builder-test-ipgp2tk9v-chenhuangjian0319-2315.vercel.app/",
       localDemoUrl: "http://localhost:5173",
-      backupDemoUrl: "", // 配置录屏视频/备用链接后自动激活备用按钮
+      backupDemoUrl: "", // 如果配置了备用演示录屏链接，按钮将自动显示；为空时彻底隐藏
       contractAddress: "0xB6379ce69E73cC6d20E5284D14386F4fBF8Ed770",
       githubUrl: "https://github.com/hamburgchan/avalanche-builder-test"
     };
@@ -868,11 +870,11 @@
         en: "Small payment does not mean safe payment. The model can be tricked. The rules still hold."
       },
       {
-        zh: "切到 Live Demo：支持 3 种情况，现场演示正常采购与注入攻击。在注入攻击中，交易被雪崩接受，但资金转移被 AvaFence 链上拦截，0 AVAX 损失！",
-        en: "Transaction accepted on Fuji. Unauthorized value transfer blocked by AvaFence. 0 AVAX transferred to attacker."
+        zh: "切到 Live Demo：支持 3 种情况，现场演示正常采购与注入攻击。在注入攻击中，交易被 Avalanche Fuji 接受，但 AvaFence 阻止了未授权价值转移。攻击者收到：0 AVAX。Agent 仍然会支付正常网络 Gas。",
+        en: "The transaction was accepted by Avalanche. AvaFence blocked the unauthorized value transfer. 0 AVAX was transferred to the attacker."
       },
       {
-        zh: "讲透雪崩：机器支付需要快速确认、极低成本与完全链上可验证。Agent 工作流不能等慢交易，AvaFence 依赖雪崩构建机器支付执行层。",
+        zh: "讲透雪崩：Avalanche 为机器工作流提供：快速确认、低成本交易与链上可验证的支付结果。Agent 工作流不能等慢交易，AvaFence 依赖雪崩构建机器支付执行层。",
         en: "Why Avalanche? Fast finality, low-cost machine transactions, and verifiable execution."
       },
       {
@@ -914,17 +916,14 @@
       const backupBtn = document.getElementById("btn-backup-demo");
       if (backupBtn) {
         if (CONFIG.backupDemoUrl && CONFIG.backupDemoUrl.trim() !== "") {
+          backupBtn.style.display = "inline-flex";
           backupBtn.style.cursor = "pointer";
           backupBtn.style.opacity = "1";
           backupBtn.title = "播放备用演示录屏";
           backupBtn.onclick = () => window.open(CONFIG.backupDemoUrl, "_blank");
         } else {
-          backupBtn.style.cursor = "not-allowed";
-          backupBtn.style.opacity = "0.5";
-          backupBtn.title = "尚未配置备用演示链接";
-          backupBtn.onclick = () => {
-            alert("尚未在 presentation.html 的 CONFIG.backupDemoUrl 中配置备用视频链接。");
-          };
+          // Hide button completely if not configured, keeping presentation clean
+          backupBtn.style.display = "none";
         }
       }
     }
@@ -983,9 +982,9 @@
       }
     }
 
-    // Open Live Demo in new tab using CONFIG
+    // Open Live Demo with fallback strategy (Vercel -> Online -> Localhost)
     function openLiveDemo() {
-      const url = CONFIG.demoUrl || CONFIG.localDemoUrl;
+      const url = CONFIG.demoUrl || CONFIG.onlineDemoUrl || CONFIG.localDemoUrl;
       window.open(url, "_blank");
     }
 
