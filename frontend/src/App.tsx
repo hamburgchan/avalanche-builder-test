@@ -13,15 +13,22 @@ import type { AuditRecord } from './components/AuditLog'
 import { FaucetModal } from './components/FaucetModal'
 import type { SpendIntent } from './components/SpendIntentCard'
 import {
-  AVAX_GUARD_ADDRESS,
+  getAvaxGuardAddress,
+  setAvaxGuardAddress,
   AVAX_GUARD_ABI,
+  AVAX_GUARD_BYTECODE,
   DEMO_ADDRESSES,
-  BlockReason
+  BlockReason,
+  FUJI_CHAIN_CONFIG
 } from './config/avalanche'
+import {
+  getOrCreateAgentWallet,
+  createNewAgentWallet,
+  getAgentBalance
+} from './services/agentWallet'
 import { monitor } from './services/monitor'
 import { merchantService } from './services/merchant'
 import type { FulfillmentResult } from './services/merchant'
-
 
 export function App() {
   const [account, setAccount] = useState<string | null>(null)
@@ -30,6 +37,16 @@ export function App() {
   const [provider, setProvider] = useState<ethers.BrowserProvider | null>(null)
   const [isConnecting, setIsConnecting] = useState<boolean>(false)
   const [isFaucetOpen, setIsFaucetOpen] = useState<boolean>(false)
+
+  // Contract deployment state
+  const [contractAddress, setContractAddr] = useState<string>(getAvaxGuardAddress())
+  const [isContractDeployed, setIsContractDeployed] = useState<boolean>(false)
+  const [isDeployingContract, setIsDeployingContract] = useState<boolean>(false)
+
+  // Agent Scoped Wallet state
+  const [agentWallet, setAgentWallet] = useState<ethers.Wallet>(() => getOrCreateAgentWallet())
+  const [agentBalance, setAgentBalance] = useState<string>('0')
+  const [isFundingAgent, setIsFundingAgent] = useState<boolean>(false)
 
   // Policy & Guard state
   const [policy, setPolicy] = useState<PolicyState | null>(null)
@@ -58,35 +75,58 @@ export function App() {
   const [auditLogs, setAuditLogs] = useState<AuditRecord[]>([])
 
   // Nonce counter for deterministic request IDs
-  const [localNonce, setLocalNonce] = useState<number>(1)
+  const [localNonce, setLocalNonce] = useState<number>(Date.now() % 1000000)
 
   // Init WSS monitor once
   useEffect(() => {
     monitor.init()
   }, [])
 
-  const refreshBalance = useCallback(async () => {
-    if (provider && account) {
+  // Check if contract has bytecode on Fuji
+  const checkContractDeployment = useCallback(async (targetAddr: string, activeProvider?: ethers.Provider) => {
+    const prov = activeProvider || new ethers.JsonRpcProvider(FUJI_CHAIN_CONFIG.rpcUrls[0])
+    try {
+      const code = await prov.getCode(targetAddr)
+      const deployed = code !== '0x' && code.length > 2
+      setIsContractDeployed(deployed)
+      return deployed
+    } catch (e) {
+      console.warn('Failed to check contract bytecode:', e)
+      setIsContractDeployed(false)
+      return false
+    }
+  }, [])
+
+  const refreshBalances = useCallback(async () => {
+    const prov = provider || new ethers.JsonRpcProvider(FUJI_CHAIN_CONFIG.rpcUrls[0])
+    if (account) {
       try {
-        const bal = await provider.getBalance(account)
+        const bal = await prov.getBalance(account)
         setBalance(ethers.formatEther(bal))
       } catch (e) {
-        console.error('Failed to get balance:', e)
+        console.error('Failed to get account balance:', e)
       }
     }
-  }, [provider, account])
+    if (agentWallet) {
+      const aBal = await getAgentBalance(agentWallet.address, prov)
+      setAgentBalance(aBal)
+    }
+  }, [provider, account, agentWallet])
 
   // Load Policy from Avalanche C-Chain
   const loadPolicy = useCallback(async () => {
-    if (!provider || !account) return
+    const prov = provider || new ethers.JsonRpcProvider(FUJI_CHAIN_CONFIG.rpcUrls[0])
+    if (!account || !agentWallet) return
+
     try {
-      if (AVAX_GUARD_ADDRESS && AVAX_GUARD_ADDRESS !== '0x4311300000000000000000000000000000000001') {
-        const contract = new ethers.Contract(AVAX_GUARD_ADDRESS, AVAX_GUARD_ABI, provider)
-        const activeOwner = await contract.activeOwnerOfAgent(DEMO_ADDRESSES.AGENT)
+      const isDeployed = await checkContractDeployment(contractAddress, prov)
+      if (isDeployed) {
+        const contract = new ethers.Contract(contractAddress, AVAX_GUARD_ABI, prov)
+        const activeOwner = await contract.activeOwnerOfAgent(agentWallet.address)
         const isBound = activeOwner.toLowerCase() === account.toLowerCase()
         setAgentAuthorized(isBound)
 
-        const p = await contract.policies(account, DEMO_ADDRESSES.AGENT)
+        const p = await contract.policies(account, agentWallet.address)
         if (p.owner !== ethers.ZeroAddress && (p.active || p.remainingBudget > 0n)) {
           setPolicy({
             owner: p.owner,
@@ -103,17 +143,17 @@ export function App() {
         }
       }
     } catch (err) {
-      console.warn('Contract not deployed or call failed, initializing demo state:', err)
+      console.warn('Contract call failed, reset state:', err)
     }
 
-    // Default Inactive initial state
     setPolicy(null)
     setAgentAuthorized(false)
-  }, [provider, account])
+  }, [provider, account, agentWallet, contractAddress, checkContractDeployment])
 
   useEffect(() => {
     loadPolicy()
-  }, [loadPolicy])
+    refreshBalances()
+  }, [loadPolicy, refreshBalances])
 
   const connectWallet = async () => {
     const ethereum = (window as any).ethereum
@@ -149,7 +189,7 @@ export function App() {
     const handleAccounts = (accounts: string[]) => {
       if (accounts.length > 0) {
         setAccount(accounts[0])
-        refreshBalance()
+        refreshBalances()
       } else {
         setAccount(null)
         setBalance('0')
@@ -158,7 +198,7 @@ export function App() {
 
     const handleChain = (cId: string) => {
       setChainId(parseInt(cId, 16))
-      refreshBalance()
+      refreshBalances()
     }
 
     ethereum.on('accountsChanged', handleAccounts)
@@ -182,12 +222,79 @@ export function App() {
       ethereum.removeListener('accountsChanged', handleAccounts)
       ethereum.removeListener('chainChanged', handleChain)
     }
-  }, [refreshBalance])
+  }, [refreshBalances])
+
+  // In-DApp 1-Click Contract Deployer via MetaMask
+  const handleDeployContract = async () => {
+    if (!account || !provider) {
+      alert('Please connect MetaMask first!')
+      return
+    }
+
+    setIsDeployingContract(true)
+    try {
+      const signer = await provider.getSigner()
+      const factory = new ethers.ContractFactory(AVAX_GUARD_ABI, AVAX_GUARD_BYTECODE, signer)
+      const deployedContract = await factory.deploy()
+      await deployedContract.waitForDeployment()
+      const newAddr = await deployedContract.getAddress()
+
+      setAvaxGuardAddress(newAddr)
+      setContractAddr(newAddr)
+      setIsContractDeployed(true)
+      await loadPolicy()
+      await refreshBalances()
+      alert(`AvaxGuard successfully deployed to Fuji at: ${newAddr}`)
+    } catch (err: any) {
+      console.error('Contract deployment failed:', err)
+      alert(`Deployment failed: ${err.message || err}`)
+    } finally {
+      setIsDeployingContract(false)
+    }
+  }
+
+  // Human Action: Fund Agent Gas (0.005 AVAX)
+  const handleFundAgent = async () => {
+    if (!account || !provider) {
+      alert('Please connect MetaMask first!')
+      return
+    }
+
+    setIsFundingAgent(true)
+    try {
+      const signer = await provider.getSigner()
+      const tx = await signer.sendTransaction({
+        to: agentWallet.address,
+        value: ethers.parseEther('0.005')
+      })
+      await tx.wait()
+      await refreshBalances()
+      alert(`Successfully funded 0.005 AVAX gas to Agent Scoped Wallet: ${agentWallet.address}`)
+    } catch (err: any) {
+      console.error('Funding agent gas failed:', err)
+      alert(`Gas funding failed: ${err.message || err}`)
+    } finally {
+      setIsFundingAgent(false)
+    }
+  }
+
+  // Reset Agent Scoped Wallet (New key for fresh policy lifecycle)
+  const handleResetAgent = () => {
+    const newW = createNewAgentWallet()
+    setAgentWallet(newW)
+    refreshBalances()
+    setPolicy(null)
+    setAgentAuthorized(false)
+  }
 
   // Human Action: Create Policy
   const handleCreatePolicy = async (budget: string, maxTx: string, daily: string, durationSec: number) => {
     if (!account || !provider) {
       alert('Please connect your wallet!')
+      return
+    }
+    if (!isContractDeployed) {
+      alert('Please deploy the AvaxGuard contract first using the button above!')
       return
     }
 
@@ -198,33 +305,19 @@ export function App() {
       const maxTxWei = ethers.parseEther(maxTx)
       const dailyWei = ethers.parseEther(daily)
 
-      if (AVAX_GUARD_ADDRESS && AVAX_GUARD_ADDRESS !== '0x4311300000000000000000000000000000000001') {
-        const contract = new ethers.Contract(AVAX_GUARD_ADDRESS, AVAX_GUARD_ABI, signer)
-        const tx = await contract.createPolicy(
-          DEMO_ADDRESSES.AGENT,
-          DEMO_ADDRESSES.MERCHANT,
-          maxTxWei,
-          dailyWei,
-          durationSec,
-          { value: budgetWei }
-        )
-        await tx.wait()
-      }
+      const contract = new ethers.Contract(contractAddress, AVAX_GUARD_ABI, signer)
+      const tx = await contract.createPolicy(
+        agentWallet.address,
+        DEMO_ADDRESSES.MERCHANT,
+        maxTxWei,
+        dailyWei,
+        durationSec,
+        { value: budgetWei }
+      )
+      await tx.wait()
 
-      // Update Local State for smooth demo
-      setPolicy({
-        owner: account,
-        agent: DEMO_ADDRESSES.AGENT,
-        totalBudget: budget,
-        remainingBudget: budget,
-        maxPerTx: maxTx,
-        dailyLimit: daily,
-        dailySpent: '0.0000',
-        expiry: Math.floor(Date.now() / 1000) + durationSec,
-        active: true
-      })
-      setAgentAuthorized(true)
-      refreshBalance()
+      await loadPolicy()
+      await refreshBalances()
     } catch (err: any) {
       console.error('Failed to create policy:', err)
       alert(`Policy creation failed: ${err.message || err}`)
@@ -235,19 +328,16 @@ export function App() {
 
   // Human Action: Revoke Policy
   const handleRevokePolicy = async () => {
-    if (!account || !provider) return
+    if (!account || !provider || !isContractDeployed) return
     setIsRevokingPolicy(true)
     try {
       const signer = await provider.getSigner()
-      if (AVAX_GUARD_ADDRESS && AVAX_GUARD_ADDRESS !== '0x4311300000000000000000000000000000000001') {
-        const contract = new ethers.Contract(AVAX_GUARD_ADDRESS, AVAX_GUARD_ABI, signer)
-        const tx = await contract.revokePolicy(DEMO_ADDRESSES.AGENT)
-        await tx.wait()
-      }
+      const contract = new ethers.Contract(contractAddress, AVAX_GUARD_ABI, signer)
+      const tx = await contract.revokePolicy(agentWallet.address)
+      await tx.wait()
 
-      setPolicy(null)
-      setAgentAuthorized(false)
-      refreshBalance()
+      await loadPolicy()
+      await refreshBalances()
     } catch (err: any) {
       console.error('Failed to revoke policy:', err)
       alert(`Revoke failed: ${err.message || err}`)
@@ -256,10 +346,18 @@ export function App() {
     }
   }
 
-  // Autonomous Demo Trigger
+  // Autonomous AI Agent Trigger: 100% Real Fuji C-Chain Execution
   const handleTriggerScene = async (scene: 'A' | 'B' | 'C') => {
-    if (!account || !provider) {
-      alert('Please connect wallet first!')
+    if (!account) {
+      alert('Please connect your wallet first!')
+      return
+    }
+    if (!isContractDeployed) {
+      alert('Please deploy the AvaxGuard contract first to Fuji!')
+      return
+    }
+    if (parseFloat(agentBalance) < 0.001) {
+      alert('Agent Scoped Wallet has insufficient AVAX for gas. Please click "Fund Agent Gas" first!')
       return
     }
 
@@ -285,7 +383,7 @@ export function App() {
         const reqId = ethers.keccak256(
           ethers.AbiCoder.defaultAbiCoder().encode(
             ['address', 'uint256', 'bytes32'],
-            [DEMO_ADDRESSES.AGENT, curNonce, ethers.id('AVAX_HIGH_RES_ORDERBOOK')]
+            [agentWallet.address, curNonce, ethers.id('AVAX_HIGH_RES_ORDERBOOK')]
           )
         )
         intent = {
@@ -298,13 +396,13 @@ export function App() {
           sceneType: 'A'
         }
       } else if (scene === 'B') {
-        // Over-Limit 0.010 AVAX > 0.003
+        // Over-Limit 0.010 AVAX > maxPerTx (0.003)
         const amt = '0.010'
         amountWei = ethers.parseEther(amt)
         const reqId = ethers.keccak256(
           ethers.AbiCoder.defaultAbiCoder().encode(
             ['address', 'uint256', 'bytes32'],
-            [DEMO_ADDRESSES.AGENT, curNonce, ethers.id('DEEP_HFT_DATASET')]
+            [agentWallet.address, curNonce, ethers.id('DEEP_HFT_DATASET')]
           )
         )
         intent = {
@@ -317,13 +415,13 @@ export function App() {
           sceneType: 'B'
         }
       } else {
-        // Scene C: Prompt Injection Attack Simulation
+        // Scene C: Prompt Injection Attack Simulation to Attacker
         const amt = '0.001'
         amountWei = ethers.parseEther(amt)
         const reqId = ethers.keccak256(
           ethers.AbiCoder.defaultAbiCoder().encode(
             ['address', 'uint256', 'bytes32'],
-            [DEMO_ADDRESSES.AGENT, curNonce, ethers.id('PROMPT_INJECTION_OVERRIDE')]
+            [agentWallet.address, curNonce, ethers.id('PROMPT_INJECTION_OVERRIDE')]
           )
         )
         intent = {
@@ -343,159 +441,147 @@ export function App() {
       log(`[Intent] Recipient: ${intent.merchantAlias} (${intent.merchant.slice(0, 8)}...)`)
       log(`[Intent] Amount: ${intent.amount} AVAX | RequestId: ${intent.requestId.slice(0, 14)}...`)
 
-      // 2. Perform Real On-Chain evaluateSpend Check
-      let onChainAllowed = false
-      let onChainReason: BlockReason = BlockReason.NONE
-      let onChainBits = 0
+      // 2. Perform Real On-Chain evaluateSpend View Check
+      const fujiProvider = new ethers.JsonRpcProvider(FUJI_CHAIN_CONFIG.rpcUrls[0])
+      const guardContract = new ethers.Contract(contractAddress, AVAX_GUARD_ABI, fujiProvider)
 
-      if (AVAX_GUARD_ADDRESS && AVAX_GUARD_ADDRESS !== '0x4311300000000000000000000000000000000001') {
-        try {
-          const contract = new ethers.Contract(AVAX_GUARD_ADDRESS, AVAX_GUARD_ABI, provider)
-          const res = await contract.evaluateSpend(
-            account,
-            DEMO_ADDRESSES.AGENT,
-            intent.merchant,
-            amountWei,
-            intent.requestId
-          )
-          onChainAllowed = res[0]
-          onChainReason = Number(res[1]) as BlockReason
-          onChainBits = Number(res[2])
-
-        } catch (e) {
-          // Fallback simulation based on same exact logic if contract call fails
-          log('⚠️ Using deterministic local policy evaluation fallback')
-        }
-      } else {
-        // Exact same evaluation logic as AvaxGuard.sol
-        let bits = 0
-        if (policy?.active) bits |= 1 << 0
-        if (policy && Date.now() / 1000 <= policy.expiry) bits |= 1 << 1
-        bits |= 1 << 2 // request fresh
-        if (intent.merchant.toLowerCase() === DEMO_ADDRESSES.MERCHANT.toLowerCase()) {
-          bits |= 1 << 3
-        }
-        const amtNum = parseFloat(intent.amount)
-        const maxNum = policy ? parseFloat(policy.maxPerTx) : 0.003
-        if (amtNum <= maxNum) bits |= 1 << 4
-        bits |= 1 << 5 // daily ok
-        const remNum = policy ? parseFloat(policy.remainingBudget) : 0.02
-        if (amtNum <= remNum) bits |= 1 << 6
-
-        onChainBits = bits
-        if (scene === 'A') {
-          onChainAllowed = true
-          onChainReason = BlockReason.NONE
-        } else if (scene === 'B') {
-          onChainAllowed = false
-          onChainReason = BlockReason.PER_TX_LIMIT_EXCEEDED
-        } else {
-          onChainAllowed = false
-          onChainReason = BlockReason.MERCHANT_NOT_ALLOWED
-        }
-      }
+      log('🔍 Querying AvaxGuard.evaluateSpend on Fuji...')
+      const evalRes = await guardContract.evaluateSpend(
+        account,
+        agentWallet.address,
+        intent.merchant,
+        amountWei,
+        intent.requestId
+      )
+      const onChainAllowed = evalRes[0] as boolean
+      const onChainReason = Number(evalRes[1]) as BlockReason
+      const onChainBits = Number(evalRes[2])
 
       setChecksPassed(onChainBits)
       setVerdict(onChainReason)
 
-      log(`[Policy Engine] Evaluated on-chain bitmask: 0b${onChainBits.toString(2).padStart(7, '0')}`)
-      log(`[Policy Engine] Decision: ${onChainAllowed ? 'APPROVED ✅' : 'BLOCKED 🛡️'}`)
+      log(`[Policy Engine] Bitmask: 0b${onChainBits.toString(2).padStart(7, '0')}`)
+      log(`[Policy Engine] On-Chain Verdict: ${onChainAllowed ? 'APPROVED ✅' : 'BLOCKED 🛡️'}`)
 
-      // 3. Autonomous Execution on Avalanche Fuji
+      // 3. Autonomous Execution: Agent Signs with Dedicated Key and Broadcasts to Fuji
       setTelemetry((prev) => ({ ...prev, status: 'PENDING' }))
-      log('⚡ Agent broadcasting transaction to Avalanche C-Chain...')
+      log('⚡ Autonomous Agent broadcasting attemptSpend to Avalanche Fuji C-Chain...')
+
+      const agentSigner = agentWallet.connect(fujiProvider)
+      const agentContract = new ethers.Contract(contractAddress, AVAX_GUARD_ABI, agentSigner)
 
       const t0 = performance.now()
-      let txHash = '0x' + Math.random().toString(16).substring(2).padStart(64, '0')
-      let blockNumber = 58468000 + Math.floor(Math.random() * 500)
+      const tx = await agentContract.attemptSpend(intent.merchant, amountWei, intent.requestId)
+      const txHash = tx.hash
+      log(`📝 Tx Broadcasted: ${txHash.slice(0, 18)}...`)
 
-      if (AVAX_GUARD_ADDRESS && AVAX_GUARD_ADDRESS !== '0x4311300000000000000000000000000000000001') {
-        try {
-          const signer = await provider.getSigner()
-          const contract = new ethers.Contract(AVAX_GUARD_ADDRESS, AVAX_GUARD_ABI, signer)
-          const tx = await contract.attemptSpend(intent.merchant, amountWei, intent.requestId)
-          txHash = tx.hash
-          const receipt = await tx.wait()
-          blockNumber = receipt.blockNumber
-        } catch (e: any) {
-          log(`⛓️ On-chain notice: ${e.message?.slice(0, 50) || e}`)
+      // Wait for acceptance on Avalanche (WSS or receipt polling) with strict 15s timeout
+      const waitPromise = monitor.waitForAccepted(txHash, t0, fujiProvider, 15000)
+      const receipt = await tx.wait()
+      const acceptedRes = await waitPromise
+      const latency = acceptedRes.latencyMs
+      log(`🏁 Avalanche Confirmed in Block #${receipt.blockNumber} (Observed Acceptance: ${latency} ms via ${acceptedRes.source})`)
+
+      // Parse Receipt Logs for PaymentExecuted / PaymentBlocked
+      let isExecuted = false
+      let isBlocked = false
+      let blockReasonParsed: BlockReason = BlockReason.NONE
+
+      const iface = new ethers.Interface(AVAX_GUARD_ABI)
+      for (const logItem of receipt.logs) {
+        if (logItem.address.toLowerCase() === contractAddress.toLowerCase()) {
+          try {
+            const parsed = iface.parseLog({
+              topics: logItem.topics as string[],
+              data: logItem.data
+            })
+            if (parsed?.name === 'PaymentExecuted') {
+              isExecuted = true
+            } else if (parsed?.name === 'PaymentBlocked') {
+              isBlocked = true
+              blockReasonParsed = Number(parsed.args[5]) as BlockReason
+            }
+          } catch {
+            // Not a matching event
+          }
         }
       }
 
-      // Measure observed acceptance
-      const t1 = await monitor.waitForAccepted(txHash, provider)
-      const latency = Math.round(t1 - t0)
+      const realGasUsed = receipt.gasUsed.toString()
+      const effectiveGasPrice = receipt.gasPrice || 25000000000n
+      const realGasCostEth = ethers.formatEther(receipt.gasUsed * effectiveGasPrice)
 
-      log(`🏁 Avalanche Accepted! Observed Acceptance: ${latency} ms`)
-
-      if (onChainAllowed) {
+      if (isExecuted) {
         // APPROVED BRANCH (Scene A)
         setTelemetry({
           status: 'ACCEPTED',
           txHash,
-          blockNumber,
-          gasUsed: '48,219',
+          blockNumber: receipt.blockNumber,
+          gasUsed: Number(realGasUsed).toLocaleString(),
           observedLatencyMs: latency,
+          latencySource: acceptedRes.source,
           unauthorizedTransfer: '0 AVAX',
-          networkGasCost: '~0.00034 AVAX'
+          networkGasCost: `~${parseFloat(realGasCostEth).toFixed(5)} AVAX`
         })
 
-        // Update Remaining Budget
-        if (policy) {
-          const newRem = Math.max(0, parseFloat(policy.remainingBudget) - parseFloat(intent.amount))
-          setPolicy((prev) => prev ? { ...prev, remainingBudget: newRem.toFixed(4) } : null)
-        }
-
-        // Call Merchant Verification Service
-        log('📡 Verifying PaymentExecuted on Avalanche with Merchant API...')
+        // Call Real Merchant Verification Service
+        log('📡 Verifying PaymentExecuted receipt with Merchant API...')
         const merchantRes = await merchantService.verifyAndFulfill(
           txHash,
           intent.requestId,
-          DEMO_ADDRESSES.AGENT,
+          agentWallet.address,
           amountWei,
-          provider
+          fujiProvider,
+          contractAddress
         )
         setMerchantResult(merchantRes)
-        log(`✅ Merchant: ${merchantRes.message}`)
-        log('📊 Agent received protected dataset and finalized report.')
 
-        confetti({
-          particleCount: 70,
-          spread: 60,
-          origin: { y: 0.6 },
-          colors: ['#ef4444', '#10b981', '#ffffff']
-        })
+        if (merchantRes.success) {
+          log(`✅ Merchant: ${merchantRes.message}`)
+          log('📊 Agent received verified protected dataset.')
 
-        // Add to audit log
-        setAuditLogs((prev) => [
-          {
-            id: 'audit-' + Date.now(),
-            timestamp: new Date().toLocaleTimeString(),
-            type: 'EXECUTED',
-            agent: DEMO_ADDRESSES.AGENT,
-            recipient: intent.merchant,
-            recipientAlias: intent.merchantAlias,
-            amount: intent.amount,
-            requestId: intent.requestId,
-            reason: BlockReason.NONE,
-            txHash,
-            latencyMs: latency
-          },
-          ...prev
-        ])
-      } else {
+          confetti({
+            particleCount: 70,
+            spread: 60,
+            origin: { y: 0.6 },
+            colors: ['#ef4444', '#10b981', '#ffffff']
+          })
+
+          setAuditLogs((prev) => [
+            {
+              id: 'audit-' + Date.now(),
+              timestamp: new Date().toLocaleTimeString(),
+              type: 'EXECUTED',
+              agent: agentWallet.address,
+              recipient: intent.merchant,
+              recipientAlias: intent.merchantAlias,
+              amount: intent.amount,
+              requestId: intent.requestId,
+              reason: BlockReason.NONE,
+              txHash,
+              latencyMs: latency
+            },
+            ...prev
+          ])
+        } else {
+          log(`❌ Merchant Verification Failed: ${merchantRes.message}`)
+        }
+      } else if (isBlocked) {
         // BLOCKED BRANCH (Scene B & C)
+        const finalReason = blockReasonParsed !== BlockReason.NONE ? blockReasonParsed : onChainReason
+
         setTelemetry({
           status: 'BLOCKED',
           txHash,
-          blockNumber,
-          gasUsed: '24,810',
+          blockNumber: receipt.blockNumber,
+          gasUsed: Number(realGasUsed).toLocaleString(),
           observedLatencyMs: latency,
+          latencySource: acceptedRes.source,
           unauthorizedTransfer: '0 AVAX',
-          networkGasCost: '~0.00021 AVAX'
+          networkGasCost: `~${parseFloat(realGasCostEth).toFixed(5)} AVAX`
         })
 
-        log(`🛡️ SPENDING BLOCKED BY AVAXGUARD: Reason = ${onChainReason}`)
+        log(`🛡️ SPENDING BLOCKED BY AVAXGUARD: Reason = ${finalReason}`)
         log(`🔒 ZERO Unauthorized Value Transferred from Human Budget.`)
 
         setAuditLogs((prev) => [
@@ -503,21 +589,27 @@ export function App() {
             id: 'audit-' + Date.now(),
             timestamp: new Date().toLocaleTimeString(),
             type: 'BLOCKED',
-            agent: DEMO_ADDRESSES.AGENT,
+            agent: agentWallet.address,
             recipient: intent.merchant,
             recipientAlias: intent.merchantAlias,
             amount: intent.amount,
             requestId: intent.requestId,
-            reason: onChainReason,
+            reason: finalReason,
             txHash,
             latencyMs: latency
           },
           ...prev
         ])
+      } else {
+        log(`⚠️ Transaction mined with status ${receipt.status}, but neither event identified.`)
       }
+
+      await loadPolicy()
+      await refreshBalances()
     } catch (err: any) {
       console.error('Execution error:', err)
-      log(`❌ Error: ${err.message || err}`)
+      log(`❌ On-chain Error: ${err.message || err}`)
+      setTelemetry((prev) => ({ ...prev, status: 'IDLE' }))
     } finally {
       setIsExecuting(false)
     }
@@ -544,8 +636,17 @@ export function App() {
             <PolicyConsole
               policy={policy}
               account={account}
+              contractAddress={contractAddress}
+              isContractDeployed={isContractDeployed}
+              isDeployingContract={isDeployingContract}
+              agentAddress={agentWallet.address}
+              agentBalance={agentBalance}
+              isFundingAgent={isFundingAgent}
               isCreating={isCreatingPolicy}
               isRevoking={isRevokingPolicy}
+              onDeployContract={handleDeployContract}
+              onFundAgent={handleFundAgent}
+              onResetAgent={handleResetAgent}
               onCreatePolicy={handleCreatePolicy}
               onRevokePolicy={handleRevokePolicy}
             />
