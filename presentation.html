@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AvaFence — Avalanche Builder Day 2026 Pitch Deck</title>
+  <title>AvaFence — Avalanche Builder Day 2026 决赛演示</title>
   <style>
     /* CSS Reset & Dark Financial Infrastructure Variables */
     :root {
@@ -38,7 +38,7 @@
     body {
       background-color: var(--bg-base);
       color: var(--text-white);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Source Han Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       overflow: hidden;
       width: 100vw;
       height: 100vh;
@@ -98,8 +98,7 @@
       border: 1px solid var(--border-subtle);
       padding: 4px 12px;
       border-radius: 9999px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 0.5px;
     }
 
     .event-meta {
@@ -152,30 +151,30 @@
       pointer-events: auto;
     }
 
-    /* Typography Hierarchy */
+    /* Typography Hierarchy for Chinese Presentation */
     .slide-title {
-      font-size: 58px;
+      font-size: 54px;
       font-weight: 800;
-      line-height: 1.15;
-      letter-spacing: -1.5px;
-      margin-bottom: 24px;
+      line-height: 1.25;
+      letter-spacing: -0.5px;
+      margin-bottom: 20px;
       color: #ffffff;
     }
 
     .slide-subtitle {
-      font-size: 26px;
+      font-size: 24px;
       font-weight: 500;
-      line-height: 1.4;
+      line-height: 1.5;
       color: var(--text-muted);
-      margin-bottom: 44px;
+      margin-bottom: 40px;
     }
 
     .hero-statement {
-      font-size: 40px;
+      font-size: 38px;
       font-weight: 700;
-      line-height: 1.3;
+      line-height: 1.35;
       color: var(--text-white);
-      margin: 24px 0;
+      margin: 22px 0;
     }
 
     .highlight-red {
@@ -201,7 +200,7 @@
     .grid-3 {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
-      gap: 30px;
+      gap: 28px;
       width: 100%;
     }
 
@@ -209,7 +208,7 @@
       background-color: var(--bg-card);
       border: 1px solid var(--border-subtle);
       border-radius: 20px;
-      padding: 40px;
+      padding: 38px 40px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -220,7 +219,7 @@
     .card-title {
       font-size: 24px;
       font-weight: 700;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       display: flex;
       align-items: center;
       gap: 12px;
@@ -228,7 +227,7 @@
 
     .card-body {
       font-size: 20px;
-      line-height: 1.5;
+      line-height: 1.6;
       color: var(--text-muted);
     }
 
@@ -240,9 +239,9 @@
       background: var(--bg-card);
       border: 1px solid var(--border-subtle);
       border-radius: 20px;
-      padding: 34px 44px;
-      margin: 28px 0;
-      gap: 20px;
+      padding: 32px 42px;
+      margin: 26px 0;
+      gap: 16px;
     }
 
     .flow-node {
@@ -250,7 +249,7 @@
       flex-direction: column;
       align-items: center;
       text-align: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .flow-node-title {
@@ -284,7 +283,7 @@
       display: flex;
       flex-wrap: wrap;
       gap: 12px;
-      margin-top: 20px;
+      margin-top: 18px;
     }
 
     .badge {
@@ -385,7 +384,7 @@
       bottom: 24px;
       right: 28px;
       width: 620px;
-      background: rgba(10, 15, 28, 0.94);
+      background: rgba(10, 15, 28, 0.95);
       backdrop-filter: blur(14px);
       border: 1.5px solid var(--avax-red);
       border-radius: 16px;
@@ -413,20 +412,21 @@
       letter-spacing: 1px;
     }
 
-    .notes-en {
-      font-size: 18px;
-      line-height: 1.5;
+    .notes-zh {
+      font-size: 17px;
+      line-height: 1.6;
       font-weight: 600;
       color: #f1f5f9;
       margin-bottom: 12px;
     }
 
-    .notes-zh {
-      font-size: 15px;
+    .notes-en {
+      font-size: 14px;
       line-height: 1.5;
       color: #94a3b8;
       border-top: 1px dashed #334155;
       padding-top: 10px;
+      font-style: italic;
     }
 
     @keyframes fadeIn {
@@ -450,168 +450,169 @@
       </div>
       <div class="event-meta">
         <span class="live-dot"></span>
-        <span>Avalanche Fuji C-Chain Verified</span>
+        <span>Avalanche Fuji C-Chain 链上已验证</span>
         <span>·</span>
-        <span>Team1 Builder Day Shenzhen 2026</span>
+        <span>Team1 Builder Day 深圳站</span>
       </div>
     </header>
 
     <!-- Slide Stage -->
     <div class="slide-stage">
 
-      <!-- SLIDE 1: HOOK -->
+      <!-- SLIDE 1: HOOK (中文主语言) -->
       <div class="slide active" id="slide-1" data-title="Hook">
-        <h1 class="slide-title">Would you give an AI agent your wallet?</h1>
-        <p class="slide-subtitle">AI agents can already think and call APIs. But what happens when they spend money?</p>
+        <h1 class="slide-title">如果 AI Agent 可以自己花钱，<br>你敢把钱包交给它吗？</h1>
+        <p class="slide-subtitle">AI Agent 已经可以思考、调用工具和 API。当它开始拥有支付能力，新的问题出现了。</p>
         
         <div class="grid-2">
           <div class="card" style="border-left: 4px solid var(--system-cyan);">
             <div>
               <div class="card-title" style="color: var(--system-cyan);">
-                <span>HUMAN APPROVALS</span>
+                <span>人工逐笔审批</span>
               </div>
               <div class="card-body">
-                Require human sign-off on every micro-payment.
+                每一笔付款都需要人类手动签名确认。
               </div>
             </div>
             <div style="margin-top: 36px;">
-              <span style="font-size: 28px; font-weight: 800; color: #fff;">SAFE,</span>
-              <span style="font-size: 28px; font-weight: 800; color: var(--text-dim);"> but NOT AUTONOMOUS</span>
+              <span style="font-size: 30px; font-weight: 800; color: #fff;">安全，</span>
+              <span style="font-size: 30px; font-weight: 800; color: var(--text-dim);"> 但不自主</span>
             </div>
           </div>
 
           <div class="card" style="border-left: 4px solid var(--avax-red);">
             <div>
               <div class="card-title" style="color: var(--avax-red);">
-                <span>DIRECT KEY ACCESS</span>
+                <span>直接开放钱包权限</span>
               </div>
               <div class="card-body">
-                Hand over unrestricted wallet private keys to the model.
+                Agent 持有可直接支配资产的钱包私钥。
               </div>
             </div>
             <div style="margin-top: 36px;">
-              <span style="font-size: 28px; font-weight: 800; color: #fff;">AUTONOMOUS,</span>
-              <span style="font-size: 28px; font-weight: 800; color: var(--blocked-red);"> but NOT SAFE</span>
+              <span style="font-size: 30px; font-weight: 800; color: #fff;">自主，</span>
+              <span style="font-size: 30px; font-weight: 800; color: var(--blocked-red);"> 但不安全</span>
             </div>
           </div>
         </div>
 
-        <div style="margin-top: 48px; font-size: 32px; font-weight: 700; color: var(--text-white);">
-          There is a <span class="highlight-red">missing layer</span>.
+        <div style="margin-top: 46px; font-size: 30px; font-weight: 700; color: var(--text-white);">
+          我们缺少一层新的 <span class="highlight-red">资金权限控制</span>。
+          <span style="font-size: 18px; color: var(--text-dim); margin-left: 14px; font-weight: 500;">(There is a missing layer.)</span>
         </div>
       </div>
 
-      <!-- SLIDE 2: THE REAL PROBLEM -->
+      <!-- SLIDE 2: THE REAL PROBLEM (中文主语言) -->
       <div class="slide" id="slide-2" data-title="The Real Problem">
-        <h1 class="slide-title">AI agents need to spend money.</h1>
-        <p class="slide-subtitle">Autonomous tasks require paying for resources: Data · APIs · Compute · Services</p>
+        <h1 class="slide-title">AI Agent 正在成为真正的“经济参与者”</h1>
+        <p class="slide-subtitle">为了完成自主任务，Agent 开始需要主动购买：数据 · API · 算力 · 推理 · 数字服务</p>
         
         <div class="flow-chain">
           <div class="flow-node">
-            <div class="flow-node-title">User Goal</div>
-            <div class="flow-node-desc">"Analyze AVAX Liquidity"</div>
+            <div class="flow-node-title">用户任务</div>
+            <div class="flow-node-desc">“分析 AVAX 流动性”</div>
           </div>
           <div class="flow-arrow">➔</div>
           <div class="flow-node">
             <div class="flow-node-title">Research Agent</div>
-            <div class="flow-node-desc">Executes Analysis Loop</div>
+            <div class="flow-node-desc">执行自动化分析工作流</div>
           </div>
           <div class="flow-arrow">➔</div>
           <div class="flow-node">
-            <div class="flow-node-title">Bottleneck</div>
-            <div class="flow-node-desc">Public data is not enough</div>
+            <div class="flow-node-title">遇到瓶颈</div>
+            <div class="flow-node-desc">公开免费数据不足</div>
           </div>
           <div class="flow-arrow">➔</div>
           <div class="flow-node">
-            <div class="flow-node-title" style="color: var(--approved-green);">Needs Premium Data</div>
-            <div class="flow-node-desc">Cost: 0.002 AVAX</div>
+            <div class="flow-node-title" style="color: var(--approved-green);">需购买高级数据</div>
+            <div class="flow-node-desc">费用: 0.002 AVAX</div>
           </div>
         </div>
 
-        <div class="hero-statement" style="font-size: 36px; margin: 20px 0;">
-          Who decides whether the Agent is allowed to pay?
+        <div class="hero-statement" style="font-size: 36px; margin: 18px 0;">
+          谁来决定 Agent 有没有资格支付这笔钱？
         </div>
 
-        <div class="badge-group" style="margin-top: 24px;">
-          <div class="badge" style="border-color: var(--blocked-red); color: #fca5a5;">⚠️ Prompt Injection Attack</div>
-          <div class="badge" style="border-color: var(--warning-amber); color: #fde68a;">⚠️ Runaway Loop Overspending</div>
-          <div class="badge" style="border-color: var(--blocked-red); color: #fca5a5;">⚠️ Unknown / Malicious Merchants</div>
+        <div class="badge-group" style="margin-top: 20px;">
+          <div class="badge" style="border-color: var(--blocked-red); color: #fca5a5;">⚠️ 提示词注入攻击 (Prompt Injection)</div>
+          <div class="badge" style="border-color: var(--warning-amber); color: #fde68a;">⚠️ 死循环超额消费 (Overspending)</div>
+          <div class="badge" style="border-color: var(--blocked-red); color: #fca5a5;">⚠️ 恶意未知商户 (Malicious Merchant)</div>
         </div>
       </div>
 
-      <!-- SLIDE 3: INSIGHT & INNOVATION -->
+      <!-- SLIDE 3: INSIGHT & INNOVATION (中文主语言) -->
       <div class="slide" id="slide-3" data-title="Permission Layer">
-        <h1 class="slide-title">The missing layer is not another wallet.</h1>
+        <h1 class="slide-title">缺的不是另一个钱包</h1>
         <p class="slide-subtitle" style="color: var(--system-cyan); font-weight: 700; font-size: 30px;">
-          It is a Financial Permission Layer.
+          而是一层资金权限控制 <span style="font-size: 20px; color: var(--text-dim); font-weight: 500;">(Financial Permission Layer)</span>
         </p>
 
-        <div class="card" style="padding: 28px 36px; background: rgba(13, 19, 34, 0.8);">
-          <div style="font-size: 32px; font-weight: 800; line-height: 1.4;">
-            <div>A wallet controls <span style="color: var(--text-dim);">access to money</span>.</div>
-            <div>AvaFence controls <span class="highlight-red">the conditions for spending it</span>.</div>
+        <div class="card" style="padding: 26px 36px; background: rgba(13, 19, 34, 0.85);">
+          <div style="font-size: 30px; font-weight: 800; line-height: 1.5;">
+            <div>钱包控制：<span style="color: var(--text-dim);">谁可以动钱</span></div>
+            <div>AvaFence 控制：<span class="highlight-red">这笔钱在什么条件下可以被花出去</span></div>
           </div>
         </div>
 
         <!-- Architecture Flow -->
-        <div class="flow-chain" style="margin: 22px 0;">
+        <div class="flow-chain" style="margin: 20px 0;">
           <div class="flow-node">
             <div class="flow-node-title">AI Agent</div>
-            <div class="flow-node-desc">Generates Intent</div>
+            <div class="flow-node-desc">支出意图 (Spend Intent)</div>
           </div>
           <div class="flow-arrow">➔</div>
           <div class="permission-box">
             <div style="font-size: 20px; font-weight: 800; color: #fff;">AVAFENCE</div>
-            <div style="font-size: 13px; color: var(--system-cyan); font-weight: 600;">ON-CHAIN PERMISSION ENGINE</div>
+            <div style="font-size: 13px; color: var(--system-cyan); font-weight: 600;">链上资金权限引擎</div>
           </div>
           <div class="flow-arrow">➔</div>
           <div class="flow-node">
-            <div class="flow-node-title">Payment Rail</div>
+            <div class="flow-node-title">支付通道</div>
             <div class="flow-node-desc">Avalanche C-Chain</div>
           </div>
           <div class="flow-arrow">➔</div>
           <div class="flow-node">
-            <div class="flow-node-title">Merchant</div>
-            <div class="flow-node-desc">Fulfills Service</div>
+            <div class="flow-node-title">服务商</div>
+            <div class="flow-node-desc">核验并释放服务</div>
           </div>
         </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px;">
           <div class="badge-group" style="margin-top: 0;">
-            <span class="badge badge-primary">WHO</span>
-            <span class="badge badge-primary">HOW MUCH</span>
-            <span class="badge badge-primary">WHEN</span>
-            <span class="badge badge-primary">WHO CAN RECEIVE</span>
-            <span class="badge badge-primary">WHICH REQUEST</span>
+            <span class="badge badge-primary">给谁</span>
+            <span class="badge badge-primary">花多少</span>
+            <span class="badge badge-primary">什么时候</span>
+            <span class="badge badge-primary">一天能花多少</span>
+            <span class="badge badge-primary">哪个请求</span>
           </div>
           <div style="font-size: 22px; font-weight: 700; color: #fff;">
-            Give agents freedom inside hard boundaries.
+            给 Agent 自主权，但把资金限制在明确边界内。
           </div>
         </div>
       </div>
 
-      <!-- SLIDE 4: WHY A BALANCE-ONLY WALLET IS NOT ENOUGH -->
+      <!-- SLIDE 4: WHY A BALANCE-ONLY WALLET IS NOT ENOUGH (中文主语言) -->
       <div class="slide" id="slide-4" data-title="Why Limited Wallet Fails">
-        <h1 class="slide-title">Why a limited wallet is not enough.</h1>
-        <p class="slide-subtitle">A small balance does not protect against prompt injection or malicious redirection.</p>
+        <h1 class="slide-title">为什么只给 Agent 一个“小钱包”还不够？</h1>
+        <p class="slide-subtitle">小额钱包只能限制最大损失，不能限制钱最终流向哪里。</p>
 
         <div class="grid-2">
           <!-- Left: Limited Wallet -->
           <div class="card">
             <div class="card-title" style="color: var(--text-dim);">
-              BALANCE-ONLY WALLET
+              仅余额限制的钱包 (Balance-Only Wallet)
             </div>
             <div class="card-body" style="font-family: monospace; font-size: 18px; margin: 16px 0;">
-              <div>Balance:           0.02 AVAX</div>
-              <div>Malicious request: 0.001 AVAX</div>
-              <div style="color: var(--approved-green); margin-top: 8px;">✓ Under wallet balance</div>
+              <div>钱包余额:      0.02 AVAX</div>
+              <div>恶意请求:      0.001 AVAX</div>
+              <div style="color: var(--approved-green); margin-top: 8px;">✓ 金额小于钱包余额</div>
             </div>
             <div style="border-top: 1px solid var(--border-subtle); padding-top: 18px;">
               <div style="font-size: 22px; font-weight: 800; color: var(--warning-amber);">
-                PAYMENT MAY BE ALLOWED ✕
+                这笔支付仍可能被允许 ✕
               </div>
               <div style="font-size: 15px; color: var(--text-dim); margin-top: 8px;">
-                A small wallet limits HOW MUCH can be lost. It does not control WHERE the money goes.
+                小钱包只能限制“最多损失多少”，无法限制“钱可以付给谁”。
               </div>
             </div>
           </div>
@@ -619,19 +620,19 @@
           <!-- Right: AvaFence -->
           <div class="card" style="border: 1.5px solid var(--avax-red); box-shadow: 0 0 30px var(--avax-red-glow);">
             <div class="card-title" style="color: var(--avax-red);">
-              AVAFENCE PERMISSION LAYER
+              AVAFENCE 资金权限层
             </div>
             <div class="card-body" style="font-family: monospace; font-size: 18px; margin: 16px 0;">
-              <div>Amount:    0.001 AVAX  <span style="color: var(--approved-green);">[✓ Valid amount]</span></div>
-              <div>Recipient: Unknown     <span style="color: var(--blocked-red);">[✕ NOT allowed]</span></div>
-              <div style="color: var(--system-cyan); margin-top: 8px;">Enforcement: Smart Contract Sandbox</div>
+              <div>请求金额: 0.001 AVAX <span style="color: var(--approved-green);">[✓ 金额合法]</span></div>
+              <div>收款方:   未知黑客地址 <span style="color: var(--blocked-red);">[✕ 不在白名单]</span></div>
+              <div style="color: var(--system-cyan); margin-top: 8px;">执行机制: Avalanche 智能合约硬编码拦截</div>
             </div>
             <div style="border-top: 1px solid var(--border-subtle); padding-top: 18px;">
               <div style="font-size: 22px; font-weight: 800; color: var(--blocked-red);">
-                BLOCKED ON-CHAIN 🛡️
+                链上直接拦截 🛡️ (BLOCKED)
               </div>
               <div style="font-size: 15px; color: var(--text-dim); margin-top: 8px;">
-                Transaction accepted on Fuji. Unauthorized value transfer blocked by AvaFence.
+                交易被 Fuji 接受，但 AvaFence 阻止未授权价值转移。
               </div>
             </div>
           </div>
@@ -639,116 +640,115 @@
 
         <div style="margin-top: 36px; display: flex; justify-content: space-between; align-items: baseline;">
           <div style="font-size: 28px; font-weight: 800; color: #fff;">
-            Small payment ≠ Safe payment.
+            小额支付 ≠ 安全支付
           </div>
           <div style="font-size: 26px; font-weight: 800; color: var(--avax-red);">
-            The model can be tricked. The rules still hold.
+            模型可能被骗，规则仍然有效。
+            <span style="font-size: 16px; color: var(--text-dim); font-weight: 500; margin-left: 10px;">(The model can be tricked. The rules still hold.)</span>
           </div>
         </div>
       </div>
 
-      <!-- SLIDE 5: LIVE DEMO -->
+      <!-- SLIDE 5: LIVE DEMO (中文主语言) -->
       <div class="slide" id="slide-5" data-title="Live Demo">
-        <h1 class="slide-title">Let’s see it on Avalanche Fuji.</h1>
-        <p class="slide-subtitle">Live smart contract verification with real autonomous transactions.</p>
+        <h1 class="slide-title">直接看真实 Fuji Demo</h1>
+        <p class="slide-subtitle">AvaFence 在 Avalanche Fuji 上执行真实策略判定与链上交易。</p>
 
         <div class="grid-3">
           <!-- Scenario 1 -->
           <div class="card" style="border-top: 4px solid var(--approved-green);">
             <div>
-              <div style="font-size: 14px; font-weight: 700; color: var(--approved-green); text-transform: uppercase;">01 · Live Execution</div>
-              <div style="font-size: 24px; font-weight: 800; color: #fff; margin: 10px 0;">NORMAL PURCHASE</div>
-              <div style="font-size: 16px; color: var(--text-muted); line-height: 1.5;">
-                <div>Amount: 0.002 AVAX</div>
-                <div>Recipient: Data Provider</div>
-                <div style="color: var(--approved-green); font-weight: 600; margin-top: 8px;">✓ Whitelisted Merchant</div>
+              <div style="font-size: 14px; font-weight: 700; color: var(--approved-green); text-transform: uppercase;">01 · 真实执行</div>
+              <div style="font-size: 24px; font-weight: 800; color: #fff; margin: 10px 0;">正常采购</div>
+              <div style="font-size: 16px; color: var(--text-muted); line-height: 1.6;">
+                <div>金额: 0.002 AVAX</div>
+                <div>收款方: 数据服务商</div>
+                <div style="color: var(--approved-green); font-weight: 600; margin-top: 8px;">✓ 白名单商户合规放行</div>
               </div>
             </div>
             <div style="margin-top: 24px; font-size: 20px; font-weight: 800; color: var(--approved-green);">
-              EXPECTED: APPROVED ✓
+              预期结果: APPROVED (允许) ✓
             </div>
           </div>
 
           <!-- Scenario 2 -->
           <div class="card" style="border-top: 4px solid var(--warning-amber); opacity: 0.75;">
             <div>
-              <div style="font-size: 14px; font-weight: 700; color: var(--warning-amber); text-transform: uppercase;">02 · Supported Rule</div>
-              <div style="font-size: 24px; font-weight: 800; color: #fff; margin: 10px 0;">OVERSPENDING</div>
-              <div style="font-size: 16px; color: var(--text-muted); line-height: 1.5;">
-                <div>Amount: 0.010 AVAX</div>
-                <div>Per-Tx Cap: 0.003 AVAX</div>
-                <div style="color: var(--warning-amber); font-weight: 600; margin-top: 8px;">✕ Exceeds Single Limit</div>
+              <div style="font-size: 14px; font-weight: 700; color: var(--warning-amber); text-transform: uppercase;">02 · 规则支持</div>
+              <div style="font-size: 24px; font-weight: 800; color: #fff; margin: 10px 0;">超额支付</div>
+              <div style="font-size: 16px; color: var(--text-muted); line-height: 1.6;">
+                <div>金额: 0.010 AVAX</div>
+                <div>单笔上限: 0.003 AVAX</div>
+                <div style="color: var(--warning-amber); font-weight: 600; margin-top: 8px;">✕ 超过单笔硬顶限额</div>
               </div>
             </div>
             <div style="margin-top: 24px; font-size: 20px; font-weight: 800; color: var(--warning-amber);">
-              EXPECTED: BLOCKED 🛡️
+              预期结果: BLOCKED (拦截) 🛡️
             </div>
           </div>
 
           <!-- Scenario 3 -->
           <div class="card" style="border-top: 4px solid var(--blocked-red);">
             <div>
-              <div style="font-size: 14px; font-weight: 700; color: var(--blocked-red); text-transform: uppercase;">03 · Live Execution</div>
-              <div style="font-size: 24px; font-weight: 800; color: #fff; margin: 10px 0;">INJECTION ATTACK</div>
-              <div style="font-size: 16px; color: var(--text-muted); line-height: 1.5;">
-                <div>Amount: 0.001 AVAX</div>
-                <div>Recipient: 0xAttacker</div>
-                <div style="color: var(--blocked-red); font-weight: 600; margin-top: 8px;">✕ Hostile Recipient</div>
+              <div style="font-size: 14px; font-weight: 700; color: var(--blocked-red); text-transform: uppercase;">03 · 真实执行</div>
+              <div style="font-size: 24px; font-weight: 800; color: #fff; margin: 10px 0;">提示词注入攻击</div>
+              <div style="font-size: 16px; color: var(--text-muted); line-height: 1.6;">
+                <div>金额: 0.001 AVAX</div>
+                <div>收款方: 0xAttacker</div>
+                <div style="color: var(--blocked-red); font-weight: 600; margin-top: 8px;">✕ 未知恶意收款地址</div>
               </div>
             </div>
             <div style="margin-top: 24px; font-size: 20px; font-weight: 800; color: var(--blocked-red);">
-              EXPECTED: BLOCKED 🛡️
+              预期结果: BLOCKED (拦截) 🛡️
             </div>
           </div>
         </div>
 
         <div class="cta-container">
           <button class="btn-live" onclick="openLiveDemo()">
-            <span>OPEN LIVE DEMO</span>
-            <span style="font-size: 24px;">↗</span>
+            <span>打开 Live Demo ↗</span>
           </button>
-          <button id="btn-backup-demo" class="btn-secondary" title="Backup video not configured">
-            <span>PLAY BACKUP DEMO</span>
-            <span>▷</span>
+          <button id="btn-backup-demo" class="btn-secondary" title="播放备用演示录屏">
+            <span>播放备用演示 ▷</span>
           </button>
           <div style="font-size: 18px; color: var(--text-muted); margin-left: auto;">
-            Every payment decision and blocked attempt is verifiable on-chain.
+            每一次允许与拦截，都可以获得链上永久可查证据。
           </div>
         </div>
       </div>
 
-      <!-- SLIDE 6: WHY AVALANCHE -->
+      <!-- SLIDE 6: WHY AVALANCHE (中文主语言) -->
       <div class="slide" id="slide-6" data-title="Why Avalanche">
-        <h1 class="slide-title">Why Avalanche?</h1>
-        <p class="slide-subtitle">Autonomous AI agent workflows require robust machine-to-machine financial infrastructure.</p>
+        <h1 class="slide-title">为什么选择 Avalanche？</h1>
+        <p class="slide-subtitle">自主 AI Agent 的机器工作流需要高可靠、高频、低成本的机器金融底座。</p>
 
         <div class="grid-3">
           <div class="card">
             <div>
-              <div style="font-size: 14px; font-weight: 700; color: var(--system-cyan); text-transform: uppercase; margin-bottom: 8px;">01</div>
-              <div style="font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 12px;">FAST FINALITY</div>
-              <div style="font-size: 18px; color: var(--text-muted); line-height: 1.5;">
-                Fast, final settlement. Autonomous machine loops cannot wait for slow financial workflows.
+              <div style="font-size: 14px; font-weight: 700; color: var(--system-cyan); text-transform: uppercase; margin-bottom: 8px;">01 · Fast Finality</div>
+              <div style="font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 12px;">快速确认</div>
+              <div style="font-size: 18px; color: var(--text-muted); line-height: 1.6;">
+                快速终局确认。Agent 是连续执行的机器工作流，完成微支付后需要立即继续下一步任务。
               </div>
             </div>
           </div>
 
           <div class="card">
             <div>
-              <div style="font-size: 14px; font-weight: 700; color: var(--system-cyan); text-transform: uppercase; margin-bottom: 8px;">02</div>
-              <div style="font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 12px;">LOW-COST TRANSACTIONS</div>
-              <div style="font-size: 18px; color: var(--text-muted); line-height: 1.5;">
-                Predictable micro-fees. Enables high-frequency purchasing of data, APIs, and inference.
+              <div style="font-size: 14px; font-weight: 700; color: var(--system-cyan); text-transform: uppercase; margin-bottom: 8px;">02 · Low-Cost Transactions</div>
+              <div style="font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 12px;">低成本交易</div>
+              <div style="font-size: 18px; color: var(--text-muted); line-height: 1.6;">
+                极低且可预测的微交易手续费。支撑 Agent 未来极高频地自主购买微型数据、API 与推理服务。
               </div>
             </div>
           </div>
 
           <div class="card">
             <div>
-              <div style="font-size: 14px; font-weight: 700; color: var(--system-cyan); text-transform: uppercase; margin-bottom: 8px;">03</div>
-              <div style="font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 12px;">VERIFIABLE EXECUTION</div>
-              <div style="font-size: 18px; color: var(--text-muted); line-height: 1.5;">
-                On-chain transparency. Humans, agents, and merchants can verify policy state and payment outcomes.
+              <div style="font-size: 14px; font-weight: 700; color: var(--system-cyan); text-transform: uppercase; margin-bottom: 8px;">03 · Verifiable Execution</div>
+              <div style="font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 12px;">链上可验证</div>
+              <div style="font-size: 18px; color: var(--text-muted); line-height: 1.6;">
+                全链路透明审计。人类、Agent 与商户都能随时独立验证 Policy 状态、支付结果与拦截记录。
               </div>
             </div>
           </div>
@@ -756,50 +756,50 @@
 
         <div class="card" style="margin-top: 36px; padding: 22px 36px; border-left: 4px solid var(--avax-red);">
           <div style="font-size: 22px; font-weight: 700; color: #fff;">
-            AvaFence depends on Avalanche for fast, verifiable machine settlement.
+            AvaFence 需要 Avalanche 提供快速、低成本、可验证的机器支付执行层。
           </div>
         </div>
       </div>
 
-      <!-- SLIDE 7: VISION / CLOSE -->
+      <!-- SLIDE 7: VISION / CLOSE (中文主语言) -->
       <div class="slide" id="slide-7" data-title="Vision">
-        <h1 class="slide-title">AI agents will have wallets.</h1>
-        <p class="slide-subtitle" style="color: var(--text-white); font-weight: 700; font-size: 36px; margin-bottom: 36px;">
-          They will also need boundaries.
+        <h1 class="slide-title">AI Agent 未来都会拥有钱包</h1>
+        <p class="slide-subtitle" style="color: var(--text-white); font-weight: 700; font-size: 34px; margin-bottom: 34px;">
+          但它们同样需要资金边界。
         </p>
 
-        <div class="flow-chain" style="margin: 24px 0;">
+        <div class="flow-chain" style="margin: 22px 0;">
           <div class="flow-node">
-            <div style="font-size: 14px; font-weight: 700; color: var(--avax-red);">TODAY</div>
+            <div style="font-size: 14px; font-weight: 700; color: var(--avax-red);">今天 (TODAY)</div>
             <div class="flow-node-title">Research Agent</div>
-            <div class="flow-node-desc">Avalanche Fuji + 1 Data Merchant</div>
+            <div class="flow-node-desc">Avalanche Fuji + 付费数据采购</div>
           </div>
           <div class="flow-arrow">➔</div>
           <div class="flow-node">
-            <div style="font-size: 14px; font-weight: 700; color: var(--system-cyan);">NEXT</div>
-            <div class="flow-node-title">Specialized Agents</div>
-            <div class="flow-node-desc">Coding, Procurement & Enterprise Fleets</div>
+            <div style="font-size: 14px; font-weight: 700; color: var(--system-cyan);">下一步 (NEXT)</div>
+            <div class="flow-node-title">专用 Agent 集群</div>
+            <div class="flow-node-desc">Coding、采购与企业级 Agent 舰队</div>
           </div>
           <div class="flow-arrow">➔</div>
           <div class="flow-node">
-            <div style="font-size: 14px; font-weight: 700; color: var(--approved-green);">VISION</div>
-            <div class="flow-node-title">Permission Layer</div>
-            <div class="flow-node-desc">Standard for Agent Economy</div>
+            <div style="font-size: 14px; font-weight: 700; color: var(--approved-green);">愿景 (VISION)</div>
+            <div class="flow-node-title">权限标准层</div>
+            <div class="flow-node-desc">Agent 经济体的通用资金权限层</div>
           </div>
         </div>
 
-        <div style="text-align: center; margin: 36px 0;">
-          <div style="font-size: 48px; font-weight: 900; letter-spacing: -1px; color: #fff;">
-            Freedom for agents. <span class="highlight-red">Boundaries for money.</span>
+        <div style="text-align: center; margin: 34px 0;">
+          <div style="font-size: 46px; font-weight: 900; letter-spacing: -0.5px; color: #fff;">
+            给 Agent 自由，<span class="highlight-red">给资金边界。</span>
           </div>
-          <div style="font-size: 22px; color: var(--text-muted); margin-top: 10px;">
+          <div style="font-size: 22px; color: var(--text-muted); margin-top: 8px;">
             AvaFence · Financial Boundaries for Autonomous AI Agents
           </div>
         </div>
 
         <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-subtle); padding-top: 18px; font-size: 15px; color: var(--text-dim);">
-          <div>Avalanche Builder Day 2026 @ Shenzhen</div>
-          <div>Contract: <code id="cfg-contract-display" style="color: var(--system-cyan);"></code></div>
+          <div>Avalanche Builder Day 2026 · 深圳站</div>
+          <div>合约: <code id="cfg-contract-display" style="color: var(--system-cyan);"></code></div>
           <div>GitHub: <code id="cfg-github-display" style="color: #fff;"></code></div>
         </div>
       </div>
@@ -809,15 +809,15 @@
     <!-- Bottom Status Bar -->
     <footer>
       <div class="controls-hint">
-        <span>Slide <span id="current-slide-num" style="color: #fff; font-weight: 700;">1</span> of 7</span>
+        <span>第 <span id="current-slide-num" style="color: #fff; font-weight: 700;">1</span> 页 / 共 7 页</span>
         <span>·</span>
-        <span><span class="key-badge">Space</span> / <span class="key-badge">→</span> Next</span>
-        <span><span class="key-badge">←</span> Prev</span>
-        <span><span class="key-badge">F</span> Fullscreen</span>
-        <span><span class="key-badge">N</span> Speaker Notes</span>
+        <span><span class="key-badge">Space</span> / <span class="key-badge">→</span> 下一页</span>
+        <span><span class="key-badge">←</span> 上一页</span>
+        <span><span class="key-badge">F</span> 全屏</span>
+        <span><span class="key-badge">N</span> 演讲提词</span>
       </div>
       <div>
-        <span>AvaFence Hackathon Final Pitch</span>
+        <span>AvaFence · 黑客松最终演示</span>
       </div>
     </footer>
 
@@ -826,104 +826,58 @@
   <!-- Draggable / Floating Speaker Notes Overlay -->
   <div id="speaker-notes-overlay">
     <div class="notes-header">
-      <span>Speaker Teleprompter (Slide <span id="notes-slide-num">1</span>)</span>
-      <span style="font-size: 12px; color: var(--text-dim);">Press 'N' to close</span>
+      <span>演讲者提词板 (第 <span id="notes-slide-num">1</span> 页)</span>
+      <span style="font-size: 12px; color: var(--text-dim);">按 'N' 键关闭</span>
     </div>
-    <div class="notes-en" id="notes-en-text"></div>
     <div class="notes-zh" id="notes-zh-text"></div>
+    <div class="notes-en" id="notes-en-text"></div>
   </div>
 
   <script>
     // =========================================================================
-    // CONFIGURATION (Centralized URLs & Addresses - DO NOT DUPLICATE IN MARKUP)
+    // CONFIGURATION (统一配置项 - 页面其它地方禁止硬编码)
     // =========================================================================
     const CONFIG = {
       demoUrl: "http://localhost:5173",
       localDemoUrl: "http://localhost:5173",
-      backupDemoUrl: "", // Set recorded video/demo URL here when ready to enable backup button
+      backupDemoUrl: "", // 配置录屏视频/备用链接后自动激活备用按钮
       contractAddress: "0xB6379ce69E73cC6d20E5284D14386F4fBF8Ed770",
       githubUrl: "https://github.com/hamburgchan/avalanche-builder-test"
     };
 
     // =========================================================================
-    // SPEAKER TELEPROMPTER NOTES
+    // SPEAKER TELEPROMPTER NOTES (中文主讲稿 + 极简英文辅助)
     // CAUTION: Do not enable Speaker Notes on the projected screen during pitch!
-    // Use 'N' key only for private rehearsal or on an un-mirrored presenter display.
+    // 严禁在现场投影大屏幕（镜像模式）下按 'N' 键，仅供私下演练或副屏使用！
     // =========================================================================
     const SPEAKER_NOTES = [
       {
-        en: [
-          "AI agents can think and call APIs.",
-          "Now, what if an agent can spend money?",
-          "Would you give it your wallet?",
-          "If you approve every payment, it is not autonomous.",
-          "If you give it your keys, it is not safe.",
-          "There is a missing layer."
-        ],
-        zh: "开门见山提出问题。不要念太快，保持短句停顿，直视评委，给评委看左右两张卡片。"
+        zh: "开门见山：AI Agent 已经能思考、调工具。但如果它开始自己花钱，你敢把钱包交给它吗？每笔都让人审批，它就不自主；直接给私钥，又极其不安全。这中间缺少一层新的资金权限控制。",
+        en: "Would you give an AI agent your wallet? There is a missing layer."
       },
       {
-        en: [
-          "AI agents are starting to spend money.",
-          "To finish a task, our agent needs market data.",
-          "The data costs 0.002 AVAX.",
-          "Spending money is required to get the job done.",
-          "Who decides if the agent is allowed to pay?"
-        ],
-        zh: "讲真实故事。Agent 买数据才能干活，花钱不是玩具功能，引出三大风险。"
+        zh: "讲真实故事：Agent 在做分析任务时，需要购买 0.002 AVAX 的市场数据。花钱是完成任务的业务刚需。谁来决定 Agent 有没有资格支付这笔钱？",
+        en: "AI agents need to spend money. Who decides if the agent is allowed to pay?"
       },
       {
-        en: [
-          "The answer is not another wallet.",
-          "AvaFence is a Financial Permission Layer.",
-          "A wallet controls access to money.",
-          "AvaFence controls the conditions for spending it.",
-          "We give agents freedom inside hard boundaries."
-        ],
-        zh: "核心定义！字正腔圆念出“A wallet controls access to money. AvaFence controls the conditions for spending it.”"
+        zh: "核心定位：缺的不是另一个钱包，而是资金权限层！钱包控制谁可以动钱，AvaFence 控制在什么条件下可以被花出去。给 Agent 自由，但把资金限制在明确边界内。",
+        en: "A wallet controls access to money. AvaFence controls the conditions for spending it."
       },
       {
-        en: [
-          "People say: just give the agent a small wallet.",
-          "That is not enough.",
-          "A small wallet limits how much you lose.",
-          "It does not control where money goes.",
-          "Small payment does not mean safe payment.",
-          "The model can be tricked. The rules still hold."
-        ],
-        zh: "反击常见认知。指出小额钱包管不住去向。强调金句：“The model can be tricked. The rules still hold.”"
+        zh: "反击质疑：有人说给 Agent 一个小钱包就够了。但小额钱包只能限制最多亏多少，管不住钱付给谁。小额支付不等于安全支付。模型可能被骗，规则仍然有效！",
+        en: "Small payment does not mean safe payment. The model can be tricked. The rules still hold."
       },
       {
-        en: [
-          "We support three cases.",
-          "I will show you the normal flow and the attack case.",
-          "(Switch to Live Demo: Normal Purchase -> Injection Attack)",
-          "In the attack case, the recipient is not allowed.",
-          "The transaction was accepted by Avalanche.",
-          "The payment was blocked by AvaFence.",
-          "0 AVAX was transferred to the attacker."
-        ],
-        zh: "切到 Web App。跑 Normal 证明能工作，跑 Injection 证明安全价值。特别强调：0 AVAX was transferred to the attacker."
+        zh: "切到 Live Demo：支持 3 种情况，现场演示正常采购与注入攻击。在注入攻击中，交易被雪崩接受，但资金转移被 AvaFence 链上拦截，0 AVAX 损失！",
+        en: "Transaction accepted on Fuji. Unauthorized value transfer blocked by AvaFence. 0 AVAX transferred to attacker."
       },
       {
-        en: [
-          "Why Avalanche?",
-          "Autonomous agents cannot wait for slow chains.",
-          "Avalanche gives machine workflows fast and final settlement.",
-          "Fees are low for micro-payments.",
-          "Anyone can verify the rules and payments on-chain."
-        ],
-        zh: "讲透雪崩价值。聚焦机器经济的三大刚需：快、便宜、可验证。"
+        zh: "讲透雪崩：机器支付需要快速确认、极低成本与完全链上可验证。Agent 工作流不能等慢交易，AvaFence 依赖雪崩构建机器支付执行层。",
+        en: "Why Avalanche? Fast finality, low-cost machine transactions, and verifiable execution."
       },
       {
-        en: [
-          "In the future, AI agents will have wallets.",
-          "They will also need boundaries.",
-          "AvaFence is the financial permission layer for the agent economy.",
-          "Freedom for agents. Boundaries for money.",
-          "Thank you!"
-        ],
-        zh: "自信收尾。感谢评委，定格在带有合约地址与开源仓库的主视觉页。"
+        zh: "升华收尾：未来所有 Agent 都会有钱包，但它们同样需要资金边界。AvaFence 是 Agent 经济体的资金权限层。给 Agent 自由，给资金边界！谢谢评委！",
+        en: "AI agents will have wallets. They will also need boundaries. Freedom for agents. Boundaries for money. Thank you!"
       }
     ];
 
@@ -962,14 +916,14 @@
         if (CONFIG.backupDemoUrl && CONFIG.backupDemoUrl.trim() !== "") {
           backupBtn.style.cursor = "pointer";
           backupBtn.style.opacity = "1";
-          backupBtn.title = "Play recorded backup demo";
+          backupBtn.title = "播放备用演示录屏";
           backupBtn.onclick = () => window.open(CONFIG.backupDemoUrl, "_blank");
         } else {
           backupBtn.style.cursor = "not-allowed";
           backupBtn.style.opacity = "0.5";
-          backupBtn.title = "Backup video not configured";
+          backupBtn.title = "尚未配置备用演示链接";
           backupBtn.onclick = () => {
-            alert("Backup demo video URL is not configured yet in presentation.html (CONFIG.backupDemoUrl).");
+            alert("尚未在 presentation.html 的 CONFIG.backupDemoUrl 中配置备用视频链接。");
           };
         }
       }
@@ -1006,11 +960,11 @@
       const notesData = SPEAKER_NOTES[currentSlide - 1];
       document.getElementById("notes-slide-num").innerText = currentSlide;
       
-      const enContainer = document.getElementById("notes-en-text");
-      enContainer.innerHTML = notesData.en.map((line) => `<div>${line}</div>`).join("");
-      
       const zhContainer = document.getElementById("notes-zh-text");
       zhContainer.innerText = notesData.zh;
+
+      const enContainer = document.getElementById("notes-en-text");
+      enContainer.innerText = notesData.en;
     }
 
     function toggleSpeakerNotes() {
