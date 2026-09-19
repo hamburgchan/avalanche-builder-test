@@ -109,50 +109,58 @@ export const BlockReason = {
 export type BlockReason = (typeof BlockReason)[keyof typeof BlockReason]
 
 
-export const BLOCK_REASON_TEXT: Record<BlockReason, { label: string; description: string }> = {
+export const BLOCK_REASON_TEXT: Record<BlockReason, { label: string; labelZh: string; description: string }> = {
   [BlockReason.NONE]: {
     label: 'APPROVED',
-    description: 'All 7 policy checks passed on-chain.'
+    labelZh: '放行通过',
+    description: '链上 7 项安全策略检查全部通过。'
   },
   [BlockReason.POLICY_INACTIVE]: {
     label: 'POLICY_INACTIVE',
-    description: 'The spending policy has been revoked or not activated by the owner.'
+    labelZh: '策略未激活',
+    description: '支出策略已被人类 Owner 撤销或尚未激活。'
   },
   [BlockReason.POLICY_EXPIRED]: {
     label: 'POLICY_EXPIRED',
-    description: 'The transaction timestamp exceeds the policy expiry threshold.'
+    labelZh: '策略已过期',
+    description: '交易时间戳已超过策略有效时长上限。'
   },
   [BlockReason.REQUEST_ALREADY_EXECUTED]: {
     label: 'REQUEST_ALREADY_EXECUTED',
-    description: 'Replay protection: This Spend Intent requestId has already been fulfilled.'
+    labelZh: '防重放拦截',
+    description: '防重放保护：该 RequestId 意图已被执行过。'
   },
   [BlockReason.MERCHANT_NOT_ALLOWED]: {
     label: 'MERCHANT_NOT_ALLOWED',
-    description: 'The recipient address is not authorized in human owner allowlist.'
+    labelZh: '非白名单商户',
+    description: '收款地址未在人类 Owner 授权的商户白名单中。'
   },
   [BlockReason.PER_TX_LIMIT_EXCEEDED]: {
     label: 'PER_TX_LIMIT_EXCEEDED',
-    description: 'Attempted amount exceeds the single-transaction hard ceiling.'
+    labelZh: '单笔金额超限',
+    description: '请求支付金额超过了智能合约单笔硬顶限额。'
   },
   [BlockReason.DAILY_LIMIT_EXCEEDED]: {
     label: 'DAILY_LIMIT_EXCEEDED',
-    description: 'Cumulative spending for today exceeds daily budget limit.'
+    labelZh: '单日限额超限',
+    description: '今日累计支出金额超过了单日预算上限。'
   },
   [BlockReason.INSUFFICIENT_BUDGET]: {
     label: 'INSUFFICIENT_BUDGET',
-    description: 'Attempted amount exceeds total remaining policy budget.'
+    labelZh: '剩余预算不足',
+    description: '请求支付金额超过了策略池剩余可用总预算。'
   }
 }
 
 // Bitmask helpers (0b1111111 = 127)
 export const TRACE_BITS = [
-  { bit: 0, key: 'POLICY_ACTIVE', label: '1. Policy Active' },
-  { bit: 1, key: 'NOT_EXPIRED', label: '2. Not Expired' },
-  { bit: 2, key: 'REQUEST_FRESH', label: '3. Request Fresh (Nonce Unused)' },
-  { bit: 3, key: 'MERCHANT_ALLOWED', label: '4. Merchant in Allowlist' },
-  { bit: 4, key: 'PER_TX_LIMIT_OK', label: '5. Max / Tx Check' },
-  { bit: 5, key: 'DAILY_LIMIT_OK', label: '6. Daily Limit Check' },
-  { bit: 6, key: 'BUDGET_AVAILABLE', label: '7. Budget Available' }
+  { bit: 0, key: 'POLICY_ACTIVE', label: '1. 策略激活状态 (Policy Active)' },
+  { bit: 1, key: 'NOT_EXPIRED', label: '2. 有效期检查 (Not Expired)' },
+  { bit: 2, key: 'REQUEST_FRESH', label: '3. 防重放 Nonce (Request Fresh)' },
+  { bit: 3, key: 'MERCHANT_ALLOWED', label: '4. 商户白名单 (Merchant Allowlist)' },
+  { bit: 4, key: 'PER_TX_LIMIT_OK', label: '5. 单笔限额检查 (Max / Tx Check)' },
+  { bit: 5, key: 'DAILY_LIMIT_OK', label: '6. 单日限额检查 (Daily Limit Check)' },
+  { bit: 6, key: 'BUDGET_AVAILABLE', label: '7. 剩余预算检查 (Budget Available)' }
 ]
 
 export function parseChecksPassed(bitmask: number): Record<string, boolean> {
