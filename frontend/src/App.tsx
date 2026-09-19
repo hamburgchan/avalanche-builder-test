@@ -242,16 +242,37 @@ export function App() {
     try {
       await assertFujiNetwork(provider)
       const signer = await provider.getSigner()
-      const factory = new ethers.ContractFactory(AVAX_GUARD_ABI, AVAX_GUARD_BYTECODE, signer)
-      const deployedContract = await factory.deploy()
-      const deployTx = deployedContract.deploymentTransaction()
-      if (!deployTx) throw new Error('Deployment transaction could not be created.')
+      const fujiRpc = new ethers.JsonRpcProvider(FUJI_CHAIN_CONFIG.rpcUrls[0], 43113, { staticNetwork: true })
 
-      const deployReceipt = await deployTx.wait()
-      const newAddr = await deployedContract.getAddress()
+      // Pre-fetch gas price and nonce directly to avoid MetaMask extension RPC rate-limits (-32002)
+      const [feeData, curNonce] = await Promise.all([
+        fujiRpc.getFeeData().catch(() => ({ gasPrice: 25000000000n })),
+        fujiRpc.getTransactionCount(account).catch(() => undefined)
+      ])
+
+      const gasPrice = feeData.gasPrice || 25000000000n
+      const deployTx = await signer.sendTransaction({
+        data: AVAX_GUARD_BYTECODE,
+        gasLimit: 2500000n,
+        gasPrice: (gasPrice * 120n) / 100n,
+        nonce: curNonce
+      })
+
+      console.log('Deployment tx submitted:', deployTx.hash)
+
+      // Wait for receipt using direct Fuji RPC to bypass MetaMask polling
+      let deployReceipt = await fujiRpc.waitForTransaction(deployTx.hash, 1, 45000)
+      if (!deployReceipt) {
+        deployReceipt = await fujiRpc.getTransactionReceipt(deployTx.hash)
+      }
+      if (!deployReceipt || deployReceipt.status !== 1) {
+        throw new Error('Deployment transaction failed or reverted on Fuji.')
+      }
+
+      const newAddr = deployReceipt.contractAddress || ethers.getCreateAddress({ from: account, nonce: deployTx.nonce })
 
       // Verify eth_getCode != 0x
-      const code = await provider.getCode(newAddr)
+      const code = await fujiRpc.getCode(newAddr)
       if (code === '0x' || code.length <= 2) {
         throw new Error('Bytecode verification failed: eth_getCode returned 0x.')
       }
@@ -274,13 +295,13 @@ Chain ID:
 43113
 
 Block:
-${deployReceipt?.blockNumber}
+${deployReceipt.blockNumber}
 
 Deployer:
 ${account}
 
 Gas Used:
-${deployReceipt?.gasUsed.toString()}
+${deployReceipt.gasUsed.toString()}
 
 Snowtrace:
 https://testnet.snowtrace.io/address/${newAddr}
@@ -333,11 +354,15 @@ VERIFIED (${code.length} bytes)
     try {
       await assertFujiNetwork(provider)
       const signer = await provider.getSigner()
+      const fujiRpc = new ethers.JsonRpcProvider(FUJI_CHAIN_CONFIG.rpcUrls[0], 43113, { staticNetwork: true })
+      const feeData = await fujiRpc.getFeeData().catch(() => ({ gasPrice: 25000000000n }))
       const tx = await signer.sendTransaction({
         to: agentWallet.address,
-        value: ethers.parseEther('0.005')
+        value: ethers.parseEther('0.005'),
+        gasLimit: 30000n,
+        gasPrice: feeData.gasPrice || 25000000000n
       })
-      await tx.wait()
+      await fujiRpc.waitForTransaction(tx.hash, 1, 30000)
       await refreshBalances()
       alert(`Successfully funded 0.005 AVAX gas to Agent Scoped Wallet: ${agentWallet.address}`)
     } catch (err: any) {
@@ -372,6 +397,8 @@ VERIFIED (${code.length} bytes)
     try {
       await assertFujiNetwork(provider)
       const signer = await provider.getSigner()
+      const fujiRpc = new ethers.JsonRpcProvider(FUJI_CHAIN_CONFIG.rpcUrls[0], 43113, { staticNetwork: true })
+      const feeData = await fujiRpc.getFeeData().catch(() => ({ gasPrice: 25000000000n }))
       const budgetWei = ethers.parseEther(budget)
       const maxTxWei = ethers.parseEther(maxTx)
       const dailyWei = ethers.parseEther(daily)
@@ -383,9 +410,13 @@ VERIFIED (${code.length} bytes)
         maxTxWei,
         dailyWei,
         durationSec,
-        { value: budgetWei }
+        {
+          value: budgetWei,
+          gasLimit: 450000n,
+          gasPrice: feeData.gasPrice || 25000000000n
+        }
       )
-      await tx.wait()
+      await fujiRpc.waitForTransaction(tx.hash, 1, 30000)
 
       await loadPolicy()
       await refreshBalances()
@@ -404,9 +435,14 @@ VERIFIED (${code.length} bytes)
     try {
       await assertFujiNetwork(provider)
       const signer = await provider.getSigner()
+      const fujiRpc = new ethers.JsonRpcProvider(FUJI_CHAIN_CONFIG.rpcUrls[0], 43113, { staticNetwork: true })
+      const feeData = await fujiRpc.getFeeData().catch(() => ({ gasPrice: 25000000000n }))
       const contract = new ethers.Contract(contractAddress, AVAX_GUARD_ABI, signer)
-      const tx = await contract.revokePolicy(agentWallet.address)
-      await tx.wait()
+      const tx = await contract.revokePolicy(agentWallet.address, {
+        gasLimit: 300000n,
+        gasPrice: feeData.gasPrice || 25000000000n
+      })
+      await fujiRpc.waitForTransaction(tx.hash, 1, 30000)
 
       await loadPolicy()
       await refreshBalances()
