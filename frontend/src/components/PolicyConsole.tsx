@@ -1,5 +1,17 @@
 import React, { useState } from 'react'
-import { Shield, Clock, DollarSign, Ban, CheckCircle, AlertCircle, PlusCircle } from 'lucide-react'
+import {
+  Shield,
+  Clock,
+  DollarSign,
+  Ban,
+  CheckCircle,
+  AlertCircle,
+  PlusCircle,
+  Zap,
+  ExternalLink,
+  RefreshCw,
+  Fuel
+} from 'lucide-react'
 import { DEMO_ADDRESSES } from '../config/avalanche'
 
 export interface PolicyState {
@@ -17,8 +29,17 @@ export interface PolicyState {
 interface PolicyConsoleProps {
   policy: PolicyState | null
   account: string | null
+  contractAddress: string
+  isContractDeployed: boolean
+  isDeployingContract: boolean
+  agentAddress: string
+  agentBalance: string
+  isFundingAgent: boolean
   isCreating: boolean
   isRevoking: boolean
+  onDeployContract: () => Promise<void>
+  onFundAgent: () => Promise<void>
+  onResetAgent: () => void
   onCreatePolicy: (budget: string, maxTx: string, daily: string, durationSec: number) => Promise<void>
   onRevokePolicy: () => Promise<void>
 }
@@ -26,8 +47,17 @@ interface PolicyConsoleProps {
 export const PolicyConsole: React.FC<PolicyConsoleProps> = ({
   policy,
   account,
+  contractAddress,
+  isContractDeployed,
+  isDeployingContract,
+  agentAddress,
+  agentBalance,
+  isFundingAgent,
   isCreating,
   isRevoking,
+  onDeployContract,
+  onFundAgent,
+  onResetAgent,
   onCreatePolicy,
   onRevokePolicy
 }) => {
@@ -38,9 +68,11 @@ export const PolicyConsole: React.FC<PolicyConsoleProps> = ({
 
   const isExpired = policy ? Date.now() / 1000 > policy.expiry : false
   const timeLeftMinutes = policy ? Math.max(0, Math.floor((policy.expiry - Date.now() / 1000) / 60)) : 0
+  const agentGasLow = parseFloat(agentBalance || '0') < 0.002
 
   return (
     <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col space-y-4">
+      {/* Header */}
       <div className="flex items-center justify-between pb-2 border-b border-slate-800">
         <div className="flex items-center space-x-2">
           <Shield className="w-5 h-5 text-red-500" />
@@ -58,6 +90,46 @@ export const PolicyConsole: React.FC<PolicyConsoleProps> = ({
           </span>
         )}
       </div>
+
+      {/* Contract Deployment Banner */}
+      {!isContractDeployed ? (
+        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs font-mono space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="font-bold text-amber-400 flex items-center space-x-1">
+              <Zap className="w-3.5 h-3.5" />
+              <span>AvaxGuard Contract Not Deployed</span>
+            </span>
+            <span className="text-[10px] text-amber-300">Fuji C-Chain</span>
+          </div>
+          <p className="text-[11px] text-slate-300">
+            Deploy the AvaxGuard policy engine directly to Fuji using your connected MetaMask wallet.
+          </p>
+          <button
+            onClick={onDeployContract}
+            disabled={!account || isDeployingContract}
+            className="w-full py-2 px-3 rounded-lg font-bold text-xs text-white bg-amber-600 hover:bg-amber-500 disabled:opacity-50 transition flex items-center justify-center space-x-1.5 cursor-pointer"
+          >
+            <Zap className="w-3.5 h-3.5" />
+            <span>{isDeployingContract ? 'Deploying to Fuji...' : 'Deploy AvaxGuard Contract (via MetaMask)'}</span>
+          </button>
+        </div>
+      ) : (
+        <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-xs font-mono flex items-center justify-between">
+          <div>
+            <div className="text-[10px] text-slate-400 uppercase">Live Contract (Fuji):</div>
+            <div className="text-emerald-400 font-bold truncate max-w-[210px]">{contractAddress}</div>
+          </div>
+          <a
+            href={`https://testnet.snowtrace.io/address/${contractAddress}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center space-x-1 text-[10px] text-slate-400 hover:text-white px-2 py-1 bg-slate-800 rounded"
+          >
+            <span>Explorer</span>
+            <ExternalLink className="w-3 h-3" />
+          </a>
+        </div>
+      )}
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-2 gap-3 text-xs font-mono">
@@ -104,17 +176,47 @@ export const PolicyConsole: React.FC<PolicyConsoleProps> = ({
 
       {/* Target Agent & Merchant Details */}
       <div className="space-y-2 text-xs font-mono">
-        <div className="p-2.5 rounded-xl bg-slate-950/40 border border-slate-800/80">
-          <div className="text-slate-400 text-[10px] uppercase">Bound Agent Scoped Wallet:</div>
-          <div className="text-slate-200 text-[11px] truncate mt-0.5">
-            {policy ? policy.agent : DEMO_ADDRESSES.AGENT}
+        {/* Scoped Agent Card */}
+        <div className="p-2.5 rounded-xl bg-slate-950/40 border border-slate-800/80 space-y-1.5">
+          <div className="flex items-center justify-between">
+            <div className="text-slate-400 text-[10px] uppercase">Bound Agent Scoped Wallet:</div>
+            <div className="flex items-center space-x-1.5">
+              <span className={`text-[10px] font-bold ${agentGasLow ? 'text-amber-400' : 'text-emerald-400'}`}>
+                Gas: {parseFloat(agentBalance).toFixed(4)} AVAX
+              </span>
+              {!policy?.active && (
+                <button
+                  onClick={onResetAgent}
+                  title="Generate new Agent Wallet key (for new policy lifecycle)"
+                  className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                </button>
+              )}
+            </div>
           </div>
+          <div className="text-slate-200 text-[11px] truncate font-mono">
+            {policy ? policy.agent : agentAddress}
+          </div>
+
+          {/* Fund Agent Gas button if low */}
+          {agentGasLow && (
+            <button
+              onClick={onFundAgent}
+              disabled={!account || isFundingAgent}
+              className="w-full mt-1 py-1.5 px-2 rounded-lg bg-amber-500/20 border border-amber-500/30 hover:bg-amber-500/30 text-amber-300 text-[11px] font-bold flex items-center justify-center space-x-1 transition cursor-pointer disabled:opacity-50"
+            >
+              <Fuel className="w-3 h-3 text-amber-400" />
+              <span>{isFundingAgent ? 'Sending Gas...' : 'Fund Agent Gas (0.005 AVAX via MetaMask)'}</span>
+            </button>
+          )}
         </div>
 
+        {/* Merchant Allowlist Card */}
         <div className="p-2.5 rounded-xl bg-slate-950/40 border border-slate-800/80">
           <div className="text-slate-400 text-[10px] uppercase">Allowed Merchant Allowlist:</div>
           <div className="text-slate-200 text-[11px] truncate mt-0.5 flex items-center justify-between">
-            <span>PremiumData API (0x12ab...1234)</span>
+            <span>PremiumData API ({DEMO_ADDRESSES.MERCHANT.slice(0, 6)}...{DEMO_ADDRESSES.MERCHANT.slice(-4)})</span>
             <span className="text-[10px] text-emerald-400 font-semibold">[Whitelisted]</span>
           </div>
         </div>
@@ -125,7 +227,7 @@ export const PolicyConsole: React.FC<PolicyConsoleProps> = ({
         {!policy || !policy.active || isExpired ? (
           <button
             onClick={() => setShowCreateModal(true)}
-            disabled={!account || isCreating}
+            disabled={!account || !isContractDeployed || isCreating}
             className="w-full py-2.5 px-3 rounded-xl font-semibold text-xs text-white bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 transition shadow-lg shadow-red-600/20 disabled:opacity-50 flex items-center justify-center space-x-1.5 cursor-pointer"
           >
             <PlusCircle className="w-4 h-4" />
@@ -183,13 +285,13 @@ export const PolicyConsole: React.FC<PolicyConsoleProps> = ({
                 setShowCreateModal(false)
               }}
               disabled={isCreating}
-              className="flex-1 py-1.5 rounded bg-red-600 hover:bg-red-500 text-white font-bold text-xs"
+              className="flex-1 py-1.5 rounded bg-red-600 hover:bg-red-500 text-white font-bold text-xs cursor-pointer disabled:opacity-50"
             >
               Confirm & Lock on Avalanche
             </button>
             <button
               onClick={() => setShowCreateModal(false)}
-              className="px-3 py-1.5 rounded bg-slate-800 text-slate-300 text-xs"
+              className="px-3 py-1.5 rounded bg-slate-800 text-slate-300 text-xs cursor-pointer"
             >
               Cancel
             </button>
