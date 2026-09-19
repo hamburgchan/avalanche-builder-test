@@ -59,8 +59,8 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      padding: 56px 80px;
+      justify-content: flex-start;
+      padding: 48px 80px;
     }
 
     /* Top Navigation Header */
@@ -124,7 +124,7 @@
       position: relative;
       flex: 1;
       width: 100%;
-      margin: 20px 0;
+      margin: 0;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -346,38 +346,6 @@
       transition: opacity 150ms ease, border-color 150ms ease;
     }
 
-    /* Bottom Status Bar */
-    footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
-      height: 48px;
-      border-top: 1px solid var(--border-subtle);
-      padding-top: 16px;
-      font-size: 15px;
-      color: var(--text-dim);
-      z-index: 10;
-    }
-
-    .controls-hint {
-      display: flex;
-      align-items: center;
-      gap: 18px;
-    }
-
-    .key-badge {
-      display: inline-block;
-      background: #1e293b;
-      color: #94a3b8;
-      border: 1px solid #334155;
-      border-radius: 4px;
-      padding: 2px 7px;
-      font-size: 12px;
-      font-family: monospace;
-      font-weight: 600;
-    }
-
     /* Speaker Notes Overlay */
     #speaker-notes-overlay {
       position: fixed;
@@ -452,7 +420,7 @@
         <span class="live-dot"></span>
         <span>Avalanche Fuji C-Chain · Live Demo</span>
         <span>·</span>
-        <span>Team1 Builder Day 深圳站</span>
+        <span>Avalanche Builder Day 2026 · 深圳</span>
       </div>
     </header>
 
@@ -624,7 +592,7 @@
             </div>
             <div class="card-body" style="font-family: monospace; font-size: 18px; margin: 16px 0;">
               <div>请求金额: 0.001 AVAX <span style="color: var(--approved-green);">[✓ 金额合法]</span></div>
-              <div>收款方:   未知黑客地址 <span style="color: var(--blocked-red);">[✕ 不在白名单]</span></div>
+              <div>收款方:   未授权收款地址 <span style="color: var(--blocked-red);">[✕ 不在白名单]</span></div>
               <div style="color: var(--system-cyan); margin-top: 8px;">执行机制: 智能合约策略强制执行</div>
             </div>
             <div style="border-top: 1px solid var(--border-subtle); padding-top: 18px;">
@@ -690,16 +658,21 @@
           <!-- Scenario 3 -->
           <div class="card" style="border-top: 4px solid var(--blocked-red);">
             <div>
-              <div style="font-size: 14px; font-weight: 700; color: var(--blocked-red); text-transform: uppercase;">03 · 真实执行</div>
+              <div style="font-size: 14px; font-weight: 700; color: var(--blocked-red); text-transform: uppercase;">03 · 链上安全验证</div>
               <div style="font-size: 24px; font-weight: 800; color: #fff; margin: 10px 0;">提示词注入攻击</div>
               <div style="font-size: 16px; color: var(--text-muted); line-height: 1.6;">
                 <div>金额: 0.001 AVAX</div>
-                <div>收款方: 0xAttacker</div>
-                <div style="color: var(--blocked-red); font-weight: 600; margin-top: 8px;">✕ 未知恶意收款地址</div>
+                <div>收款方: 0xAttacker (未授权收款地址)</div>
+                <div style="color: var(--blocked-red); font-weight: 600; margin-top: 8px;">✕ 未授权收款地址</div>
               </div>
             </div>
-            <div style="margin-top: 24px; font-size: 20px; font-weight: 800; color: var(--blocked-red);">
-              预期结果: BLOCKED (拦截) 🛡️
+            <div style="margin-top: 20px;">
+              <div style="font-size: 20px; font-weight: 800; color: var(--blocked-red);">
+                预期结果: BLOCKED (拦截) 🛡️
+              </div>
+              <div style="font-size: 13px; color: var(--text-dim); margin-top: 6px;">
+                模拟恶意输入 · 真实 Fuji 链上策略执行
+              </div>
             </div>
           </div>
         </div>
@@ -799,28 +772,13 @@
         </div>
 
         <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-subtle); padding-top: 18px; font-size: 15px; color: var(--text-dim);">
-          <div>Avalanche Builder Day 2026 · 深圳站</div>
+          <div>Avalanche Builder Day 2026 · 深圳</div>
           <div>合约: <code id="cfg-contract-display" style="color: var(--system-cyan);"></code></div>
           <div>GitHub: <code id="cfg-github-display" style="color: #fff;"></code></div>
         </div>
       </div>
 
     </div>
-
-    <!-- Bottom Status Bar -->
-    <footer>
-      <div class="controls-hint">
-        <span>第 <span id="current-slide-num" style="color: #fff; font-weight: 700;">1</span> 页 / 共 7 页</span>
-        <span>·</span>
-        <span><span class="key-badge">Space</span> / <span class="key-badge">→</span> 下一页</span>
-        <span><span class="key-badge">←</span> 上一页</span>
-        <span><span class="key-badge">F</span> 全屏</span>
-        <span><span class="key-badge">N</span> 演讲提词</span>
-      </div>
-      <div>
-        <span>AvaFence · 黑客松最终演示</span>
-      </div>
-    </footer>
 
   </div>
 
@@ -937,7 +895,8 @@
       if (target) {
         target.classList.add("active");
         currentSlide = slideNum;
-        document.getElementById("current-slide-num").innerText = currentSlide;
+        const slideNumEl = document.getElementById("current-slide-num");
+        if (slideNumEl) slideNumEl.innerText = currentSlide;
         updateSpeakerNotes();
       }
     }
