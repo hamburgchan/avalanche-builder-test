@@ -68,13 +68,28 @@ export const DEMO_ADDRESSES = {
 
 /**
  * Strict Fuji Chain Guard: enforces chainId == 43113 before any on-chain operation
+ * Uses in-memory eth_chainId to bypass MetaMask remote RPC blockNumber errors (-32002)
  */
-export async function assertFujiNetwork(provider: ethers.Provider): Promise<void> {
-  const network = await provider.getNetwork()
-  if (Number(network.chainId) !== 43113) {
-    const switched = await switchToFuji()
-    if (!switched) {
-      throw new Error(`Wrong network: Chain ID ${network.chainId}. Please switch to Avalanche Fuji Testnet (Chain ID 43113 / 0xa869).`)
+export async function assertFujiNetwork(provider?: ethers.Provider): Promise<void> {
+  if (typeof window !== 'undefined' && (window as any).ethereum) {
+    try {
+      const hexChainId = await (window as any).ethereum.request({ method: 'eth_chainId' })
+      const currentId = parseInt(hexChainId, 16)
+      if (currentId !== 43113) {
+        const switched = await switchToFuji()
+        if (!switched) {
+          throw new Error(`Wrong network: Chain ID ${currentId}. Please switch to Avalanche Fuji Testnet (Chain ID 43113 / 0xa869).`)
+        }
+      }
+      return
+    } catch (e: any) {
+      if (e.message?.includes('Wrong network')) throw e
+    }
+  }
+  if (provider) {
+    const network = await provider.getNetwork()
+    if (Number(network.chainId) !== 43113) {
+      throw new Error(`Wrong network: Chain ID ${network.chainId}. Please switch to Avalanche Fuji Testnet (Chain ID 43113).`)
     }
   }
 }

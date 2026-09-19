@@ -44,6 +44,7 @@ export function App() {
   const [contractAddress, setContractAddr] = useState<string>(getAvaxGuardAddress())
   const [isContractDeployed, setIsContractDeployed] = useState<boolean>(false)
   const [isDeployingContract, setIsDeployingContract] = useState<boolean>(false)
+  const [deployError, setDeployError] = useState<string | null>(null)
 
   // Agent Scoped Wallet state
   const [agentWallet, setAgentWallet] = useState<ethers.Wallet>(() => getOrCreateAgentWallet())
@@ -239,6 +240,7 @@ export function App() {
     }
 
     setIsDeployingContract(true)
+    setDeployError(null)
     try {
       await assertFujiNetwork(provider)
       const signer = await provider.getSigner()
@@ -316,7 +318,9 @@ VERIFIED (${code.length} bytes)
       await refreshBalances()
     } catch (err: any) {
       console.error('Contract deployment failed:', err)
-      alert(`Deployment failed: ${err.message || err}`)
+      const msg = err.message || String(err)
+      setDeployError(msg)
+      alert(`Deployment failed: ${msg}`)
     } finally {
       setIsDeployingContract(false)
     }
@@ -758,6 +762,7 @@ VERIFIED (${code.length} bytes)
               contractAddress={contractAddress}
               isContractDeployed={isContractDeployed}
               isDeployingContract={isDeployingContract}
+              deployError={deployError}
               agentAddress={agentWallet.address}
               agentBalance={agentBalance}
               isFundingAgent={isFundingAgent}

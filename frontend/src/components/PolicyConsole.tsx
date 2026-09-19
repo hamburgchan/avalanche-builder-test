@@ -32,6 +32,7 @@ interface PolicyConsoleProps {
   contractAddress: string
   isContractDeployed: boolean
   isDeployingContract: boolean
+  deployError?: string | null
   agentAddress: string
   agentBalance: string
   isFundingAgent: boolean
@@ -51,6 +52,7 @@ export const PolicyConsole: React.FC<PolicyConsoleProps> = ({
   contractAddress,
   isContractDeployed,
   isDeployingContract,
+  deployError,
   agentAddress,
   agentBalance,
   isFundingAgent,
@@ -145,6 +147,16 @@ export const PolicyConsole: React.FC<PolicyConsoleProps> = ({
               </div>
             )}
           </div>
+
+          {deployError && (
+            <div className="p-2.5 rounded-lg bg-red-950/80 border border-red-500/40 text-red-300 text-[11px] font-mono break-all mt-1.5">
+              <div className="font-bold flex items-center space-x-1 text-red-400">
+                <AlertCircle className="w-3.5 h-3.5" />
+                <span>Deployment Error Detail:</span>
+              </div>
+              <div className="mt-1 text-[10px] text-red-200">{deployError}</div>
+            </div>
+          )}
         </div>
       ) : (
         <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-xs font-mono flex items-center justify-between">
