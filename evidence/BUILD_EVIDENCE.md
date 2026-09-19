@@ -88,7 +88,10 @@
 
 ## 6. Continuous Integration (GitHub Actions)
 
-- **Workflow File**: `.github/workflows/deploy.yml`
-- **Foundry Step**: `forge test --match-contract AvaxGuardTest -vv`
-- **Frontend Step**: `bun run build`
-- **Run URL**: `TBD`
+- **Workflow File**: `.github/workflows/ci.yml`
+- **Trigger**: Push to `builder-day-live`
+- **Foundry Step**: `forge test --match-contract AvaxGuardTest -vv` (14/14 PASS)
+- **Frontend Step**: `bun run build` (PASS, 0 errors)
+- **Run ID**: `35419321029`
+- **Run URL**: [https://github.com/hamburgchan/avalanche-builder-test/actions/runs/35419321029](https://github.com/hamburgchan/avalanche-builder-test/actions/runs/35419321029)
+- **Status**: `PASS (Completed in 20s)`
