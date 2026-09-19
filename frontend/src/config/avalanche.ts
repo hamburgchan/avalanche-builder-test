@@ -59,7 +59,7 @@ export const AVAX_GUARD_BYTECODE: string =
 // Deterministic EIP-55 Checksummed EVM Addresses for Demo (Validated Fail-Closed at Module Load)
 export const DEMO_ADDRESSES = {
   // Scoped Agent Wallet Fallback
-  AGENT: validateAddressOrThrow('0x888888cf1046e68E36e1aa2E0E07105EDDd1f08F', 'AGENT'),
+  AGENT: validateAddressOrThrow('0x82fF1466015f208dB33e4E198e529b03f6fa1A51', 'AGENT'),
   // Real Dedicated Merchant Wallet on Fuji (Trackable before/after balance)
   MERCHANT: validateAddressOrThrow('0x0D54D5f550e357D5314bf90f178101402BFd3348', 'MERCHANT'),
   // Dedicated Simulated Attacker Address on Fuji (0.0 balance, not in allowlist)

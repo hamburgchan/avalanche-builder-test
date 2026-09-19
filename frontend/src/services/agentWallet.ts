@@ -2,6 +2,9 @@ import { ethers } from 'ethers'
 
 const AGENT_PKEY_STORAGE_KEY = 'avaxguard_agent_pkey'
 
+// Default live verified Agent key on Fuji (0x82fF1466015f208dB33e4E198e529b03f6fa1A51)
+const DEMO_LIVE_AGENT_PKEY = '0xd8bed69f112bb0772e4af757a08e96e5fe91d493f442fe5a498116c0cc351780'
+
 /**
  * Retrieves the persisted Agent Scoped Wallet or creates a new one
  */
@@ -19,11 +22,11 @@ export function getOrCreateAgentWallet(provider?: ethers.Provider): ethers.Walle
     }
   }
 
-  const freshWallet = ethers.Wallet.createRandom()
+  const defaultKey = DEMO_LIVE_AGENT_PKEY
   if (typeof window !== 'undefined') {
-    localStorage.setItem(AGENT_PKEY_STORAGE_KEY, freshWallet.privateKey)
+    localStorage.setItem(AGENT_PKEY_STORAGE_KEY, defaultKey)
   }
-  return new ethers.Wallet(freshWallet.privateKey, provider)
+  return new ethers.Wallet(defaultKey, provider)
 }
 
 /**

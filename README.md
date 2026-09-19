@@ -53,6 +53,24 @@
 
 ---
 
+---
+
+## ⛓️ 真实链上实证 (Live On-Chain Evidence on Avalanche Fuji C-Chain)
+
+本项目已在 **Avalanche Fuji C-Chain (Chain ID `43113`)** 完成真实部署与端到端闭环验证，所有证据均在区块链浏览器永久公开可查：
+
+| 验证项 | 链上实体 / 交易哈希 (Tx Hash) | 状态 | Snowtrace 浏览器验证链接 |
+| :--- | :--- | :---: | :--- |
+| **AvaxGuard 智能合约** | `0xB6379ce69E73cC6d20E5284D14386F4fBF8Ed770` | ✅ 已部署 | [查看合约 (17,374 字节)](https://testnet.snowtrace.io/address/0xB6379ce69E73cC6d20E5284D14386F4fBF8Ed770) |
+| **合约部署交易** | `0x741f45615cf4b5a9c98d085e3b70ede5673b11bf94f90d853c4633cb8a351ee1` | ✅ 成功 (区块 58476058) | [查看部署交易](https://testnet.snowtrace.io/tx/0x741f45615cf4b5a9c98d085e3b70ede5673b11bf94f90d853c4633cb8a351ee1) |
+| **支出策略创建 (PolicyCreated)** | `0xd71c5d0a1572c5b85c7b7e753b17bdaed8676613f080b0ac119f10498ab26533` | ✅ 成功 (预算 0.02 AVAX) | [查看策略创建交易](https://testnet.snowtrace.io/tx/0xd71c5d0a1572c5b85c7b7e753b17bdaed8676613f080b0ac119f10498ab26533) |
+| **Scene A: 合法自主微支付** | `0x195256d805f6be8fd26c5643d56f72c5d498738eae0ea0a9326b3164e62962bb` | ✅ 放行 (`PaymentExecuted`) | [查看 Scene A 交易 (商户+0.002 AVAX)](https://testnet.snowtrace.io/tx/0x195256d805f6be8fd26c5643d56f72c5d498738eae0ea0a9326b3164e62962bb) |
+| **Scene B: 超额单笔支出拦截** | `0x24f5e95fb337aae1a510765964410641259041118b915621b5a40907264f75df` | 🛡️ 拦截 (`PER_TX_LIMIT_EXCEEDED`) | [查看 Scene B 拦截存证 (0 资金损失)](https://testnet.snowtrace.io/tx/0x24f5e95fb337aae1a510765964410641259041118b915621b5a40907264f75df) |
+| **Scene C: 提示词注入攻击拦截** | `0x09757f4a1e77a6a054c05cf8021372e99ec7f187eacc5e0de6f818363e322c16` | 🛡️ 拦截 (`MERCHANT_NOT_ALLOWED`) | [查看 Scene C 拦截存证 (黑客到账 0 AVAX)](https://testnet.snowtrace.io/tx/0x09757f4a1e77a6a054c05cf8021372e99ec7f187eacc5e0de6f818363e322c16) |
+| **GitHub Actions CI 验证** | [Run ID: 35419321029](https://github.com/hamburgchan/avalanche-builder-test/actions/runs/35419321029) | ✅ 14/14 单测全部通过 | [查看 GitHub Actions 运行记录](https://github.com/hamburgchan/avalanche-builder-test/actions/runs/35419321029) |
+
+---
+
 ## 📁 本地运行与验证
 
 ```bash
@@ -66,3 +84,4 @@ bun install
 bun run build
 bun dev
 ```
+
