@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { ethers } from 'ethers'
 import confetti from 'canvas-confetti'
 import { Navbar } from './components/Navbar'
@@ -25,8 +25,7 @@ import {
 } from './config/avalanche'
 import {
   getOrCreateAgentWallet,
-  createNewAgentWallet,
-  getAgentBalance
+  createNewAgentWallet
 } from './services/agentWallet'
 import { monitor } from './services/monitor'
 import { merchantService } from './services/merchant'
@@ -86,47 +85,43 @@ export function App() {
     monitor.init()
   }, [])
 
-  // Check if contract has bytecode on Fuji
-  const checkContractDeployment = useCallback(async (targetAddr: string, activeProvider?: ethers.Provider) => {
-    const prov = activeProvider || new ethers.JsonRpcProvider(FUJI_CHAIN_CONFIG.rpcUrls[0])
-    try {
-      const code = await prov.getCode(targetAddr)
-      const deployed = code !== '0x' && code.length > 2
-      setIsContractDeployed(deployed)
-      return deployed
-    } catch (e) {
-      console.warn('Failed to check contract bytecode:', e)
-      setIsContractDeployed(false)
-      return false
-    }
-  }, [])
+  // Direct static read-only Fuji RPC provider (Bypasses MetaMask completely for all queries)
+  const fujiReadOnlyRpc = useMemo(
+    () => new ethers.JsonRpcProvider(FUJI_CHAIN_CONFIG.rpcUrls[0], 43113, { staticNetwork: true }),
+    []
+  )
 
   const refreshBalances = useCallback(async () => {
-    const prov = provider || new ethers.JsonRpcProvider(FUJI_CHAIN_CONFIG.rpcUrls[0])
     if (account) {
       try {
-        const bal = await prov.getBalance(account)
+        const bal = await fujiReadOnlyRpc.getBalance(account)
         setBalance(ethers.formatEther(bal))
       } catch (e) {
         console.error('Failed to get account balance:', e)
       }
     }
     if (agentWallet) {
-      const aBal = await getAgentBalance(agentWallet.address, prov)
-      setAgentBalance(aBal)
+      try {
+        const aBal = await fujiReadOnlyRpc.getBalance(agentWallet.address)
+        setAgentBalance(ethers.formatEther(aBal))
+      } catch (e) {
+        console.error('Failed to get agent balance:', e)
+      }
     }
-  }, [provider, account, agentWallet])
+  }, [account, agentWallet, fujiReadOnlyRpc])
 
   // Load Policy from Avalanche C-Chain
   const loadPolicy = useCallback(async () => {
-    const prov = provider || new ethers.JsonRpcProvider(FUJI_CHAIN_CONFIG.rpcUrls[0])
     if (!account || !agentWallet) return
 
     try {
-      const isDeployed = await checkContractDeployment(contractAddress, prov)
+      const code = await fujiReadOnlyRpc.getCode(contractAddress)
+      const isDeployed = code !== '0x' && code.length > 2
+      setIsContractDeployed(isDeployed)
+
       if (isDeployed) {
-        const contract = new ethers.Contract(contractAddress, AVAX_GUARD_ABI, prov)
-        const activeOwner = await contract.activeOwnerOfAgent(agentWallet.address)
+        const contract = new ethers.Contract(contractAddress, AVAX_GUARD_ABI, fujiReadOnlyRpc)
+        const activeOwner = await contract.activeOwnerOfAgent(agentWallet.address).catch(() => ethers.ZeroAddress)
         const isBound = activeOwner.toLowerCase() === account.toLowerCase()
         setAgentAuthorized(isBound)
 
@@ -152,7 +147,7 @@ export function App() {
 
     setPolicy(null)
     setAgentAuthorized(false)
-  }, [provider, account, agentWallet, contractAddress, checkContractDeployment])
+  }, [account, agentWallet, contractAddress, fujiReadOnlyRpc])
 
   useEffect(() => {
     loadPolicy()
