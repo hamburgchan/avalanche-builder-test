@@ -19,7 +19,9 @@ import {
   AVAX_GUARD_BYTECODE,
   DEMO_ADDRESSES,
   BlockReason,
-  FUJI_CHAIN_CONFIG
+  FUJI_CHAIN_CONFIG,
+  assertFujiNetwork,
+  validateAddressOrThrow
 } from './config/avalanche'
 import {
   getOrCreateAgentWallet,
@@ -69,6 +71,7 @@ export function App() {
     blockNumber: null,
     gasUsed: null,
     observedLatencyMs: null,
+    latencySource: 'WSS',
     unauthorizedTransfer: '0 AVAX',
     networkGasCost: '~0.00035 AVAX'
   })
@@ -168,6 +171,10 @@ export function App() {
       const accounts = await browserProvider.send('eth_requestAccounts', [])
       const network = await browserProvider.getNetwork()
 
+      if (Number(network.chainId) !== 43113) {
+        await assertFujiNetwork(browserProvider)
+      }
+
       setProvider(browserProvider)
       setAccount(accounts[0] || null)
       setChainId(Number(network.chainId))
@@ -224,7 +231,7 @@ export function App() {
     }
   }, [refreshBalances])
 
-  // In-DApp 1-Click Contract Deployer via MetaMask
+  // In-DApp 1-Click Contract Deployer via MetaMask (P0-DEPLOYMENT)
   const handleDeployContract = async () => {
     if (!account || !provider) {
       alert('Please connect MetaMask first!')
@@ -233,23 +240,85 @@ export function App() {
 
     setIsDeployingContract(true)
     try {
+      await assertFujiNetwork(provider)
       const signer = await provider.getSigner()
       const factory = new ethers.ContractFactory(AVAX_GUARD_ABI, AVAX_GUARD_BYTECODE, signer)
       const deployedContract = await factory.deploy()
-      await deployedContract.waitForDeployment()
+      const deployTx = deployedContract.deploymentTransaction()
+      if (!deployTx) throw new Error('Deployment transaction could not be created.')
+
+      const deployReceipt = await deployTx.wait()
       const newAddr = await deployedContract.getAddress()
+
+      // Verify eth_getCode != 0x
+      const code = await provider.getCode(newAddr)
+      if (code === '0x' || code.length <= 2) {
+        throw new Error('Bytecode verification failed: eth_getCode returned 0x.')
+      }
 
       setAvaxGuardAddress(newAddr)
       setContractAddr(newAddr)
       setIsContractDeployed(true)
+
+      const deployLog = `
+========================================
+P0-DEPLOYMENT: DONE
+
+Contract Address:
+${newAddr}
+
+Deployment Tx:
+${deployTx.hash}
+
+Chain ID:
+43113
+
+Block:
+${deployReceipt?.blockNumber}
+
+Deployer:
+${account}
+
+Gas Used:
+${deployReceipt?.gasUsed.toString()}
+
+Snowtrace:
+https://testnet.snowtrace.io/address/${newAddr}
+
+eth_getCode:
+VERIFIED (${code.length} bytes)
+========================================`
+      console.log(deployLog)
+      alert(`P0-DEPLOYMENT: DONE!\n\nContract Address: ${newAddr}\nTx Hash: ${deployTx.hash}\nSnowtrace: https://testnet.snowtrace.io/address/${newAddr}`)
+
       await loadPolicy()
       await refreshBalances()
-      alert(`AvaxGuard successfully deployed to Fuji at: ${newAddr}`)
     } catch (err: any) {
       console.error('Contract deployment failed:', err)
       alert(`Deployment failed: ${err.message || err}`)
     } finally {
       setIsDeployingContract(false)
+    }
+  }
+
+  // Bind custom pre-deployed contract address
+  const handleBindCustomContract = async (addr: string) => {
+    try {
+      const verified = validateAddressOrThrow(addr, 'CUSTOM_CONTRACT')
+      const prov = provider || new ethers.JsonRpcProvider(FUJI_CHAIN_CONFIG.rpcUrls[0])
+      const code = await prov.getCode(verified)
+      if (code === '0x' || code.length <= 2) {
+        alert(`Bytecode verification failed: No contract deployed at ${verified}`)
+        return
+      }
+      setAvaxGuardAddress(verified)
+      setContractAddr(verified)
+      setIsContractDeployed(true)
+      await loadPolicy()
+      await refreshBalances()
+      alert(`Successfully bound to verified AvaxGuard contract: ${verified}`)
+    } catch (e: any) {
+      alert(`Invalid address: ${e.message}`)
     }
   }
 
@@ -262,6 +331,7 @@ export function App() {
 
     setIsFundingAgent(true)
     try {
+      await assertFujiNetwork(provider)
       const signer = await provider.getSigner()
       const tx = await signer.sendTransaction({
         to: agentWallet.address,
@@ -294,12 +364,13 @@ export function App() {
       return
     }
     if (!isContractDeployed) {
-      alert('Please deploy the AvaxGuard contract first using the button above!')
+      alert('LIVE CHAIN NOT READY: Please deploy the AvaxGuard contract first using the button above!')
       return
     }
 
     setIsCreatingPolicy(true)
     try {
+      await assertFujiNetwork(provider)
       const signer = await provider.getSigner()
       const budgetWei = ethers.parseEther(budget)
       const maxTxWei = ethers.parseEther(maxTx)
@@ -331,6 +402,7 @@ export function App() {
     if (!account || !provider || !isContractDeployed) return
     setIsRevokingPolicy(true)
     try {
+      await assertFujiNetwork(provider)
       const signer = await provider.getSigner()
       const contract = new ethers.Contract(contractAddress, AVAX_GUARD_ABI, signer)
       const tx = await contract.revokePolicy(agentWallet.address)
@@ -348,12 +420,14 @@ export function App() {
 
   // Autonomous AI Agent Trigger: 100% Real Fuji C-Chain Execution
   const handleTriggerScene = async (scene: 'A' | 'B' | 'C') => {
-    if (!account) {
+    if (!account || !provider) {
       alert('Please connect your wallet first!')
       return
     }
+    await assertFujiNetwork(provider)
+
     if (!isContractDeployed) {
-      alert('Please deploy the AvaxGuard contract first to Fuji!')
+      alert('LIVE CHAIN NOT READY: AvaxGuard contract must be deployed to Fuji first.')
       return
     }
     if (parseFloat(agentBalance) < 0.001) {
@@ -390,7 +464,7 @@ export function App() {
           requestId: reqId,
           serviceName: 'Avalanche High-Resolution Orderbook API',
           merchant: DEMO_ADDRESSES.MERCHANT,
-          merchantAlias: 'PremiumData API (Whitelisted)',
+          merchantAlias: `Authorized Merchant (${DEMO_ADDRESSES.MERCHANT.slice(0, 6)}...${DEMO_ADDRESSES.MERCHANT.slice(-4)})`,
           amount: amt,
           taskDescription: 'Fetch AVAX real-time liquidity depth and orderbook support levels.',
           sceneType: 'A'
@@ -409,7 +483,7 @@ export function App() {
           requestId: reqId,
           serviceName: 'Institutional High-Frequency Dataset (Exclusive)',
           merchant: DEMO_ADDRESSES.MERCHANT,
-          merchantAlias: 'PremiumData API (Whitelisted)',
+          merchantAlias: `Authorized Merchant (${DEMO_ADDRESSES.MERCHANT.slice(0, 6)}...${DEMO_ADDRESSES.MERCHANT.slice(-4)})`,
           amount: amt,
           taskDescription: 'Attempt to purchase ultra-deep intelligence dataset exceeding per-tx cap.',
           sceneType: 'B'
@@ -428,7 +502,7 @@ export function App() {
           requestId: reqId,
           serviceName: 'Prompt-Injection-Induced Malicious Forwarding',
           merchant: DEMO_ADDRESSES.ATTACKER,
-          merchantAlias: 'Attacker Wallet (Unauthorized)',
+          merchantAlias: `Unauthorized Attacker (${DEMO_ADDRESSES.ATTACKER.slice(0, 6)}...${DEMO_ADDRESSES.ATTACKER.slice(-4)})`,
           amount: amt,
           taskDescription: 'Simulated prompt injection override attempting to drain micro funds to attacker.',
           sceneType: 'C'
@@ -438,11 +512,12 @@ export function App() {
       setCurrentIntent(intent)
       log(`[${new Date().toLocaleTimeString()}] 🤖 Agent formed Spend Intent for Scene ${scene}`)
       log(`[Intent] Target: ${intent.serviceName}`)
-      log(`[Intent] Recipient: ${intent.merchantAlias} (${intent.merchant.slice(0, 8)}...)`)
+      log(`[Intent] Recipient: ${intent.merchantAlias}`)
       log(`[Intent] Amount: ${intent.amount} AVAX | RequestId: ${intent.requestId.slice(0, 14)}...`)
 
       // 2. Perform Real On-Chain evaluateSpend View Check
       const fujiProvider = new ethers.JsonRpcProvider(FUJI_CHAIN_CONFIG.rpcUrls[0])
+      await assertFujiNetwork(fujiProvider)
       const guardContract = new ethers.Contract(contractAddress, AVAX_GUARD_ABI, fujiProvider)
 
       log('🔍 Querying AvaxGuard.evaluateSpend on Fuji...')
@@ -461,7 +536,10 @@ export function App() {
       setVerdict(onChainReason)
 
       log(`[Policy Engine] Bitmask: 0b${onChainBits.toString(2).padStart(7, '0')}`)
-      log(`[Policy Engine] On-Chain Verdict: ${onChainAllowed ? 'APPROVED ✅' : 'BLOCKED 🛡️'}`)
+      log(`[Policy Engine] Preview Verdict: ${onChainAllowed ? 'APPROVED ✅' : 'BLOCKED 🛡️'}`)
+
+      // Record recipient balance before execution
+      const recipientBalBefore = await fujiProvider.getBalance(intent.merchant)
 
       // 3. Autonomous Execution: Agent Signs with Dedicated Key and Broadcasts to Fuji
       setTelemetry((prev) => ({ ...prev, status: 'PENDING' }))
@@ -481,6 +559,11 @@ export function App() {
       const acceptedRes = await waitPromise
       const latency = acceptedRes.latencyMs
       log(`🏁 Avalanche Confirmed in Block #${receipt.blockNumber} (Observed Acceptance: ${latency} ms via ${acceptedRes.source})`)
+
+      // Check recipient balance after execution
+      const recipientBalAfter = await fujiProvider.getBalance(intent.merchant)
+      const recipientDelta = recipientBalAfter - recipientBalBefore
+      log(`💰 Recipient Balance Delta: ${ethers.formatEther(recipientDelta)} AVAX (Before: ${ethers.formatEther(recipientBalBefore)}, After: ${ethers.formatEther(recipientBalAfter)})`)
 
       // Parse Receipt Logs for PaymentExecuted / PaymentBlocked
       let isExecuted = false
@@ -645,6 +728,7 @@ export function App() {
               isCreating={isCreatingPolicy}
               isRevoking={isRevokingPolicy}
               onDeployContract={handleDeployContract}
+              onBindCustomContract={handleBindCustomContract}
               onFundAgent={handleFundAgent}
               onResetAgent={handleResetAgent}
               onCreatePolicy={handleCreatePolicy}

@@ -38,6 +38,7 @@ interface PolicyConsoleProps {
   isCreating: boolean
   isRevoking: boolean
   onDeployContract: () => Promise<void>
+  onBindCustomContract?: (addr: string) => Promise<void>
   onFundAgent: () => Promise<void>
   onResetAgent: () => void
   onCreatePolicy: (budget: string, maxTx: string, daily: string, durationSec: number) => Promise<void>
@@ -56,6 +57,7 @@ export const PolicyConsole: React.FC<PolicyConsoleProps> = ({
   isCreating,
   isRevoking,
   onDeployContract,
+  onBindCustomContract,
   onFundAgent,
   onResetAgent,
   onCreatePolicy,
@@ -64,6 +66,8 @@ export const PolicyConsole: React.FC<PolicyConsoleProps> = ({
   const [budgetInput, setBudgetInput] = useState('0.02')
   const [maxTxInput, setMaxTxInput] = useState('0.003')
   const [dailyInput, setDailyInput] = useState('0.01')
+  const [customAddrInput, setCustomAddrInput] = useState('')
+  const [showManualInput, setShowManualInput] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
 
   const isExpired = policy ? Date.now() / 1000 > policy.expiry : false
@@ -112,6 +116,35 @@ export const PolicyConsole: React.FC<PolicyConsoleProps> = ({
             <Zap className="w-3.5 h-3.5" />
             <span>{isDeployingContract ? 'Deploying to Fuji...' : 'Deploy AvaxGuard Contract (via MetaMask)'}</span>
           </button>
+
+          {/* Or bind existing address */}
+          <div className="pt-1">
+            <button
+              type="button"
+              onClick={() => setShowManualInput(!showManualInput)}
+              className="text-[10px] text-slate-400 hover:text-white underline cursor-pointer"
+            >
+              {showManualInput ? 'Hide manual address input' : 'Or enter already deployed Fuji contract address'}
+            </button>
+            {showManualInput && (
+              <div className="mt-1.5 flex space-x-1.5">
+                <input
+                  type="text"
+                  placeholder="0x..."
+                  value={customAddrInput}
+                  onChange={(e) => setCustomAddrInput(e.target.value)}
+                  className="flex-1 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-[11px] text-white font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={() => onBindCustomContract && onBindCustomContract(customAddrInput)}
+                  className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] rounded font-bold"
+                >
+                  Bind
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       ) : (
         <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-xs font-mono flex items-center justify-between">
@@ -210,6 +243,10 @@ export const PolicyConsole: React.FC<PolicyConsoleProps> = ({
               <span>{isFundingAgent ? 'Sending Gas...' : 'Fund Agent Gas (0.005 AVAX via MetaMask)'}</span>
             </button>
           )}
+
+          <div className="text-[9px] text-slate-500 leading-tight pt-1 border-t border-slate-900">
+            Client-side scoped Agent Wallet for hackathon demonstration. Private key is stored locally in the browser and is NOT production secure.
+          </div>
         </div>
 
         {/* Merchant Allowlist Card */}

@@ -60,10 +60,23 @@ export const AVAX_GUARD_BYTECODE: string =
 export const DEMO_ADDRESSES = {
   // Scoped Agent Wallet Fallback
   AGENT: validateAddressOrThrow('0x888888cf1046e68E36e1aa2E0E07105EDDd1f08F', 'AGENT'),
-  // Authorized Premium Data Merchant
-  MERCHANT: validateAddressOrThrow('0x12ab34CD56ef78AB90cd1234567890aBcDeF1234', 'MERCHANT'),
-  // Simulated Attacker Target Address (For Prompt Injection Defense Scene)
-  ATTACKER: validateAddressOrThrow('0x93FC18Ba40C72D8523A7AFe9e766d77994A1221A', 'ATTACKER')
+  // Real Dedicated Merchant Wallet on Fuji (Trackable before/after balance)
+  MERCHANT: validateAddressOrThrow('0x0D54D5f550e357D5314bf90f178101402BFd3348', 'MERCHANT'),
+  // Dedicated Simulated Attacker Address on Fuji (0.0 balance, not in allowlist)
+  ATTACKER: validateAddressOrThrow('0xA2B13aE961DE511D9897Ce99a6B5d273DB77B5dD', 'ATTACKER')
+}
+
+/**
+ * Strict Fuji Chain Guard: enforces chainId == 43113 before any on-chain operation
+ */
+export async function assertFujiNetwork(provider: ethers.Provider): Promise<void> {
+  const network = await provider.getNetwork()
+  if (Number(network.chainId) !== 43113) {
+    const switched = await switchToFuji()
+    if (!switched) {
+      throw new Error(`Wrong network: Chain ID ${network.chainId}. Please switch to Avalanche Fuji Testnet (Chain ID 43113 / 0xa869).`)
+    }
+  }
 }
 
 // BlockReason Enum matching AvaxGuard.sol (compatible with erasableSyntaxOnly)

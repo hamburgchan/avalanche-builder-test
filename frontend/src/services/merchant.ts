@@ -132,16 +132,16 @@ class MerchantFulfillmentService {
       // Return fulfilled protected premium dataset
       return {
         success: true,
-        message: 'Payment verified on Avalanche Fuji. Releasing protected premium dataset.',
+        message: 'Mock Premium Dataset released after REAL on-chain payment verification.',
         disclaimer: 'Client-side merchant verifier demo — not production persistent replay protection',
         dataset: {
-          asset: 'AVAX/USDT (Avalanche C-Chain)',
+          asset: 'AVAX/USDT (Mock Orderbook Depth)',
           timestamp: new Date().toISOString(),
           bestBid: 28.45,
           bestAsk: 28.48,
-          liquidityScore: 'AAA+ (98.4/100)',
-          sentimentIndicator: 'Strong Institutional Inflow (Bullish Divergence)',
-          institutionalFlows: `+184,200 AVAX Net Inflow verified across Fuji & Mainnet telemetry. Verified Payment: ${ethers.formatEther(paidAmount)} AVAX`
+          liquidityScore: 'Sample Liquidity Matrix',
+          sentimentIndicator: 'Sample Market Depth Profile',
+          institutionalFlows: `Mock premium dataset delivered upon receipt verification. On-chain Payment Verified: ${ethers.formatEther(paidAmount)} AVAX`
         }
       }
     } catch (err: any) {
