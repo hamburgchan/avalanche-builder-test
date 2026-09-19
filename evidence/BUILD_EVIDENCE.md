@@ -49,6 +49,22 @@
 
 ---
 
+## 2.2 Security Incident Response: Legacy Agent Revocation & Fund Recovery
+
+- **Status**: `VERIFIED & EXECUTED (100% On-Chain Recovery)`
+- **Target Retired Agent**: `0x82fF1466015f208dB33e4E198e529b03f6fa1A51`
+- **Transaction Hash**: `0x4309fe1653a1c09f16a056372527a12fb0724c4cab498c66596d9400179acf9f`
+- **Snowtrace URL**: [https://testnet.snowtrace.io/tx/0x4309fe1653a1c09f16a056372527a12fb0724c4cab498c66596d9400179acf9f](https://testnet.snowtrace.io/tx/0x4309fe1653a1c09f16a056372527a12fb0724c4cab498c66596d9400179acf9f)
+- **Block Number**: `58477053`
+- **Timestamp**: `13:41:22`
+- **Gas Used**: `150,000`
+- **Receipt Status**: `1 (Success)`
+- **Refunded Amount**: `0.018 AVAX (100% returned to Owner 0x7F76...)`
+- **Decoded Event**: `PolicyRevoked(owner: 0x7F762778eaEAfe5b6b6647179419452e07f4c5Ce, agent: 0x82fF1466015f208dB33e4E198e529b03f6fa1A51, refundAmount: 0.018 AVAX)`
+- **Result**: Compromised agent `0x82fF...` permanently deactivated (`active = false`, `remainingBudget = 0`). All funds fully recovered.
+
+---
+
 ## 3. Scene A: Legitimate Autonomous Payment (0.002 AVAX)
 
 - **Status**: `VERIFIED & EXECUTED (100% On-Chain)`
