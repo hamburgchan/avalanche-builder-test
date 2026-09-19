@@ -41,9 +41,11 @@ export function App() {
 
   // Contract deployment state
   const [contractAddress, setContractAddr] = useState<string>(getAvaxGuardAddress())
-  const [isContractDeployed, setIsContractDeployed] = useState<boolean>(false)
+  const [isContractDeployed, setIsContractDeployed] = useState<boolean>(true)
   const [isDeployingContract, setIsDeployingContract] = useState<boolean>(false)
   const [deployError, setDeployError] = useState<string | null>(null)
+  const [hasCompromisedPolicy, setHasCompromisedPolicy] = useState<boolean>(false)
+  const [isRevokingCompromised, setIsRevokingCompromised] = useState<boolean>(false)
 
   // Agent Scoped Wallet state
   const [agentWallet, setAgentWallet] = useState<ethers.Wallet>(() => getOrCreateAgentWallet())
@@ -121,6 +123,13 @@ export function App() {
 
       if (isDeployed) {
         const contract = new ethers.Contract(contractAddress, AVAX_GUARD_ABI, fujiReadOnlyRpc)
+
+        // Check if compromised legacy agent (0x82fF1466015f208dB33e4E198e529b03f6fa1A51) still has an active policy
+        const RETIRED_LEAKED_AGENT = '0x82fF1466015f208dB33e4E198e529b03f6fa1A51'
+        contract.policies(account, RETIRED_LEAKED_AGENT).then((cp: any) => {
+          setHasCompromisedPolicy(cp && (cp.active || cp.remainingBudget > 0n))
+        }).catch(() => setHasCompromisedPolicy(false))
+
         const activeOwner = await contract.activeOwnerOfAgent(agentWallet.address).catch(() => ethers.ZeroAddress)
         const isBound = activeOwner.toLowerCase() === account.toLowerCase()
         setAgentAuthorized(isBound)
@@ -497,6 +506,43 @@ VERIFIED (${code.length} bytes)
     }
   }
 
+  // Emergency Revoke for the retired/compromised legacy agent (0x82fF...1A51)
+  const handleRevokeCompromisedPolicy = async () => {
+    if (!account || !provider || isRevokingCompromised) return
+    setIsRevokingCompromised(true)
+    try {
+      await assertFujiNetwork(provider)
+      const fujiRpc = new ethers.JsonRpcProvider(FUJI_CHAIN_CONFIG.rpcUrls[0], 43113, { staticNetwork: true })
+      const feeData = await fujiRpc.getFeeData().catch(() => ({ gasPrice: 25000000000n }))
+      const gasPriceHex = '0x' + ((feeData.gasPrice || 25000000000n) * 120n / 100n).toString(16)
+
+      const iface = new ethers.Interface(AVAX_GUARD_ABI)
+      const callData = iface.encodeFunctionData('revokePolicy', ['0x82fF1466015f208dB33e4E198e529b03f6fa1A51'])
+
+      const txHash: string = await (window as any).ethereum.request({
+        method: 'eth_sendTransaction',
+        params: [{
+          from: account,
+          to: contractAddress,
+          data: callData,
+          gas: '0x493e0', // 300,000 gas
+          gasPrice: gasPriceHex
+        }]
+      })
+      await fujiRpc.waitForTransaction(txHash, 1, 30000)
+
+      alert(`✅ Compromised Agent Policy Revoked Successfully!\nTx: ${txHash}\nRemaining 0.018 AVAX budget has returned to your wallet.`)
+      setHasCompromisedPolicy(false)
+      await loadPolicy()
+      await refreshBalances()
+    } catch (err: any) {
+      console.error('Failed to revoke compromised policy:', err)
+      alert(`Revoke failed: ${err.message || err}`)
+    } finally {
+      setIsRevokingCompromised(false)
+    }
+  }
+
   // Autonomous AI Agent Trigger: 100% Real Fuji C-Chain Execution
   const handleTriggerScene = async (scene: 'A' | 'B' | 'C') => {
     if (!account || !provider) {
@@ -802,6 +848,8 @@ VERIFIED (${code.length} bytes)
               isContractDeployed={isContractDeployed}
               isDeployingContract={isDeployingContract}
               deployError={deployError}
+              hasCompromisedPolicy={hasCompromisedPolicy}
+              isRevokingCompromised={isRevokingCompromised}
               agentAddress={agentWallet.address}
               agentBalance={agentBalance}
               isFundingAgent={isFundingAgent}
@@ -811,6 +859,7 @@ VERIFIED (${code.length} bytes)
               onBindCustomContract={handleBindCustomContract}
               onFundAgent={handleFundAgent}
               onResetAgent={handleResetAgent}
+              onRevokeCompromisedPolicy={handleRevokeCompromisedPolicy}
               onCreatePolicy={handleCreatePolicy}
               onRevokePolicy={handleRevokePolicy}
             />

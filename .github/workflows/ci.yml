@@ -16,6 +16,16 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Secret Scanning (Detect Hardcoded Private Keys)
+        run: |
+          echo "Scanning frontend/src for exposed private key patterns..."
+          # Scan typescript source files for potential 64-character hex strings
+          if grep -rEI --include="*.ts" --include="*.tsx" "0x[a-fA-F0-9]{64}" frontend/src/; then
+            echo "::error::Critical Security Violation: Hardcoded private key detected in frontend/src! Build rejected."
+            exit 1
+          fi
+          echo "Security scan passed: Zero hardcoded private keys found."
+
       - name: Setup Foundry Toolchain
         uses: foundry-rs/foundry-toolchain@v1
 
