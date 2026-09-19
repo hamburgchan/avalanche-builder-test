@@ -9,15 +9,16 @@
 
 ## 1. Fuji Contract Deployment (P0-DEPLOYMENT)
 
-- **Status**: PENDING LIVE DEPLOYMENT
-- **Contract Address**: `TBD`
-- **Deployment Tx Hash**: `TBD`
+- **Status**: `VERIFIED & DEPLOYED (100% On-Chain)`
+- **Contract Address**: `0xB6379ce69E73cC6d20E5284D14386F4fBF8Ed770`
+- **Deployment Tx Hash**: `0x741f45615cf4b5a9c98d085e3b70ede5673b11bf94f90d853c4633cb8a351ee1`
 - **Deployer (Owner)**: `0x7F762778eaEAfe5b6b6647179419452e07f4c5Ce`
 - **Chain ID**: `43113`
-- **Block Number**: `TBD`
-- **Gas Used**: `TBD`
-- **Snowtrace URL**: `TBD`
-- **Bytecode Verification (`eth_getCode`)**: `TBD`
+- **Block Number**: `58476058`
+- **Gas Used**: `1945525`
+- **Snowtrace URL**: [https://testnet.snowtrace.io/address/0xB6379ce69E73cC6d20E5284D14386F4fBF8Ed770](https://testnet.snowtrace.io/address/0xB6379ce69E73cC6d20E5284D14386F4fBF8Ed770)
+- **Tx Snowtrace URL**: [https://testnet.snowtrace.io/tx/0x741f45615cf4b5a9c98d085e3b70ede5673b11bf94f90d853c4633cb8a351ee1](https://testnet.snowtrace.io/tx/0x741f45615cf4b5a9c98d085e3b70ede5673b11bf94f90d853c4633cb8a351ee1)
+- **Bytecode Verification (`eth_getCode`)**: `VERIFIED (17,374 bytes bytecode != 0x)`
 
 ---
 

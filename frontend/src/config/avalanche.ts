@@ -41,7 +41,7 @@ export function getAvaxGuardAddress(): string {
   if (envAddr && envAddr.startsWith('0x') && envAddr.length === 42) {
     return validateAddressOrThrow(envAddr, 'ENV_CONTRACT_ADDRESS')
   }
-  return '0x4311300000000000000000000000000000000001'
+  return '0xB6379ce69E73cC6d20E5284D14386F4fBF8Ed770'
 }
 
 export function setAvaxGuardAddress(addr: string): void {
