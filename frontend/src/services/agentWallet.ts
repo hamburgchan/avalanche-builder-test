@@ -2,11 +2,12 @@ import { ethers } from 'ethers'
 
 const AGENT_PKEY_STORAGE_KEY = 'avaxguard_agent_pkey'
 
-// Default live verified Agent key on Fuji (0x82fF1466015f208dB33e4E198e529b03f6fa1A51)
-const DEMO_LIVE_AGENT_PKEY = '0xd8bed69f112bb0772e4af757a08e96e5fe91d493f442fe5a498116c0cc351780'
+// Permanently retired compromised legacy agent address (from early test session)
+const RETIRED_LEAKED_AGENT = '0x82ff1466015f208db33e4e198e529b03f6fa1a51'
 
 /**
- * Retrieves the persisted Agent Scoped Wallet or creates a new one
+ * Retrieves the persisted Agent Scoped Wallet or creates a fresh random one in client browser.
+ * NEVER hardcodes or bundles any private keys into source code or build artifacts.
  */
 export function getOrCreateAgentWallet(provider?: ethers.Provider): ethers.Wallet {
   let pkey: string | null = null
@@ -16,17 +17,23 @@ export function getOrCreateAgentWallet(provider?: ethers.Provider): ethers.Walle
 
   if (pkey && pkey.startsWith('0x') && pkey.length === 66) {
     try {
-      return new ethers.Wallet(pkey, provider)
+      const wallet = new ethers.Wallet(pkey, provider)
+      // Migration protection: automatically discard any compromised legacy demo wallet
+      if (wallet.address.toLowerCase() === RETIRED_LEAKED_AGENT) {
+        console.warn('Compromised legacy agent wallet detected in localStorage. Purging and generating fresh wallet...')
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem(AGENT_PKEY_STORAGE_KEY)
+        }
+        return createNewAgentWallet(provider)
+      }
+      return wallet
     } catch (e) {
       console.warn('Invalid stored agent private key, generating fresh one:', e)
     }
   }
 
-  const defaultKey = DEMO_LIVE_AGENT_PKEY
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(AGENT_PKEY_STORAGE_KEY, defaultKey)
-  }
-  return new ethers.Wallet(defaultKey, provider)
+  // Pure client-side generation: each browser gets its own secure isolated scoped wallet
+  return createNewAgentWallet(provider)
 }
 
 /**

@@ -26,8 +26,11 @@
   - **P0-3 Fuji 链上一键部署器**: 在前端控制台内置基于 MetaMask 的 Fuji 智能合约部署器与字节码验证机制，动态将部署地址持久化至应用。
   - **P0-4 & P0-5 彻底剔除伪造链上 Fallback**: 移除所有 `Math.random` 假哈希、虚拟区块高度和固定 Gas。所有三场景判定严格由 Fuji 真实交易 Receipt 及事件驱动（`PaymentExecuted` / `PaymentBlocked`）。
   - **P0-7 强健的 Avalanche 确认监听器**: 升级 `newAcceptedTransactions` WSS 监听器，增加 15s 超时保险与收据轮询降级机制，UI 明确标注延迟来源（`WSS` 或 `POLLING`）。
-  - **P0-8 Fail-Closed 商户验证服务**: 增加 Chain ID 43113 强制验证与严格参数验真，明确标注客户端防重放 Demo 说明。
+    - **P0-8 Fail-Closed 商户验证服务**: 增加 Chain ID 43113 强制验证与严格参数验真，明确标注客户端防重放 Demo 说明。
   - **P0-9 强化 CI 自动化**: 在 GitHub Actions 部署流程中嵌入 Foundry 工具链及 `forge test` 强制单测，单测不通过禁止发布前端。
+  - **P0-10 客户端密钥绝对安全与合规时间线**:
+    - **时间线声明**：合约部署交易完成于 12:26:10（环境准备阶段）；Scene A、Scene B、Scene C 等核心交互为 13:00 现场 Coding 开始后于 13:21 实时发起并确认的真实链上交易。
+    - **安全机制**：前端 Agent 采用 `ethers.Wallet.createRandom()` 纯客户端本地隔离生成，源码与线上 Bundle 零私钥硬编码，内置旧测试密钥自动淘汰清洗保护。
 
 ---
 
@@ -61,7 +64,7 @@
 
 | 验证项 | 链上实体 / 交易哈希 (Tx Hash) | 状态 | Snowtrace 浏览器验证链接 |
 | :--- | :--- | :---: | :--- |
-| **AvaxGuard 智能合约** | `0xB6379ce69E73cC6d20E5284D14386F4fBF8Ed770` | ✅ 已部署 | [查看合约 (17,374 字节)](https://testnet.snowtrace.io/address/0xB6379ce69E73cC6d20E5284D14386F4fBF8Ed770) |
+| **AvaxGuard 智能合约** | `0xB6379ce69E73cC6d20E5284D14386F4fBF8Ed770` | ✅ 已部署 | [查看合约 (8,686 字节运行时字节码 / 17,374 字符)](https://testnet.snowtrace.io/address/0xB6379ce69E73cC6d20E5284D14386F4fBF8Ed770) |
 | **合约部署交易** | `0x741f45615cf4b5a9c98d085e3b70ede5673b11bf94f90d853c4633cb8a351ee1` | ✅ 成功 (区块 58476058) | [查看部署交易](https://testnet.snowtrace.io/tx/0x741f45615cf4b5a9c98d085e3b70ede5673b11bf94f90d853c4633cb8a351ee1) |
 | **支出策略创建 (PolicyCreated)** | `0xd46ed3bf9e58e1c4b7e4c2414775e110eb72093bd7de6c91461cc60dcc7b25cd` | ✅ 成功 (预算 0.02 AVAX) | [查看策略创建交易](https://testnet.snowtrace.io/tx/0xd46ed3bf9e58e1c4b7e4c2414775e110eb72093bd7de6c91461cc60dcc7b25cd) |
 | **Scene A: 合法自主微支付** | `0xefbff0a69c9888d68a6415e046ed7d664e1406878f40170fd38dcaa2df1378a7` | ✅ 放行 (`PaymentExecuted`) | [查看 Scene A 交易 (商户+0.002 AVAX)](https://testnet.snowtrace.io/tx/0xefbff0a69c9888d68a6415e046ed7d664e1406878f40170fd38dcaa2df1378a7) |

@@ -10,7 +10,8 @@ import {
   Zap,
   ExternalLink,
   RefreshCw,
-  Fuel
+  Fuel,
+  ShieldAlert
 } from 'lucide-react'
 import { DEMO_ADDRESSES, updateFujiRpcInMetaMask } from '../config/avalanche'
 
@@ -33,6 +34,8 @@ interface PolicyConsoleProps {
   isContractDeployed: boolean
   isDeployingContract: boolean
   deployError?: string | null
+  hasCompromisedPolicy?: boolean
+  isRevokingCompromised?: boolean
   agentAddress: string
   agentBalance: string
   isFundingAgent: boolean
@@ -42,6 +45,7 @@ interface PolicyConsoleProps {
   onBindCustomContract?: (addr: string) => Promise<void>
   onFundAgent: () => Promise<void>
   onResetAgent: () => void
+  onRevokeCompromisedPolicy?: () => Promise<void>
   onCreatePolicy: (budget: string, maxTx: string, daily: string, durationSec: number) => Promise<void>
   onRevokePolicy: () => Promise<void>
 }
@@ -53,6 +57,8 @@ export const PolicyConsole: React.FC<PolicyConsoleProps> = ({
   isContractDeployed,
   isDeployingContract,
   deployError,
+  hasCompromisedPolicy,
+  isRevokingCompromised,
   agentAddress,
   agentBalance,
   isFundingAgent,
@@ -62,6 +68,7 @@ export const PolicyConsole: React.FC<PolicyConsoleProps> = ({
   onBindCustomContract,
   onFundAgent,
   onResetAgent,
+  onRevokeCompromisedPolicy,
   onCreatePolicy,
   onRevokePolicy
 }) => {
@@ -97,26 +104,58 @@ export const PolicyConsole: React.FC<PolicyConsoleProps> = ({
         )}
       </div>
 
-      {/* Contract Deployment Banner */}
-      {!isContractDeployed ? (
-        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs font-mono space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="font-bold text-amber-400 flex items-center space-x-1">
-              <Zap className="w-3.5 h-3.5" />
-              <span>AvaxGuard Contract Not Deployed</span>
-            </span>
-            <span className="text-[10px] text-amber-300">Fuji C-Chain</span>
+      {/* P0 Security Action: Compromised Legacy Agent Policy Active */}
+      {hasCompromisedPolicy && (
+        <div className="p-3 rounded-xl bg-rose-950/80 border border-rose-500 text-xs font-mono space-y-2">
+          <div className="flex items-center space-x-1.5 text-rose-400 font-bold">
+            <AlertCircle className="w-4 h-4" />
+            <span>P0 Security Alert: Compromised Agent Policy Active!</span>
           </div>
-          <p className="text-[11px] text-slate-300">
-            Deploy the AvaxGuard policy engine directly to Fuji using your connected MetaMask wallet.
+          <p className="text-[11px] text-rose-200">
+            The retired test agent (<span className="text-amber-300 font-bold">0x82fF...1A51</span>) still has an active policy with 0.018 AVAX. Revoke it now to reclaim your AVAX and lock the compromised agent permanently.
           </p>
+          <button
+            type="button"
+            onClick={onRevokeCompromisedPolicy}
+            disabled={isRevokingCompromised}
+            className="w-full py-2 px-3 rounded-lg font-bold text-xs text-white bg-rose-600 hover:bg-rose-500 cursor-pointer flex items-center justify-center space-x-1.5 transition disabled:opacity-50"
+          >
+            <ShieldAlert className="w-4 h-4" />
+            <span>{isRevokingCompromised ? 'Revoking on Fuji...' : 'Revoke 0x82fF... & Reclaim 0.018 AVAX'}</span>
+          </button>
+        </div>
+      )}
+
+      {/* Live Verified Contract Card */}
+      <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-xs font-mono flex items-center justify-between">
+        <div>
+          <div className="text-[10px] text-slate-400 uppercase">Live Verified Contract (Fuji):</div>
+          <div className="text-emerald-400 font-bold truncate max-w-[210px]">{contractAddress}</div>
+        </div>
+        <a
+          href={`https://testnet.snowtrace.io/address/${contractAddress}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center space-x-1 text-[10px] text-slate-400 hover:text-white px-2 py-1 bg-slate-800 rounded"
+        >
+          <span>Explorer</span>
+          <ExternalLink className="w-3 h-3" />
+        </a>
+      </div>
+
+      {/* Advanced Tools Collapsible */}
+      <details className="group text-xs font-mono">
+        <summary className="cursor-pointer text-[10px] text-slate-400 hover:text-slate-200 list-none flex items-center space-x-1">
+          <span>▸ Advanced: Custom Contract & RPC Tools</span>
+        </summary>
+        <div className="mt-2 p-3 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
           <button
             onClick={onDeployContract}
             disabled={!account || isDeployingContract}
-            className="w-full py-2 px-3 rounded-lg font-bold text-xs text-white bg-amber-600 hover:bg-amber-500 disabled:opacity-50 transition flex items-center justify-center space-x-1.5 cursor-pointer"
+            className="w-full py-1.5 px-3 rounded-lg font-bold text-[11px] text-amber-200 bg-amber-950/60 border border-amber-500/40 hover:bg-amber-900/60 disabled:opacity-50 transition flex items-center justify-center space-x-1.5 cursor-pointer"
           >
             <Zap className="w-3.5 h-3.5" />
-            <span>{isDeployingContract ? 'Deploying to Fuji...' : 'Deploy AvaxGuard Contract (via MetaMask)'}</span>
+            <span>{isDeployingContract ? 'Deploying to Fuji...' : 'Deploy New Custom Contract (via MetaMask)'}</span>
           </button>
 
           <button
@@ -140,7 +179,7 @@ export const PolicyConsole: React.FC<PolicyConsoleProps> = ({
               onClick={() => setShowManualInput(!showManualInput)}
               className="text-[10px] text-slate-400 hover:text-white underline cursor-pointer"
             >
-              {showManualInput ? 'Hide manual address input' : 'Or enter already deployed Fuji contract address'}
+              {showManualInput ? 'Hide manual address input' : 'Or bind custom contract address'}
             </button>
             {showManualInput && (
               <div className="mt-1.5 flex space-x-1.5">
@@ -172,23 +211,7 @@ export const PolicyConsole: React.FC<PolicyConsoleProps> = ({
             </div>
           )}
         </div>
-      ) : (
-        <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-xs font-mono flex items-center justify-between">
-          <div>
-            <div className="text-[10px] text-slate-400 uppercase">Live Contract (Fuji):</div>
-            <div className="text-emerald-400 font-bold truncate max-w-[210px]">{contractAddress}</div>
-          </div>
-          <a
-            href={`https://testnet.snowtrace.io/address/${contractAddress}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center space-x-1 text-[10px] text-slate-400 hover:text-white px-2 py-1 bg-slate-800 rounded"
-          >
-            <span>Explorer</span>
-            <ExternalLink className="w-3 h-3" />
-          </a>
-        </div>
-      )}
+      </details>
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-2 gap-3 text-xs font-mono">
