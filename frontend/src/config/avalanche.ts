@@ -1,4 +1,14 @@
+import { ethers } from 'ethers'
 import AvaxGuardMeta from '../contracts/AvaxGuard.json'
+
+// Address validator enforcing strict EIP-55 checksum validation (Fail-Closed)
+export function validateAddressOrThrow(addr: string, label: string): string {
+  try {
+    return ethers.getAddress(addr)
+  } catch (err: any) {
+    throw new Error(`[Address Checksum Failure] Invalid EIP-55 address for ${label}: "${addr}". ${err.message}`)
+  }
+}
 
 export const FUJI_CHAIN_CONFIG = {
   chainId: '0xa869', // 43113 in hex
@@ -17,18 +27,43 @@ export const FUJI_CHAIN_CONFIG = {
   wsUrl: 'wss://api.avax-test.network/ext/bc/C/ws'
 }
 
-// AvaxGuard Contract Address on Fuji (Updated upon deployment)
-export const AVAX_GUARD_ADDRESS = (import.meta as any).env?.VITE_AVAX_GUARD_ADDRESS || '0x4311300000000000000000000000000000000001'
-export const AVAX_GUARD_ABI = AvaxGuardMeta.abi
+// AvaxGuard Contract Address on Fuji (Updated upon deployment or local override)
+const LOCAL_STORAGE_CONTRACT_KEY = 'AVAX_GUARD_ADDRESS_OVERRIDE'
 
-// Deterministic Checksummed EVM Addresses for Demo (All valid 20-byte addresses)
+export function getAvaxGuardAddress(): string {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem(LOCAL_STORAGE_CONTRACT_KEY)
+    if (saved && saved.startsWith('0x') && saved.length === 42) {
+      return validateAddressOrThrow(saved, 'SAVED_CONTRACT_ADDRESS')
+    }
+  }
+  const envAddr = (import.meta as any).env?.VITE_AVAX_GUARD_ADDRESS
+  if (envAddr && envAddr.startsWith('0x') && envAddr.length === 42) {
+    return validateAddressOrThrow(envAddr, 'ENV_CONTRACT_ADDRESS')
+  }
+  return '0x4311300000000000000000000000000000000001'
+}
+
+export function setAvaxGuardAddress(addr: string): void {
+  const verified = validateAddressOrThrow(addr, 'DEPLOYED_CONTRACT_ADDRESS')
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(LOCAL_STORAGE_CONTRACT_KEY, verified)
+  }
+}
+
+export const AVAX_GUARD_ADDRESS = getAvaxGuardAddress()
+export const AVAX_GUARD_ABI = AvaxGuardMeta.abi
+export const AVAX_GUARD_BYTECODE: string =
+  (AvaxGuardMeta as any).bytecode?.object || (AvaxGuardMeta as any).bytecode || ''
+
+// Deterministic EIP-55 Checksummed EVM Addresses for Demo (Validated Fail-Closed at Module Load)
 export const DEMO_ADDRESSES = {
-  // Scoped Agent Wallet (Holds dedicated signing key and tiny gas)
-  AGENT: '0x888888cF1046e68E36E1AA2E0E07105EdDd1F08F',
+  // Scoped Agent Wallet Fallback
+  AGENT: validateAddressOrThrow('0x888888cf1046e68E36e1aa2E0E07105EDDd1f08F', 'AGENT'),
   // Authorized Premium Data Merchant
-  MERCHANT: '0x12aB34cD56eF78aB90cD1234567890aBcDeF1234',
+  MERCHANT: validateAddressOrThrow('0x12ab34CD56ef78AB90cd1234567890aBcDeF1234', 'MERCHANT'),
   // Simulated Attacker Target Address (For Prompt Injection Defense Scene)
-  ATTACKER: '0x93fc18bA40c72D8523A7aFe9E766D77994A1221A'
+  ATTACKER: validateAddressOrThrow('0x93FC18Ba40C72D8523A7AFe9e766d77994A1221A', 'ATTACKER')
 }
 
 // BlockReason Enum matching AvaxGuard.sol (compatible with erasableSyntaxOnly)
