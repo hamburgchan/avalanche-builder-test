@@ -344,8 +344,7 @@
       padding: 18px 32px;
       border-radius: 14px;
       border: 1px solid var(--border-subtle);
-      cursor: not-allowed;
-      opacity: 0.5;
+      transition: opacity 150ms ease, border-color 150ms ease;
     }
 
     /* Bottom Status Bar */
@@ -632,7 +631,7 @@
                 BLOCKED ON-CHAIN 🛡️
               </div>
               <div style="font-size: 15px; color: var(--text-dim); margin-top: 8px;">
-                Fuji contract rejects the spend. Zero unauthorized funds transferred.
+                Transaction accepted on Fuji. Unauthorized value transfer blocked by AvaFence.
               </div>
             </div>
           </div>
@@ -643,7 +642,7 @@
             Small payment ≠ Safe payment.
           </div>
           <div style="font-size: 26px; font-weight: 800; color: var(--avax-red);">
-            The model can be manipulated. The fence cannot.
+            The model can be tricked. The rules still hold.
           </div>
         </div>
       </div>
@@ -708,7 +707,7 @@
             <span>OPEN LIVE DEMO</span>
             <span style="font-size: 24px;">↗</span>
           </button>
-          <button class="btn-secondary" title="Backup video not configured">
+          <button id="btn-backup-demo" class="btn-secondary" title="Backup video not configured">
             <span>PLAY BACKUP DEMO</span>
             <span>▷</span>
           </button>
@@ -749,7 +748,7 @@
               <div style="font-size: 14px; font-weight: 700; color: var(--system-cyan); text-transform: uppercase; margin-bottom: 8px;">03</div>
               <div style="font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 12px;">VERIFIABLE EXECUTION</div>
               <div style="font-size: 18px; color: var(--text-muted); line-height: 1.5;">
-                On-chain transparency. Humans, agents, and merchants can verify every decision.
+                On-chain transparency. Humans, agents, and merchants can verify policy state and payment outcomes.
               </div>
             </div>
           </div>
@@ -800,8 +799,8 @@
 
         <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-subtle); padding-top: 18px; font-size: 15px; color: var(--text-dim);">
           <div>Avalanche Builder Day 2026 @ Shenzhen</div>
-          <div>Contract: <code style="color: var(--system-cyan);">0xB6379ce69E73cC6d20E5284D14386F4fBF8Ed770</code></div>
-          <div>GitHub: <code style="color: #fff;">hamburgchan/avalanche-builder-test</code></div>
+          <div>Contract: <code id="cfg-contract-display" style="color: var(--system-cyan);"></code></div>
+          <div>GitHub: <code id="cfg-github-display" style="color: #fff;"></code></div>
         </div>
       </div>
 
@@ -835,11 +834,22 @@
   </div>
 
   <script>
-    // Configuration
-    const DEMO_URL = "http://localhost:5173";
-    const BACKUP_DEMO_URL = "";
+    // =========================================================================
+    // CONFIGURATION (Centralized URLs & Addresses - DO NOT DUPLICATE IN MARKUP)
+    // =========================================================================
+    const CONFIG = {
+      demoUrl: "http://localhost:5173",
+      localDemoUrl: "http://localhost:5173",
+      backupDemoUrl: "", // Set recorded video/demo URL here when ready to enable backup button
+      contractAddress: "0xB6379ce69E73cC6d20E5284D14386F4fBF8Ed770",
+      githubUrl: "https://github.com/hamburgchan/avalanche-builder-test"
+    };
 
-    // 7-Slide Speaker Notes Data (Short, simple sentences <= 12 words)
+    // =========================================================================
+    // SPEAKER TELEPROMPTER NOTES
+    // CAUTION: Do not enable Speaker Notes on the projected screen during pitch!
+    // Use 'N' key only for private rehearsal or on an un-mirrored presenter display.
+    // =========================================================================
     const SPEAKER_NOTES = [
       {
         en: [
@@ -879,9 +889,9 @@
           "A small wallet limits how much you lose.",
           "It does not control where money goes.",
           "Small payment does not mean safe payment.",
-          "The model can be manipulated. The fence cannot."
+          "The model can be tricked. The rules still hold."
         ],
-        zh: "反击常见认知。指出小额钱包管不住去向。强调金句：“The model can be manipulated. The fence cannot.”"
+        zh: "反击常见认知。指出小额钱包管不住去向。强调金句：“The model can be tricked. The rules still hold.”"
       },
       {
         en: [
@@ -933,7 +943,37 @@
     }
 
     window.addEventListener("resize", scaleViewport);
-    window.addEventListener("DOMContentLoaded", scaleViewport);
+    window.addEventListener("DOMContentLoaded", () => {
+      scaleViewport();
+      initConfigBindings();
+      updateSpeakerNotes();
+    });
+
+    // Centralized Config Binding to DOM
+    function initConfigBindings() {
+      const contractEl = document.getElementById("cfg-contract-display");
+      if (contractEl) contractEl.innerText = CONFIG.contractAddress;
+
+      const githubEl = document.getElementById("cfg-github-display");
+      if (githubEl) githubEl.innerText = CONFIG.githubUrl.replace("https://github.com/", "");
+
+      const backupBtn = document.getElementById("btn-backup-demo");
+      if (backupBtn) {
+        if (CONFIG.backupDemoUrl && CONFIG.backupDemoUrl.trim() !== "") {
+          backupBtn.style.cursor = "pointer";
+          backupBtn.style.opacity = "1";
+          backupBtn.title = "Play recorded backup demo";
+          backupBtn.onclick = () => window.open(CONFIG.backupDemoUrl, "_blank");
+        } else {
+          backupBtn.style.cursor = "not-allowed";
+          backupBtn.style.opacity = "0.5";
+          backupBtn.title = "Backup video not configured";
+          backupBtn.onclick = () => {
+            alert("Backup demo video URL is not configured yet in presentation.html (CONFIG.backupDemoUrl).");
+          };
+        }
+      }
+    }
 
     // Slide Navigation
     function goToSlide(slideNum) {
@@ -989,9 +1029,10 @@
       }
     }
 
-    // Open Live Demo in new tab
+    // Open Live Demo in new tab using CONFIG
     function openLiveDemo() {
-      window.open(DEMO_URL, "_blank");
+      const url = CONFIG.demoUrl || CONFIG.localDemoUrl;
+      window.open(url, "_blank");
     }
 
     // Keyboard Shortcuts
@@ -1013,10 +1054,6 @@
         toggleSpeakerNotes();
       }
     });
-
-    // Initialize
-    updateSpeakerNotes();
-    scaleViewport();
   </script>
 </body>
 </html>
