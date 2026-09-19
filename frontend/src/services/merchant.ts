@@ -1,9 +1,10 @@
 import { ethers } from 'ethers'
-import { AVAX_GUARD_ADDRESS, AVAX_GUARD_ABI, DEMO_ADDRESSES } from '../config/avalanche'
+import { getAvaxGuardAddress, AVAX_GUARD_ABI, DEMO_ADDRESSES } from '../config/avalanche'
 
 export interface FulfillmentResult {
   success: boolean
   message: string
+  disclaimer?: string
   dataset?: {
     asset: string
     timestamp: string
@@ -16,6 +17,7 @@ export interface FulfillmentResult {
 }
 
 class MerchantFulfillmentService {
+  // In-memory client-side replay tracker for hackathon demo
   private usedTxHashes: Set<string> = new Set()
   private iface: ethers.Interface = new ethers.Interface(AVAX_GUARD_ABI)
 
@@ -24,41 +26,66 @@ class MerchantFulfillmentService {
     requestId: string,
     expectedAgent: string,
     expectedPriceWei: bigint,
-    provider: ethers.BrowserProvider | ethers.JsonRpcProvider
+    provider: ethers.BrowserProvider | ethers.JsonRpcProvider,
+    customGuardAddress?: string
   ): Promise<FulfillmentResult> {
+    const targetGuard = (customGuardAddress || getAvaxGuardAddress()).toLowerCase()
     const normalizedTx = txHash.toLowerCase()
 
-    // Anti-replay check
+    // 0. Anti-replay check
     if (this.usedTxHashes.has(normalizedTx)) {
       return {
         success: false,
-        message: 'Replay detected: Transaction hash already consumed.'
+        message: 'Replay rejected: Transaction hash already consumed by merchant service.',
+        disclaimer: 'Client-side merchant verifier demo — not production persistent replay protection'
       }
     }
 
     try {
+      // 1. Verify Network Chain ID == 43113 (Fuji)
+      const network = await provider.getNetwork()
+      if (Number(network.chainId) !== 43113) {
+        return {
+          success: false,
+          message: `Network mismatch: ChainId ${network.chainId} is not Avalanche Fuji (43113).`,
+          disclaimer: 'Client-side merchant verifier demo — not production persistent replay protection'
+        }
+      }
+
+      // 2. Fetch Transaction Receipt
       const receipt = await provider.getTransactionReceipt(normalizedTx)
       if (!receipt) {
-        return { success: false, message: 'Transaction receipt not found.' }
+        return {
+          success: false,
+          message: 'Transaction receipt not found on Avalanche Fuji.',
+          disclaimer: 'Client-side merchant verifier demo — not production persistent replay protection'
+        }
       }
 
-      // 1. Receipt Status must be 1
+      // 3. Receipt Status must be 1 (Success)
       if (receipt.status !== 1) {
-        return { success: false, message: 'Transaction execution reverted on chain.' }
+        return {
+          success: false,
+          message: 'Transaction execution reverted or failed on-chain.',
+          disclaimer: 'Client-side merchant verifier demo — not production persistent replay protection'
+        }
       }
 
-      // 2. Receipt TO must match AvaxGuard contract address
-      if (receipt.to?.toLowerCase() !== AVAX_GUARD_ADDRESS.toLowerCase()) {
-        return { success: false, message: 'Invalid target contract: receipt.to mismatch.' }
+      // 4. Receipt TO must match AvaxGuard contract address
+      if (receipt.to?.toLowerCase() !== targetGuard) {
+        return {
+          success: false,
+          message: `Target contract mismatch: receipt.to (${receipt.to}) != AvaxGuard (${targetGuard}).`,
+          disclaimer: 'Client-side merchant verifier demo — not production persistent replay protection'
+        }
       }
 
-      // 3. Search for PaymentExecuted event emitted by AvaxGuard
+      // 5. Search for PaymentExecuted event emitted strictly by AvaxGuard
       let paymentEventFound = false
       let paidAmount = 0n
 
       for (const log of receipt.logs) {
-        // Critical PATCH 3: verify log.address is AvaxGuard
-        if (log.address.toLowerCase() !== AVAX_GUARD_ADDRESS.toLowerCase()) {
+        if (log.address.toLowerCase() !== targetGuard) {
           continue
         }
 
@@ -74,7 +101,7 @@ class MerchantFulfillmentService {
             const eventRequestId = parsed.args[2]
             const eventAmount = BigInt(parsed.args[4])
 
-            // Validate all event attributes
+            // Validate all event attributes against spend intent
             if (
               eventAgent === expectedAgent.toLowerCase() &&
               eventRecipient === DEMO_ADDRESSES.MERCHANT.toLowerCase() &&
@@ -86,7 +113,7 @@ class MerchantFulfillmentService {
               break
             }
           }
-        } catch (e) {
+        } catch {
           // not this event, keep scanning
         }
       }
@@ -94,7 +121,8 @@ class MerchantFulfillmentService {
       if (!paymentEventFound) {
         return {
           success: false,
-          message: 'Payment verification failed: No valid PaymentExecuted log matching criteria.'
+          message: 'Payment verification failed: No valid PaymentExecuted log matching criteria.',
+          disclaimer: 'Client-side merchant verifier demo — not production persistent replay protection'
         }
       }
 
@@ -104,21 +132,23 @@ class MerchantFulfillmentService {
       // Return fulfilled protected premium dataset
       return {
         success: true,
-        message: 'Release protected premium dataset after payment verification.',
+        message: 'Mock Premium Dataset released after REAL on-chain payment verification.',
+        disclaimer: 'Client-side merchant verifier demo — not production persistent replay protection',
         dataset: {
-          asset: 'AVAX/USDT (Avalanche C-Chain)',
+          asset: 'AVAX/USDT (Mock Orderbook Depth)',
           timestamp: new Date().toISOString(),
           bestBid: 28.45,
           bestAsk: 28.48,
-          liquidityScore: 'AAA+ (98.4/100)',
-          sentimentIndicator: 'Strong Institutional Inflow (Bullish Divergence)',
-          institutionalFlows: `+184,200 AVAX Net Inflow verified across Fuji & Mainnet telemetry. Paid: ${ethers.formatEther(paidAmount)} AVAX`
+          liquidityScore: 'Sample Liquidity Matrix',
+          sentimentIndicator: 'Sample Market Depth Profile',
+          institutionalFlows: `Mock premium dataset delivered upon receipt verification. On-chain Payment Verified: ${ethers.formatEther(paidAmount)} AVAX`
         }
       }
     } catch (err: any) {
       return {
         success: false,
-        message: `Verification exception: ${err.message || err}`
+        message: `Verification exception: ${err.message || err}`,
+        disclaimer: 'Client-side merchant verifier demo — not production persistent replay protection'
       }
     }
   }

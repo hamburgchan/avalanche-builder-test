@@ -24,10 +24,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Run Foundry Smart Contract Tests
+        run: |
+          cd contracts
+          forge test --match-contract AvaxGuardTest -vv
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
+
 
       - name: Install Frontend Dependencies
         run: |

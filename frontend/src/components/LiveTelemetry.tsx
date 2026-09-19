@@ -8,6 +8,7 @@ export interface TelemetryData {
   blockNumber: number | null
   gasUsed: string | null
   observedLatencyMs: number | null
+  latencySource?: 'WSS' | 'POLLING' | 'TIMEOUT'
   unauthorizedTransfer: string
   networkGasCost: string
 }
@@ -74,7 +75,9 @@ export const LiveTelemetry: React.FC<LiveTelemetryProps> = ({ telemetry }) => {
         </div>
         <div className="text-right text-[10px] text-slate-400">
           <div>Sub-Second Finality</div>
-          <div className="text-emerald-400 font-semibold mt-0.5">WSS Tracked</div>
+          <div className="text-emerald-400 font-semibold mt-0.5">
+            {telemetry.latencySource ? `${telemetry.latencySource} Tracked` : 'WSS / Polling'}
+          </div>
         </div>
       </div>
 

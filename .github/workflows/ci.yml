@@ -1,0 +1,40 @@
+name: CI (Contracts & Frontend)
+
+on:
+  push:
+    branches:
+      - main
+      - builder-day-live
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Foundry Toolchain
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Run Foundry Contract Unit Tests
+        run: |
+          cd contracts
+          forge test --match-contract AvaxGuardTest -vv
+
+      - name: Setup Bun Runtime
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install Frontend Dependencies
+        run: |
+          cd frontend
+          bun install
+
+      - name: Build Frontend Production Bundle
+        run: |
+          cd frontend
+          bun run build

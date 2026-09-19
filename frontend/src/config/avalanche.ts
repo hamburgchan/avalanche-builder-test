@@ -1,4 +1,14 @@
+import { ethers } from 'ethers'
 import AvaxGuardMeta from '../contracts/AvaxGuard.json'
+
+// Address validator enforcing strict EIP-55 checksum validation (Fail-Closed)
+export function validateAddressOrThrow(addr: string, label: string): string {
+  try {
+    return ethers.getAddress(addr)
+  } catch (err: any) {
+    throw new Error(`[Address Checksum Failure] Invalid EIP-55 address for ${label}: "${addr}". ${err.message}`)
+  }
+}
 
 export const FUJI_CHAIN_CONFIG = {
   chainId: '0xa869', // 43113 in hex
@@ -10,25 +20,78 @@ export const FUJI_CHAIN_CONFIG = {
     decimals: 18,
   },
   rpcUrls: [
-    'https://api.avax-test.network/ext/bc/C/rpc',
-    'https://avalanche-fuji-c-chain-rpc.publicnode.com'
+    'https://avalanche-fuji-c-chain-rpc.publicnode.com',
+    'https://api.avax-test.network/ext/bc/C/rpc'
   ],
   blockExplorerUrls: ['https://testnet.snowtrace.io/'],
   wsUrl: 'wss://api.avax-test.network/ext/bc/C/ws'
 }
 
-// AvaxGuard Contract Address on Fuji (Updated upon deployment)
-export const AVAX_GUARD_ADDRESS = (import.meta as any).env?.VITE_AVAX_GUARD_ADDRESS || '0x4311300000000000000000000000000000000001'
-export const AVAX_GUARD_ABI = AvaxGuardMeta.abi
+// AvaxGuard Contract Address on Fuji (Updated upon deployment or local override)
+const LOCAL_STORAGE_CONTRACT_KEY = 'AVAX_GUARD_ADDRESS_OVERRIDE'
 
-// Deterministic Checksummed EVM Addresses for Demo (All valid 20-byte addresses)
+export function getAvaxGuardAddress(): string {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem(LOCAL_STORAGE_CONTRACT_KEY)
+    if (saved && saved.startsWith('0x') && saved.length === 42) {
+      return validateAddressOrThrow(saved, 'SAVED_CONTRACT_ADDRESS')
+    }
+  }
+  const envAddr = (import.meta as any).env?.VITE_AVAX_GUARD_ADDRESS
+  if (envAddr && envAddr.startsWith('0x') && envAddr.length === 42) {
+    return validateAddressOrThrow(envAddr, 'ENV_CONTRACT_ADDRESS')
+  }
+  return '0xB6379ce69E73cC6d20E5284D14386F4fBF8Ed770'
+}
+
+export function setAvaxGuardAddress(addr: string): void {
+  const verified = validateAddressOrThrow(addr, 'DEPLOYED_CONTRACT_ADDRESS')
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(LOCAL_STORAGE_CONTRACT_KEY, verified)
+  }
+}
+
+export const AVAX_GUARD_ADDRESS = getAvaxGuardAddress()
+export const AVAX_GUARD_ABI = AvaxGuardMeta.abi
+export const AVAX_GUARD_BYTECODE: string =
+  (AvaxGuardMeta as any).bytecode?.object || (AvaxGuardMeta as any).bytecode || ''
+
+// Deterministic EIP-55 Checksummed EVM Addresses for Demo (Validated Fail-Closed at Module Load)
 export const DEMO_ADDRESSES = {
-  // Scoped Agent Wallet (Holds dedicated signing key and tiny gas)
-  AGENT: '0x888888cF1046e68E36E1AA2E0E07105EdDd1F08F',
-  // Authorized Premium Data Merchant
-  MERCHANT: '0x12aB34cD56eF78aB90cD1234567890aBcDeF1234',
-  // Simulated Attacker Target Address (For Prompt Injection Defense Scene)
-  ATTACKER: '0x93fc18bA40c72D8523A7aFe9E766D77994A1221A'
+  // Scoped Agent Wallet Fallback
+  AGENT: validateAddressOrThrow('0x82fF1466015f208dB33e4E198e529b03f6fa1A51', 'AGENT'),
+  // Real Dedicated Merchant Wallet on Fuji (Trackable before/after balance)
+  MERCHANT: validateAddressOrThrow('0x0D54D5f550e357D5314bf90f178101402BFd3348', 'MERCHANT'),
+  // Dedicated Simulated Attacker Address on Fuji (0.0 balance, not in allowlist)
+  ATTACKER: validateAddressOrThrow('0xA2B13aE961DE511D9897Ce99a6B5d273DB77B5dD', 'ATTACKER')
+}
+
+/**
+ * Strict Fuji Chain Guard: enforces chainId == 43113 before any on-chain operation
+ * Uses in-memory eth_chainId to bypass MetaMask remote RPC blockNumber errors (-32002)
+ */
+export async function assertFujiNetwork(provider?: ethers.Provider): Promise<void> {
+  if (typeof window !== 'undefined' && (window as any).ethereum) {
+    try {
+      const hexChainId = await (window as any).ethereum.request({ method: 'eth_chainId' })
+      const currentId = parseInt(hexChainId, 16)
+      if (currentId !== 43113) {
+        const switched = await switchToFuji()
+        if (!switched) {
+          throw new Error(`Wrong network: Chain ID ${currentId}. Please switch to Avalanche Fuji Testnet (Chain ID 43113 / 0xa869).`)
+        }
+      }
+      return
+    } catch (e: any) {
+      if (e.message?.includes('Wrong network')) throw e
+    }
+  }
+  if (provider) {
+    const network = await provider.getNetwork()
+    if (Number(network.chainId) !== 43113) {
+      throw new Error(`Wrong network: Chain ID ${network.chainId}. Please switch to Avalanche Fuji Testnet (Chain ID 43113).`)
+    }
+  }
 }
 
 // BlockReason Enum matching AvaxGuard.sol (compatible with erasableSyntaxOnly)
@@ -126,6 +189,21 @@ export async function switchToFuji(): Promise<boolean> {
       }
     }
     console.error('Failed to switch to Fuji network:', switchError)
+    return false
+  }
+}
+
+export async function updateFujiRpcInMetaMask(): Promise<boolean> {
+  const ethereum = (window as any).ethereum
+  if (!ethereum) return false
+  try {
+    await ethereum.request({
+      method: 'wallet_addEthereumChain',
+      params: [FUJI_CHAIN_CONFIG],
+    })
+    return true
+  } catch (err) {
+    console.error('Failed to update Fuji RPC in MetaMask:', err)
     return false
   }
 }
