@@ -20,8 +20,8 @@ export const FUJI_CHAIN_CONFIG = {
     decimals: 18,
   },
   rpcUrls: [
-    'https://api.avax-test.network/ext/bc/C/rpc',
-    'https://avalanche-fuji-c-chain-rpc.publicnode.com'
+    'https://avalanche-fuji-c-chain-rpc.publicnode.com',
+    'https://api.avax-test.network/ext/bc/C/rpc'
   ],
   blockExplorerUrls: ['https://testnet.snowtrace.io/'],
   wsUrl: 'wss://api.avax-test.network/ext/bc/C/ws'
@@ -189,6 +189,21 @@ export async function switchToFuji(): Promise<boolean> {
       }
     }
     console.error('Failed to switch to Fuji network:', switchError)
+    return false
+  }
+}
+
+export async function updateFujiRpcInMetaMask(): Promise<boolean> {
+  const ethereum = (window as any).ethereum
+  if (!ethereum) return false
+  try {
+    await ethereum.request({
+      method: 'wallet_addEthereumChain',
+      params: [FUJI_CHAIN_CONFIG],
+    })
+    return true
+  } catch (err) {
+    console.error('Failed to update Fuji RPC in MetaMask:', err)
     return false
   }
 }

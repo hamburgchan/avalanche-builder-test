@@ -12,7 +12,7 @@ import {
   RefreshCw,
   Fuel
 } from 'lucide-react'
-import { DEMO_ADDRESSES } from '../config/avalanche'
+import { DEMO_ADDRESSES, updateFujiRpcInMetaMask } from '../config/avalanche'
 
 export interface PolicyState {
   owner: string
@@ -117,6 +117,20 @@ export const PolicyConsole: React.FC<PolicyConsoleProps> = ({
           >
             <Zap className="w-3.5 h-3.5" />
             <span>{isDeployingContract ? 'Deploying to Fuji...' : 'Deploy AvaxGuard Contract (via MetaMask)'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={async () => {
+              const ok = await updateFujiRpcInMetaMask()
+              if (ok) {
+                alert('MetaMask Fuji network switched to PublicNode RPC (no rate limits)!')
+              }
+            }}
+            className="w-full py-1.5 px-3 rounded-lg text-[11px] font-mono font-medium text-cyan-300 bg-cyan-950/60 border border-cyan-500/40 hover:bg-cyan-900/60 transition flex items-center justify-center space-x-1.5 cursor-pointer"
+          >
+            <RefreshCw className="w-3 h-3" />
+            <span>Switch MetaMask to Fuji PublicNode (Fix -32002)</span>
           </button>
 
           {/* Or bind existing address */}
