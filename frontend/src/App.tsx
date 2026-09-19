@@ -419,6 +419,17 @@ VERIFIED (${code.length} bytes)
       const maxTxWei = ethers.parseEther(maxTx)
       const dailyWei = ethers.parseEther(daily)
 
+      // Pre-check on-chain rule: One Agent = One Policy Lifecycle
+      const contractCheck = new ethers.Contract(contractAddress, AVAX_GUARD_ABI, fujiRpc)
+      const isAlreadyUsed = await contractCheck.agentEverBound(agentWallet.address).catch(() => false)
+      if (isAlreadyUsed) {
+        const newW = createNewAgentWallet()
+        setAgentWallet(newW)
+        alert(`Safety Rule Triggered: Current Agent was already used in a previous policy lifecycle.\n\nAvaxGuard enforces strict 'One Agent = One Policy Lifecycle'.\n\nA fresh Agent (${newW.address}) has been generated!\n\nPlease click 'Fund Agent Gas (0.005 AVAX)' first, then click 'Create Spending Policy'.`)
+        setIsCreatingPolicy(false)
+        return
+      }
+
       const iface = new ethers.Interface(AVAX_GUARD_ABI)
       const callData = iface.encodeFunctionData('createPolicy', [
         agentWallet.address,

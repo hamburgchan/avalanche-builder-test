@@ -25,9 +25,27 @@
 ## 2. Participant Addresses (Real EVM Validated)
 
 - **Human Owner Wallet**: `0x7F762778eaEAfe5b6b6647179419452e07f4c5Ce` (Holds delegated budget)
-- **Agent Scoped Wallet**: `0x82fF1466015f208dB33e4E198e529b03f6fa1A51` (Holds signing key & gas)
+- **Agent Scoped Wallet**: `0x6ad50e7117c838c720c27d20247232f27bfcc1d7` (Holds signing key & gas)
 - **Authorized Merchant**: `0x0D54D5f550e357D5314bf90f178101402BFd3348` (Tracked before/after balance)
 - **Simulated Attacker**: `0xA2B13aE961DE511D9897Ce99a6B5d273DB77B5dD` (Unauthorized recipient)
+
+---
+
+## 2.1 Policy Setup & Agent Binding (PolicyCreated)
+
+- **Status**: `VERIFIED & EXECUTED (100% On-Chain)`
+- **Transaction Hash**: `0xd46ed3bf9e58e1c4b7e4c2414775e110eb72093bd7de6c91461cc60dcc7b25cd`
+- **Snowtrace URL**: [https://testnet.snowtrace.io/tx/0xd46ed3bf9e58e1c4b7e4c2414775e110eb72093bd7de6c91461cc60dcc7b25cd](https://testnet.snowtrace.io/tx/0xd46ed3bf9e58e1c4b7e4c2414775e110eb72093bd7de6c91461cc60dcc7b25cd)
+- **Block Number**: `58476751`
+- **Gas Used**: `304,888`
+- **Receipt Status**: `1 (Success)`
+- **Delegated Budget**: `0.02 AVAX`
+- **Max Per Tx**: `0.003 AVAX`
+- **Daily Limit**: `0.01 AVAX`
+- **Duration**: `3600 seconds`
+- **Bound Agent**: `0x6ad50e7117c838c720c27d20247232f27bfcc1d7`
+- **Allowlisted Merchant**: `0x0D54D5f550e357D5314bf90f178101402BFd3348`
+- **Decoded Events**: `PolicyCreated`, `MerchantAllowlistUpdated`
 
 ---
 
@@ -35,19 +53,17 @@
 
 - **Status**: `VERIFIED & EXECUTED (100% On-Chain)`
 - **Spend Intent**: Avalanche High-Resolution Orderbook API (0.002 AVAX <= 0.003 MaxPerTx)
-- **Transaction Hash**: `0x195256d805f6be8fd26c5643d56f72c5d498738eae0ea0a9326b3164e62962bb`
-- **Snowtrace URL**: [https://testnet.snowtrace.io/tx/0x195256d805f6be8fd26c5643d56f72c5d498738eae0ea0a9326b3164e62962bb](https://testnet.snowtrace.io/tx/0x195256d805f6be8fd26c5643d56f72c5d498738eae0ea0a9326b3164e62962bb)
-- **Block Number**: `58476663`
+- **Transaction Hash**: `0xefbff0a69c9888d68a6415e046ed7d664e1406878f40170fd38dcaa2df1378a7`
+- **Snowtrace URL**: [https://testnet.snowtrace.io/tx/0xefbff0a69c9888d68a6415e046ed7d664e1406878f40170fd38dcaa2df1378a7](https://testnet.snowtrace.io/tx/0xefbff0a69c9888d68a6415e046ed7d664e1406878f40170fd38dcaa2df1378a7)
+- **Block Number**: `58476762`
 - **Receipt Status**: `1 (Success)`
-- **Decoded Event**: `PaymentExecuted(agent: 0x82fF1466015f208dB33e4E198e529b03f6fa1A51, recipient: 0x0D54D5f550e357D5314bf90f178101402BFd3348, requestId: 0x...01, owner: 0x7F76..., amount: 0.002 AVAX, remainingBudget: 0.018 AVAX)`
-- **Agent Address**: `0x82fF1466015f208dB33e4E198e529b03f6fa1A51`
+- **Decoded Event**: `PaymentExecuted(agent: 0x6ad50e7117c838c720c27d20247232f27bfcc1d7, recipient: 0x0D54D5f550e357D5314bf90f178101402BFd3348, amount: 0.002 AVAX, remainingBudget: 0.018 AVAX)`
+- **Agent Address**: `0x6ad50e7117c838c720c27d20247232f27bfcc1d7`
 - **Merchant Recipient**: `0x0D54D5f550e357D5314bf90f178101402BFd3348`
 - **Payment Amount**: `0.002 AVAX`
-- **Merchant Balance Before**: `0.0 AVAX`
-- **Merchant Balance After**: `0.002 AVAX`
-- **Merchant Balance Delta**: `+0.002 AVAX (VERIFIED)`
+- **Merchant Balance Delta**: `+0.002 AVAX (VERIFIED on Fuji)`
 - **Remaining Policy Budget**: `0.018 AVAX (0.02 - 0.002)`
-- **Gas Used**: `132,372`
+- **Gas Used**: `107,744`
 - **Merchant Verification**: `VERIFIED (Receipt verified & Mock Premium Dataset released)`
 
 ---
@@ -56,15 +72,15 @@
 
 - **Status**: `VERIFIED & DEFENDED (100% On-Chain)`
 - **Spend Intent**: Institutional High-Frequency Dataset (0.010 AVAX > 0.003 MaxPerTx)
-- **Transaction Hash**: `0x24f5e95fb337aae1a510765964410641259041118b915621b5a40907264f75df`
-- **Snowtrace URL**: [https://testnet.snowtrace.io/tx/0x24f5e95fb337aae1a510765964410641259041118b915621b5a40907264f75df](https://testnet.snowtrace.io/tx/0x24f5e95fb337aae1a510765964410641259041118b915621b5a40907264f75df)
-- **Block Number**: `58476668`
+- **Transaction Hash**: `0xe6c790834d26d9af0b81251376e95cfacec77fe82211553664b56592bb480020`
+- **Snowtrace URL**: [https://testnet.snowtrace.io/tx/0xe6c790834d26d9af0b81251376e95cfacec77fe82211553664b56592bb480020](https://testnet.snowtrace.io/tx/0xe6c790834d26d9af0b81251376e95cfacec77fe82211553664b56592bb480020)
+- **Block Number**: `58476771`
 - **Receipt Status**: `1 (Success - Call Recorded, Payment Blocked)`
-- **Decoded Event**: `PaymentBlocked(agent, recipient, requestId: 0x...02, owner, amount: 0.010 AVAX, reason: PER_TX_LIMIT_EXCEEDED)`
+- **Decoded Event**: `PaymentBlocked(agent, recipient, owner, amount: 0.010 AVAX, reason: PER_TX_LIMIT_EXCEEDED)`
 - **Block Reason**: `PER_TX_LIMIT_EXCEEDED (5)`
 - **Unauthorized Value Transfer**: `0 AVAX (Human Capital 100% Protected)`
 - **Merchant Balance Delta**: `0 AVAX`
-- **Network Gas Paid by Agent**: `44,728`
+- **Network Gas Paid by Agent**: `45,100`
 - **Remaining Policy Budget**: `0.018 AVAX (UNTOUCHED)`
 
 ---
@@ -74,15 +90,15 @@
 - **Status**: `VERIFIED & DEFENDED (100% On-Chain)`
 - **Spend Intent**: Prompt Injection Induced Transfer to Attacker (0.001 AVAX)
 - **Target Recipient**: `0xA2B13aE961DE511D9897Ce99a6B5d273DB77B5dD` (Unauthorized Attacker)
-- **Transaction Hash**: `0x09757f4a1e77a6a054c05cf8021372e99ec7f187eacc5e0de6f818363e322c16`
-- **Snowtrace URL**: [https://testnet.snowtrace.io/tx/0x09757f4a1e77a6a054c05cf8021372e99ec7f187eacc5e0de6f818363e322c16](https://testnet.snowtrace.io/tx/0x09757f4a1e77a6a054c05cf8021372e99ec7f187eacc5e0de6f818363e322c16)
-- **Block Number**: `58476673`
+- **Transaction Hash**: `0x9a2e7f67788bbc4c754340974adb0dd206ed298cc21405a9ed2dec41fcc9c2d9`
+- **Snowtrace URL**: [https://testnet.snowtrace.io/tx/0x9a2e7f67788bbc4c754340974adb0dd206ed298cc21405a9ed2dec41fcc9c2d9](https://testnet.snowtrace.io/tx/0x9a2e7f67788bbc4c754340974adb0dd206ed298cc21405a9ed2dec41fcc9c2d9)
+- **Block Number**: `58476773`
 - **Receipt Status**: `1 (Success - Call Recorded, Payment Blocked)`
-- **Decoded Event**: `PaymentBlocked(agent, recipient: 0xA2B13aE961DE511D9897Ce99a6B5d273DB77B5dD, requestId: 0x...03, owner, amount: 0.001 AVAX, reason: MERCHANT_NOT_ALLOWED)`
+- **Decoded Event**: `PaymentBlocked(agent, recipient: 0xA2B13aE961DE511D9897Ce99a6B5d273DB77B5dD, owner, amount: 0.001 AVAX, reason: MERCHANT_NOT_ALLOWED)`
 - **Block Reason**: `MERCHANT_NOT_ALLOWED (4)`
 - **Attacker Received**: `0 AVAX (Protected)`
 - **Unauthorized Value Transfer**: `0 AVAX`
-- **Network Gas Paid by Agent**: `42,586`
+- **Network Gas Paid by Agent**: `42,958`
 
 ---
 

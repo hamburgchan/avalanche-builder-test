@@ -258,6 +258,17 @@ export const PolicyConsole: React.FC<PolicyConsoleProps> = ({
             {policy ? policy.agent : agentAddress}
           </div>
 
+          {!policy?.active && (
+            <button
+              type="button"
+              onClick={onResetAgent}
+              className="w-full mt-1 py-1 px-2 rounded bg-slate-800 hover:bg-slate-700 text-cyan-300 text-[10px] font-mono flex items-center justify-center space-x-1 cursor-pointer border border-cyan-500/20"
+            >
+              <RefreshCw className="w-3 h-3" />
+              <span>Generate Fresh Agent Wallet (New Lifecycle)</span>
+            </button>
+          )}
+
           {/* Fund Agent Gas button if low */}
           {agentGasLow && (
             <button
