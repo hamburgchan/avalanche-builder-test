@@ -369,13 +369,17 @@ VERIFIED (${code.length} bytes)
     try {
       await assertFujiNetwork(provider)
       const fujiRpc = new ethers.JsonRpcProvider(FUJI_CHAIN_CONFIG.rpcUrls[0], 43113, { staticNetwork: true })
+      const feeData = await fujiRpc.getFeeData().catch(() => ({ gasPrice: 25000000000n }))
+      const gasPriceHex = '0x' + ((feeData.gasPrice || 25000000000n) * 120n / 100n).toString(16)
+
       const txHash: string = await (window as any).ethereum.request({
         method: 'eth_sendTransaction',
         params: [{
           from: account,
           to: agentWallet.address,
           value: '0x' + ethers.parseEther('0.005').toString(16),
-          gas: '0x7530'
+          gas: '0x7530',
+          gasPrice: gasPriceHex
         }]
       })
       await fujiRpc.waitForTransaction(txHash, 1, 30000)
@@ -413,6 +417,9 @@ VERIFIED (${code.length} bytes)
     try {
       await assertFujiNetwork(provider)
       const fujiRpc = new ethers.JsonRpcProvider(FUJI_CHAIN_CONFIG.rpcUrls[0], 43113, { staticNetwork: true })
+      const feeData = await fujiRpc.getFeeData().catch(() => ({ gasPrice: 25000000000n }))
+      const gasPriceHex = '0x' + ((feeData.gasPrice || 25000000000n) * 120n / 100n).toString(16)
+
       const budgetWei = ethers.parseEther(budget)
       const maxTxWei = ethers.parseEther(maxTx)
       const dailyWei = ethers.parseEther(daily)
@@ -433,7 +440,8 @@ VERIFIED (${code.length} bytes)
           to: contractAddress,
           data: callData,
           value: '0x' + budgetWei.toString(16),
-          gas: '0x6ddd0' // 450,000 gas
+          gas: '0x6ddd0', // 450,000 gas
+          gasPrice: gasPriceHex
         }]
       })
       await fujiRpc.waitForTransaction(txHash, 1, 30000)
@@ -455,6 +463,9 @@ VERIFIED (${code.length} bytes)
     try {
       await assertFujiNetwork(provider)
       const fujiRpc = new ethers.JsonRpcProvider(FUJI_CHAIN_CONFIG.rpcUrls[0], 43113, { staticNetwork: true })
+      const feeData = await fujiRpc.getFeeData().catch(() => ({ gasPrice: 25000000000n }))
+      const gasPriceHex = '0x' + ((feeData.gasPrice || 25000000000n) * 120n / 100n).toString(16)
+
       const iface = new ethers.Interface(AVAX_GUARD_ABI)
       const callData = iface.encodeFunctionData('revokePolicy', [agentWallet.address])
 
@@ -464,7 +475,8 @@ VERIFIED (${code.length} bytes)
           from: account,
           to: contractAddress,
           data: callData,
-          gas: '0x493e0' // 300,000 gas
+          gas: '0x493e0', // 300,000 gas
+          gasPrice: gasPriceHex
         }]
       })
       await fujiRpc.waitForTransaction(txHash, 1, 30000)
