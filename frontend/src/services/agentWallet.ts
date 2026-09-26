@@ -15,21 +15,30 @@ export const PERMANENTLY_COMPROMISED_LEGACY_AGENT = '0x82ff1466015f208db33e4e198
 /**
  * Connects an Agent Wallet to a provider with strict Mainnet signing guard.
  * Strictly blocks if provider targets Avalanche C-Chain Mainnet (Chain ID 43114).
+ * Safety check runs BEFORE wallet.connect(provider) is invoked.
  */
 export async function connectAgentSignerSafely(
   wallet: ethers.Wallet,
   provider: ethers.Provider
 ): Promise<ethers.Wallet> {
   const network = await provider.getNetwork()
-  assertBrowserSigningAllowed(network.chainId)
+  const chainId = Number(network.chainId)
+  if (chainId === 43114) {
+    throw new Error(
+      '[CRITICAL SECURITY GUARD] Cannot connect Agent wallet to Avalanche C-Chain Mainnet (43114)! ' +
+      'Browser Agent signing on Mainnet is strictly prohibited. AvaFence Mainnet contracts are proof-only.'
+    )
+  }
+  assertBrowserSigningAllowed(chainId)
   return wallet.connect(provider)
 }
 
 /**
  * Retrieves the persisted Agent Scoped Wallet or creates a fresh random one in client browser.
  * NEVER hardcodes or bundles any private keys into source code or build artifacts.
+ * Always returns a disconnected Wallet (provider is null).
  */
-export function getOrCreateAgentWallet(provider?: ethers.Provider): ethers.Wallet {
+export function getOrCreateAgentWallet(): ethers.Wallet {
   let pkey: string | null = null
   if (typeof window !== 'undefined') {
     pkey = localStorage.getItem(AGENT_PKEY_STORAGE_KEY)
@@ -37,14 +46,14 @@ export function getOrCreateAgentWallet(provider?: ethers.Provider): ethers.Walle
 
   if (pkey && pkey.startsWith('0x') && pkey.length === 66) {
     try {
-      const wallet = new ethers.Wallet(pkey, provider)
+      const wallet = new ethers.Wallet(pkey)
       // Migration protection: automatically discard any compromised legacy demo wallet
       if (wallet.address.toLowerCase() === PERMANENTLY_COMPROMISED_LEGACY_AGENT) {
         console.warn('Compromised legacy agent wallet detected in localStorage. Purging and generating fresh wallet...')
         if (typeof window !== 'undefined') {
           localStorage.removeItem(AGENT_PKEY_STORAGE_KEY)
         }
-        return createNewAgentWallet(provider)
+        return createNewAgentWallet()
       }
       return wallet
     } catch (e) {
@@ -53,19 +62,20 @@ export function getOrCreateAgentWallet(provider?: ethers.Provider): ethers.Walle
   }
 
   // Pure client-side generation: each browser gets its own secure isolated scoped wallet
-  return createNewAgentWallet(provider)
+  return createNewAgentWallet()
 }
 
 /**
  * Creates a brand new Agent Scoped Wallet (used when resetting or after revoking a policy)
- * Ensures compliance with AvaxGuard's 'One Agent = One Policy Lifecycle'
+ * Ensures compliance with AvaxGuard's 'One Agent = One Policy Lifecycle'.
+ * Always returns a disconnected Wallet (provider is null).
  */
-export function createNewAgentWallet(provider?: ethers.Provider): ethers.Wallet {
+export function createNewAgentWallet(): ethers.Wallet {
   const freshWallet = ethers.Wallet.createRandom()
   if (typeof window !== 'undefined') {
     localStorage.setItem(AGENT_PKEY_STORAGE_KEY, freshWallet.privateKey)
   }
-  return new ethers.Wallet(freshWallet.privateKey, provider)
+  return new ethers.Wallet(freshWallet.privateKey)
 }
 
 /**
