@@ -27,6 +27,41 @@ export const FUJI_CHAIN_CONFIG = {
   wsUrl: 'wss://api.avax-test.network/ext/bc/C/ws'
 }
 
+export const MAINNET_CHAIN_CONFIG = {
+  chainId: '0xa86a', // 43114 in hex
+  chainIdDecimal: 43114,
+  chainName: 'Avalanche C-Chain',
+  nativeCurrency: {
+    name: 'Avalanche',
+    symbol: 'AVAX',
+    decimals: 18,
+  },
+  rpcUrls: [
+    'https://api.avax.network/ext/bc/C/rpc',
+    'https://avalanche-c-chain-rpc.publicnode.com'
+  ],
+  blockExplorerUrls: ['https://snowtrace.io/'],
+  wsUrl: 'wss://api.avax.network/ext/bc/C/ws'
+}
+
+// Multi-network contract registry: separates public interactive demo from mainnet verification proof
+export const NETWORK_CONTRACTS = {
+  FUJI: {
+    chainId: 43113,
+    chainName: 'Avalanche Fuji C-Chain',
+    address: '0xB6379ce69E73cC6d20E5284D14386F4fBF8Ed770',
+    explorerUrl: 'https://testnet.snowtrace.io/address/0xB6379ce69E73cC6d20E5284D14386F4fBF8Ed770',
+    role: 'INTERACTIVE_DEMO'
+  },
+  MAINNET: {
+    chainId: 43114,
+    chainName: 'Avalanche C-Chain',
+    address: '', // Populated upon Mainnet deployment
+    explorerUrl: '',
+    role: 'PRODUCTION_PROOF'
+  }
+} as const
+
 // AvaxGuard Contract Address on Fuji (Updated upon deployment or local override)
 const LOCAL_STORAGE_CONTRACT_KEY = 'AVAX_GUARD_ADDRESS_OVERRIDE'
 
@@ -91,6 +126,29 @@ export async function assertFujiNetwork(provider?: ethers.Provider): Promise<voi
     if (Number(network.chainId) !== 43113) {
       throw new Error(`Wrong network: Chain ID ${network.chainId}. Please switch to Avalanche Fuji Testnet (Chain ID 43113).`)
     }
+  }
+}
+
+/**
+ * Browser Mainnet Signing Guard:
+ * Strictly blocks browser-based Agent signing flows on Avalanche Mainnet (Chain ID 43114).
+ * Avalanche Mainnet contracts are designated for production proof / on-chain verification only.
+ * The browser-managed localStorage Agent private key MUST NEVER sign transactions on Mainnet.
+ */
+export function assertBrowserSigningAllowed(chainId?: number | string | bigint | null): void {
+  let targetId: number | null = null
+  if (chainId !== undefined && chainId !== null) {
+    targetId = typeof chainId === 'string' ? (chainId.startsWith('0x') ? parseInt(chainId, 16) : Number(chainId)) : Number(chainId)
+  } else if (typeof window !== 'undefined' && (window as any).ethereum?.chainId) {
+    targetId = parseInt((window as any).ethereum.chainId, 16)
+  }
+
+  if (targetId === 43114) {
+    throw new Error(
+      '[CRITICAL SECURITY GUARD] Browser Agent signing is strictly blocked on Avalanche C-Chain Mainnet (43114)! ' +
+      'AvaFence Mainnet contracts are read-only / proof-only in the web interface. ' +
+      'No browser private key can sign or broadcast transactions to Mainnet.'
+    )
   }
 }
 

@@ -106,7 +106,7 @@ contract AvaxGuardTest is Test {
         (, , , uint256 remainingBudget, , , uint256 dailySpent, , , ) = guard.policies(ownerA, agent1);
         assertEq(remainingBudget, INITIAL_BUDGET - spendAmt);
         assertEq(dailySpent, spendAmt);
-        assertTrue(guard.executedRequests(reqId));
+        assertTrue(guard.executedRequests(agent1, reqId));
     }
 
     function test_AttemptSpend_Blocked_PerTxLimit() public {
@@ -135,7 +135,7 @@ contract AvaxGuardTest is Test {
         (, , , uint256 remainingBudget, , , uint256 dailySpent, , , ) = guard.policies(ownerA, agent1);
         assertEq(remainingBudget, INITIAL_BUDGET);
         assertEq(dailySpent, 0);
-        assertFalse(guard.executedRequests(reqId));
+        assertFalse(guard.executedRequests(agent1, reqId));
     }
 
     function test_AttemptSpend_Blocked_DailyLimit() public {
@@ -258,6 +258,80 @@ contract AvaxGuardTest is Test {
         );
         guard.attemptSpend(merchant, 0.002 ether, reqId);
         vm.stopPrank();
+    }
+
+    function test_ReplayProtection_CrossAgentCollision_Isolation() public {
+        _setupDefaultPolicy(); // ownerA funds agent1
+
+        // ownerB creates and funds a separate policy for agent2
+        vm.prank(ownerB);
+        guard.createPolicy{value: INITIAL_BUDGET}(
+            agent2,
+            merchant,
+            MAX_PER_TX,
+            DAILY_LIMIT,
+            DURATION
+        );
+
+        bytes32 sharedReqId = keccak256("shared-request-id-collision-test");
+        uint256 spendAmt = 0.001 ether;
+
+        // 1. Agent 1 executes with sharedReqId -> MUST succeed
+        vm.prank(agent1);
+        vm.expectEmit(true, true, true, true);
+        emit AvaxGuard.PaymentExecuted(
+            agent1,
+            merchant,
+            sharedReqId,
+            ownerA,
+            spendAmt,
+            INITIAL_BUDGET - spendAmt
+        );
+        guard.attemptSpend(merchant, spendAmt, sharedReqId);
+
+        assertTrue(guard.executedRequests(agent1, sharedReqId));
+        assertFalse(guard.executedRequests(agent2, sharedReqId));
+
+        // 2. Agent 2 executes with the identical sharedReqId -> MUST ALSO succeed (isolated namespace)
+        vm.prank(agent2);
+        vm.expectEmit(true, true, true, true);
+        emit AvaxGuard.PaymentExecuted(
+            agent2,
+            merchant,
+            sharedReqId,
+            ownerB,
+            spendAmt,
+            INITIAL_BUDGET - spendAmt
+        );
+        guard.attemptSpend(merchant, spendAmt, sharedReqId);
+
+        assertTrue(guard.executedRequests(agent2, sharedReqId));
+
+        // 3. Agent 1 attempts to re-use sharedReqId -> MUST BE BLOCKED
+        vm.prank(agent1);
+        vm.expectEmit(true, true, true, true);
+        emit AvaxGuard.PaymentBlocked(
+            agent1,
+            merchant,
+            sharedReqId,
+            ownerA,
+            spendAmt,
+            AvaxGuard.BlockReason.REQUEST_ALREADY_EXECUTED
+        );
+        guard.attemptSpend(merchant, spendAmt, sharedReqId);
+
+        // 4. Agent 2 attempts to re-use sharedReqId -> MUST ALSO BE BLOCKED
+        vm.prank(agent2);
+        vm.expectEmit(true, true, true, true);
+        emit AvaxGuard.PaymentBlocked(
+            agent2,
+            merchant,
+            sharedReqId,
+            ownerB,
+            spendAmt,
+            AvaxGuard.BlockReason.REQUEST_ALREADY_EXECUTED
+        );
+        guard.attemptSpend(merchant, spendAmt, sharedReqId);
     }
 
     function test_AttemptSpend_Revert_Unauthorized() public {

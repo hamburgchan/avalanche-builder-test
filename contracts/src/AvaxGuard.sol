@@ -43,8 +43,8 @@ contract AvaxGuard {
     // Strict One Agent = One Policy Lifecycle tracker
     mapping(address => bool) public agentEverBound;
 
-    // Replay Protection for executed spend intents
-    mapping(bytes32 => bool) public executedRequests;
+    // Replay Protection for executed spend intents (Agent-scoped namespace)
+    mapping(address => mapping(bytes32 => bool)) public executedRequests;
 
     // Reentrancy Guard
     uint256 private _status;
@@ -195,8 +195,8 @@ contract AvaxGuard {
             return (false, BlockReason.POLICY_EXPIRED, passed);
         }
 
-        // Bit 2: Request Fresh (Nonce unconsumed)
-        if (!executedRequests[requestId]) {
+        // Bit 2: Request Fresh (Nonce unconsumed for this agent)
+        if (!executedRequests[agent][requestId]) {
             passed |= (1 << 2);
         } else {
             return (false, BlockReason.REQUEST_ALREADY_EXECUTED, passed);
@@ -288,7 +288,7 @@ contract AvaxGuard {
 
         policy.dailySpent += amount;
         policy.remainingBudget -= amount;
-        executedRequests[requestId] = true;
+        executedRequests[msg.sender][requestId] = true;
 
         (bool sent, ) = recipient.call{value: amount}("");
         if (!sent) revert TransferFailed();

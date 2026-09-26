@@ -3,11 +3,15 @@ src = "src"
 out = "out"
 libs = ["lib"]
 solc_version = "0.8.28"
+evm_version = "cancun"
 
 [rpc_endpoints]
 fuji = "https://api.avax-test.network/ext/bc/C/rpc"
 fuji_backup = "https://avalanche-fuji-c-chain-rpc.publicnode.com"
+mainnet = "https://api.avax.network/ext/bc/C/rpc"
+mainnet_backup = "https://avalanche-c-chain-rpc.publicnode.com"
 
 [etherscan]
 fuji = { key = "${SNOWTRACE_API_KEY}", url = "https://api-testnet.snowtrace.io/api" }
+mainnet = { key = "${SNOWTRACE_API_KEY}", url = "https://api.snowtrace.io/api" }
 

@@ -2,7 +2,9 @@
 
 > **Avalanche Builder Day Shenzhen 2026** (One-Day Coding Hackathon)  
 > **Tagline**: *Give AI agents money — without giving them your wallet.*  
-> **Network**: Avalanche Fuji C-Chain (Chain ID `43113`)  
+> **Networks**:  
+> - **Avalanche C-Chain Mainnet** (Chain ID `43114`): 生产合约部署与链上真实性存证 (Production Proof)  
+> - **Avalanche Fuji C-Chain** (Chain ID `43113`): 公开交互试用环境，无需真实 AVAX (Interactive Demo)  
 > **Live Demo**: [https://hamburgchan.github.io/avalanche-builder-test/](https://hamburgchan.github.io/avalanche-builder-test/)
 
 ---
@@ -55,6 +57,15 @@
    - 结果：收款方不在商户白名单，合约判定 `PaymentBlocked(MERCHANT_NOT_ALLOWED)`，人类资金池固若金汤！
 
 ---
+
+## 🌐 双网络部署架构 (Dual-Network Architecture)
+
+AvaFence 采取“**主网链上存证，测试网公开交互**”的双轨架构：
+
+| 网络 (Network) | Chain ID | 角色定位 (Role) | 目标地址 / 状态 | 说明 (Notes) |
+| :--- | :---: | :---: | :---: | :--- |
+| **Avalanche C-Chain Mainnet** | `43114` | 生产部署与真实性存证 (Production Proof) | 待广播部署 (Pending Deploy) | 真实资金权限沙盒，提供不可篡改的主网部署与微支付策略放行/拦截存证 |
+| **Avalanche Fuji C-Chain** | `43113` | 公开交互试用环境 (Interactive Demo) | `0xB6379ce69E73cC6d20E5284D14386F4fBF8Ed770` | 保持默认交互，开发者与 Grant 评审可零成本体验 3 大安全场景 |
 
 ---
 

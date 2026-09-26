@@ -24,11 +24,13 @@ import {
   BLOCK_REASON_TEXT,
   FUJI_CHAIN_CONFIG,
   assertFujiNetwork,
+  assertBrowserSigningAllowed,
   validateAddressOrThrow
 } from './config/avalanche'
 import {
   getOrCreateAgentWallet,
-  createNewAgentWallet
+  createNewAgentWallet,
+  connectAgentSignerSafely
 } from './services/agentWallet'
 import { monitor } from './services/monitor'
 import { merchantService } from './services/merchant'
@@ -724,7 +726,8 @@ VERIFIED (${code.length} bytes)
       // 4. In Parallel: Autonomous Execution on Avalanche Fuji (No artificial delay - Requirement 14)
       const txPromise: Promise<{ txHash: string; receipt: any; acceptedRes: any; latency: number }> = (async () => {
         log('⚡ Agent 使用独立钱包私钥签署 attemptSpend 并广播至 Avalanche Fuji C-Chain...')
-        const agentSigner = agentWallet.connect(fujiProvider)
+        assertBrowserSigningAllowed(chainId)
+        const agentSigner = await connectAgentSignerSafely(agentWallet, fujiProvider)
         const agentContract = new ethers.Contract(contractAddress, AVAX_GUARD_ABI, agentSigner)
 
         const t0 = performance.now()
