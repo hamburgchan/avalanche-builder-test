@@ -309,7 +309,7 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
           <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-900 text-slate-400">
             <span>Agent Wallet:</span>
             <div className="flex items-center space-x-1.5">
-              <span className="text-slate-300 font-mono">{agentAddress.slice(0, 6)}...{agentAddress.slice(-4)}</span>
+              <span className="text-slate-300 font-mono">{agentAddress ? `${agentAddress.slice(0, 6)}...${agentAddress.slice(-4)}` : '--'}</span>
               <span className={`font-bold ${agentGasLow ? 'text-amber-400' : 'text-emerald-400'}`}>
                 ({parseFloat(agentBalance).toFixed(3)} AVAX)
               </span>
@@ -560,8 +560,20 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
                       </span>
                     </div>
                     <div className="flex justify-between items-center text-slate-400">
-                      <span>Actual Gas Consumed:</span>
-                      <span className="text-slate-200">{historical.gasUsed} gas ({historical.networkGasCost})</span>
+                      <span>Recipient Delta:</span>
+                      <span className="text-slate-200 font-mono">{historical.recipientDelta}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-slate-400">
+                      <span>Gas Used:</span>
+                      <span className="text-slate-200 font-mono">{historical.gasUsed}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-slate-400">
+                      <span>Effective Gas Price:</span>
+                      <span className="text-slate-200 font-mono">{historical.effectiveGasPrice}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-slate-400">
+                      <span>Network Gas Cost:</span>
+                      <span className="text-slate-200 font-mono text-[10px] text-emerald-400">{historical.networkGasCost}</span>
                     </div>
 
                     <div className="pt-2 border-t border-slate-900 mt-1">

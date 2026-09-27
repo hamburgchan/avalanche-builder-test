@@ -18,7 +18,9 @@ export interface VerifiedEvidenceItem {
   reasonLabel: string
   snowtraceUrl: string
   gasUsed: string
+  effectiveGasPrice: string
   networkGasCost: string
+  recipientDelta: string
   eventEmitted: string
 }
 
@@ -183,8 +185,10 @@ export const siteConfig: SiteConfig = {
       reasonLabel: 'APPROVED (PaymentExecuted)',
       snowtraceUrl:
         'https://testnet.snowtrace.io/tx/0xefbff0a69c9888d68a6415e046ed7d664e1406878f40170fd38dcaa2df1378a7',
-      gasUsed: '142,850',
-      networkGasCost: '~0.00357 AVAX',
+      gasUsed: '107744',
+      effectiveGasPrice: '160 wei',
+      networkGasCost: '0.00000000001723904 AVAX',
+      recipientDelta: '+0.002 AVAX',
       eventEmitted: 'PaymentExecuted'
     },
     {
@@ -203,8 +207,10 @@ export const siteConfig: SiteConfig = {
       reasonLabel: 'BLOCKED: recipient not authorized (PaymentBlocked)',
       snowtraceUrl:
         'https://testnet.snowtrace.io/tx/0x9a2e7f67788bbc4c754340974adb0dd206ed298cc21405a9ed2dec41fcc9c2d9',
-      gasUsed: '68,420',
-      networkGasCost: '~0.00171 AVAX',
+      gasUsed: '42958',
+      effectiveGasPrice: '160 wei',
+      networkGasCost: '0.00000000000687328 AVAX',
+      recipientDelta: '0 AVAX',
       eventEmitted: 'PaymentBlocked (recipient not authorized)'
     },
     {
@@ -223,8 +229,10 @@ export const siteConfig: SiteConfig = {
       reasonLabel: 'BLOCKED: PER_TX_LIMIT_EXCEEDED (PaymentBlocked)',
       snowtraceUrl:
         'https://testnet.snowtrace.io/tx/0xe6c790834d26d9af0b81251376e95cfacec77fe82211553664b56592bb480020',
-      gasUsed: '68,390',
-      networkGasCost: '~0.00171 AVAX',
+      gasUsed: '45100',
+      effectiveGasPrice: '160 wei',
+      networkGasCost: '0.000000000007216 AVAX',
+      recipientDelta: '0 AVAX',
       eventEmitted: 'PaymentBlocked (PER_TX_LIMIT_EXCEEDED)'
     }
   ]

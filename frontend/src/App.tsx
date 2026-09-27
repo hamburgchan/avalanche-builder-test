@@ -57,10 +57,18 @@ export function App() {
   const [hasCompromisedPolicy, setHasCompromisedPolicy] = useState<boolean>(false)
   const [isRevokingCompromised, setIsRevokingCompromised] = useState<boolean>(false)
 
-  // Agent Scoped Wallet state
-  const [agentWallet, setAgentWallet] = useState<ethers.Wallet>(() => getOrCreateAgentWallet())
+  // Agent Scoped Wallet state (Lazy Initialization — not created on startup or during instant simulation)
+  const [agentWallet, setAgentWallet] = useState<ethers.Wallet | null>(null)
   const [agentBalance, setAgentBalance] = useState<string>('0')
   const [isFundingAgent, setIsFundingAgent] = useState<boolean>(false)
+
+  // Lazy Agent Scoped Wallet initializer: only called when user enters Live mode or Guided Setup
+  const ensureAgentWallet = useCallback((): ethers.Wallet => {
+    if (agentWallet) return agentWallet
+    const wallet = getOrCreateAgentWallet()
+    setAgentWallet(wallet)
+    return wallet
+  }, [agentWallet])
 
   // Policy & Guard state
   const [policy, setPolicy] = useState<PolicyState | null>(null)
@@ -348,6 +356,7 @@ export function App() {
       return
     }
 
+    const currentAgent = ensureAgentWallet()
     setIsFundingAgent(true)
     try {
       await assertFujiNetwork(provider)
@@ -359,7 +368,7 @@ export function App() {
         method: 'eth_sendTransaction',
         params: [{
           from: account,
-          to: agentWallet.address,
+          to: currentAgent.address,
           value: '0x' + ethers.parseEther('0.005').toString(16),
           gas: '0x7530',
           gasPrice: gasPriceHex
@@ -367,7 +376,7 @@ export function App() {
       })
       await fujiRpc.waitForTransaction(txHash, 1, 30000)
       await refreshBalances()
-      alert(`成功为 Agent 独立钱包充值 0.005 AVAX Gas: ${agentWallet.address}`)
+      alert(`成功为 Agent 独立钱包充值 0.005 AVAX Gas: ${currentAgent.address}`)
     } catch (err: any) {
       console.error('Funding agent gas failed:', err)
       alert(`Gas 充值失败: ${err.message || err}`)
@@ -396,6 +405,7 @@ export function App() {
       return
     }
 
+    const currentAgent = ensureAgentWallet()
     setIsCreatingPolicy(true)
     try {
       await assertFujiNetwork(provider)
@@ -408,7 +418,7 @@ export function App() {
       const dailyWei = ethers.parseEther(daily)
 
       const contractCheck = new ethers.Contract(contractAddress, AVAX_GUARD_ABI, fujiRpc)
-      const isAlreadyUsed = await contractCheck.agentEverBound(agentWallet.address).catch(() => false)
+      const isAlreadyUsed = await contractCheck.agentEverBound(currentAgent.address).catch(() => false)
       if (isAlreadyUsed) {
         const newW = createNewAgentWallet()
         setAgentWallet(newW)
@@ -419,7 +429,7 @@ export function App() {
 
       const iface = new ethers.Interface(AVAX_GUARD_ABI)
       const callData = iface.encodeFunctionData('createPolicy', [
-        agentWallet.address,
+        currentAgent.address,
         DEMO_ADDRESSES.MERCHANT,
         maxTxWei,
         dailyWei,
@@ -452,6 +462,7 @@ export function App() {
   // Revoke Policy
   const handleRevokePolicy = async () => {
     if (!account || !provider || !isContractDeployed) return
+    const currentAgent = ensureAgentWallet()
     setIsRevokingPolicy(true)
     try {
       await assertFujiNetwork(provider)
@@ -460,7 +471,7 @@ export function App() {
       const gasPriceHex = '0x' + ((feeData.gasPrice || 25000000000n) * 120n / 100n).toString(16)
 
       const iface = new ethers.Interface(AVAX_GUARD_ABI)
-      const callData = iface.encodeFunctionData('revokePolicy', [agentWallet.address])
+      const callData = iface.encodeFunctionData('revokePolicy', [currentAgent.address])
 
       const txHash: string = await (window as any).ethereum.request({
         method: 'eth_sendTransaction',
@@ -574,6 +585,7 @@ export function App() {
 
   // Guided Prepare Demo Handler (P0-3)
   const handlePrepareDemo = async () => {
+    ensureAgentWallet()
     setIsPreparingDemo(true)
     try {
       if (!account) {
@@ -783,6 +795,8 @@ export function App() {
       return
     }
 
+    const activeAgentWallet = ensureAgentWallet()
+
     const scenario = currentExecution.scenario
     const curNonce = localNonce
     setLocalNonce((prev) => prev + 1)
@@ -848,7 +862,7 @@ export function App() {
       const evalRes = await withTimeout(
         guardContract.evaluateSpend(
           account,
-          agentWallet.address,
+          activeAgentWallet.address,
           intent.recipient,
           amountWei,
           intent.requestId
@@ -900,7 +914,7 @@ export function App() {
       const txPromise: Promise<{ txHash: string; receipt: any; acceptedRes: any; latency: number }> = (async () => {
         log('⚡ Agent 使用独立钱包私钥签署 attemptSpend 并广播至 Avalanche Fuji C-Chain...')
         assertBrowserSigningAllowed(chainId)
-        const agentSigner = await connectAgentSignerSafely(agentWallet, fujiProvider)
+        const agentSigner = await connectAgentSignerSafely(activeAgentWallet, fujiProvider)
         const agentContract = new ethers.Contract(contractAddress, AVAX_GUARD_ABI, agentSigner)
 
         const t0 = performance.now()
@@ -1011,7 +1025,7 @@ export function App() {
           merchantService.verifyAndFulfill(
             txHash,
             intent.requestId,
-            agentWallet.address,
+            activeAgentWallet.address,
             amountWei,
             fujiProvider,
             contractAddress
@@ -1046,7 +1060,7 @@ export function App() {
               id: 'audit-' + Date.now(),
               timestamp: new Date().toLocaleTimeString(),
               type: 'EXECUTED',
-              agent: agentWallet.address,
+              agent: activeAgentWallet.address,
               recipient: intent.recipient,
               recipientAlias: intent.recipientAlias,
               amount: intent.amount,
@@ -1091,7 +1105,7 @@ export function App() {
             id: 'audit-' + Date.now(),
             timestamp: new Date().toLocaleTimeString(),
             type: 'BLOCKED',
-            agent: agentWallet.address,
+            agent: activeAgentWallet.address,
             recipient: intent.recipient,
             recipientAlias: intent.recipientAlias,
             amount: intent.amount,
@@ -1177,7 +1191,10 @@ export function App() {
 
               <button
                 type="button"
-                onClick={() => setDemoMode('live')}
+                onClick={() => {
+                  setDemoMode('live')
+                  ensureAgentWallet()
+                }}
                 className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2 cursor-pointer ${
                   demoMode === 'live'
                     ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-md shadow-red-600/30'
@@ -1249,7 +1266,7 @@ export function App() {
                 deployError={deployError}
                 hasCompromisedPolicy={hasCompromisedPolicy}
                 isRevokingCompromised={isRevokingCompromised}
-                agentAddress={agentWallet.address}
+                agentAddress={agentWallet ? agentWallet.address : ''}
                 agentBalance={agentBalance}
                 isFundingAgent={isFundingAgent}
                 onFundAgent={handleFundAgent}

@@ -83,4 +83,58 @@ describe('Agent Wallet Security & Disconnected Factory Guard', () => {
     expect(loadedWallet.provider).toBeNull()
     expect(loadedWallet.address.toLowerCase()).not.toBe(PERMANENTLY_COMPROMISED_LEGACY_AGENT)
   })
+
+  it('6. Lazy initialization: initial state has no agent private key in localStorage', () => {
+    // Fresh state before entering Live Fuji mode
+    expect(localStorage.getItem('avaxguard_agent_pkey')).toBeNull()
+  })
+
+  it('7. Historical Fuji Evidence matches RPC Source of Truth exactly without estimation', async () => {
+    const { siteConfig } = await import('../config/site.config')
+    const itemA = siteConfig.historicalEvidence.find((e) => e.scenario === 'A')!
+    const itemB = siteConfig.historicalEvidence.find((e) => e.scenario === 'B')!
+    const itemC = siteConfig.historicalEvidence.find((e) => e.scenario === 'C')!
+
+    // Scenario A: PaymentExecuted
+    expect(itemA.amount).toBe('0.002 AVAX')
+    expect(itemA.blockNumber).toBe(58476762)
+    expect(itemA.gasUsed).toBe('107744')
+    expect(itemA.effectiveGasPrice).toBe('160 wei')
+    expect(itemA.networkGasCost).toBe('0.00000000001723904 AVAX')
+    expect(itemA.recipientDelta).toBe('+0.002 AVAX')
+
+    // Scenario B: PaymentBlocked reason 4
+    expect(itemB.amount).toBe('0.001 AVAX')
+    expect(itemB.blockNumber).toBe(58476773)
+    expect(itemB.gasUsed).toBe('42958')
+    expect(itemB.effectiveGasPrice).toBe('160 wei')
+    expect(itemB.networkGasCost).toBe('0.00000000000687328 AVAX')
+    expect(itemB.recipientDelta).toBe('0 AVAX')
+
+    // Scenario C: PaymentBlocked reason 5
+    expect(itemC.amount).toBe('0.010 AVAX')
+    expect(itemC.blockNumber).toBe(58476771)
+    expect(itemC.gasUsed).toBe('45100')
+    expect(itemC.effectiveGasPrice).toBe('160 wei')
+    expect(itemC.networkGasCost).toBe('0.000000000007216 AVAX')
+    expect(itemC.recipientDelta).toBe('0 AVAX')
+  })
+
+  it('8. Obsolete gas estimates (142850, 68420, 68390) are completely eliminated', async () => {
+    const { siteConfig } = await import('../config/site.config')
+    const allGasUsed = siteConfig.historicalEvidence.map((e) => e.gasUsed)
+    const allGasCost = siteConfig.historicalEvidence.map((e) => e.networkGasCost)
+
+    expect(allGasUsed.includes('142850')).toBeFalse()
+    expect(allGasUsed.includes('142,850')).toBeFalse()
+    expect(allGasUsed.includes('68420')).toBeFalse()
+    expect(allGasUsed.includes('68,420')).toBeFalse()
+    expect(allGasUsed.includes('68390')).toBeFalse()
+    expect(allGasUsed.includes('68,390')).toBeFalse()
+
+    for (const cost of allGasCost) {
+      expect(cost.includes('~0.00357')).toBeFalse()
+      expect(cost.includes('~0.00171')).toBeFalse()
+    }
+  })
 })
