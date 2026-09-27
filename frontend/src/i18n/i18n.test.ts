@@ -117,4 +117,54 @@ describe('AvaFence i18n Bilingual Support & Integrity', () => {
     expect(zhCN.policyEvaluation.historicalEvidenceTitle).toBe('可比的 Fuji 已验证历史凭证')
     expect(zhCN.policyEvaluation.historicalDisclaimer).toContain('并非本次模拟产生的交易')
   })
+
+  it('8. Policy Coverage section verifies 7 capabilities, required note, and 4 use cases', () => {
+    // English capabilities
+    const expectedEnCaps = [
+      'Total Budget',
+      'Per-Transaction Limit',
+      'Daily Spending Limit',
+      'Approved Recipients',
+      'Policy Expiry',
+      'Replay Protection',
+      'Explicit Block Reasons'
+    ]
+    expect(en.policyCoverage.capabilities.map((c) => c.name)).toEqual(expectedEnCaps)
+
+    // Chinese capabilities
+    const expectedZhCaps = [
+      '总预算',
+      '单笔限额',
+      '每日限额',
+      '授权收款方',
+      '策略有效期',
+      '重复支付防护',
+      '明确的阻止原因'
+    ]
+    expect(zhCN.policyCoverage.capabilities.map((c) => c.name)).toEqual(expectedZhCaps)
+
+    // Exact Explanatory Note
+    expect(en.policyCoverage.noteText).toBe(
+      'The three demo scenarios illustrate how the current policy engine works. They do not represent the full range of agent payment workflows AvaFence is exploring.'
+    )
+    expect(zhCN.policyCoverage.noteText).toBe(
+      '当前三个演示场景用于说明策略引擎的工作方式，并不代表 AvaFence 最终只支持这三种 Agent 支付场景。'
+    )
+
+    // 4 Example Use Cases
+    expect(en.policyCoverage.useCases.length).toBe(4)
+    expect(zhCN.policyCoverage.useCases.length).toBe(4)
+    expect(en.policyCoverage.useCasesHeading).toBe('Example Use Cases')
+    expect(zhCN.policyCoverage.useCasesHeading).toContain('Example Use Cases')
+
+    // Primitives matching check
+    for (const uc of en.policyCoverage.useCases) {
+      expect(uc.primitives.length).toBeGreaterThan(0)
+      expect(uc.description.length).toBeGreaterThan(0)
+    }
+    for (const uc of zhCN.policyCoverage.useCases) {
+      expect(uc.primitives.length).toBeGreaterThan(0)
+      expect(uc.description.length).toBeGreaterThan(0)
+    }
+  })
 })

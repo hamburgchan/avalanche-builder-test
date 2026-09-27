@@ -5,6 +5,7 @@ import { Navbar } from './components/Navbar'
 import { Hero } from './components/Hero'
 import { DeveloperIntegrationPreview } from './components/DeveloperIntegrationPreview'
 import { CurrentVsPlanned } from './components/CurrentVsPlanned'
+import { PolicyCoverage } from './components/PolicyCoverage'
 import { DemoSetupProgress } from './components/DemoSetupProgress'
 import type { PolicyState } from './components/PolicyConsole'
 import { AgentWorkspace } from './components/AgentWorkspace'
@@ -1293,6 +1294,9 @@ export function App() {
 
         {/* P0-5: Current Capabilities vs Planned Roadmap */}
         <CurrentVsPlanned />
+
+        {/* Policy Coverage: Verified Capabilities & Example Use Cases */}
+        <PolicyCoverage />
 
         {/* P0-1: Decision Evidence & Audit Trail */}
         <AuditLog logs={auditLogs} />

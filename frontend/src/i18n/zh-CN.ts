@@ -434,6 +434,47 @@ export const zhCN: TranslationDict = {
     intentRationale: '意图说明：',
     requestId: 'Request ID:'
   },
+  policyCoverage: {
+    heading: '策略能力覆盖范围 (Policy Coverage)',
+    subheading: 'AvaFence 链上策略引擎当前已验证的能力边界与原生原语。',
+    verifiedBadge: '已验证链上能力',
+    noteText: '当前三个演示场景用于说明策略引擎的工作方式，并不代表 AvaFence 最终只支持这三种 Agent 支付场景。',
+    capabilitiesHeading: '已验证策略能力',
+    capabilities: [
+      { name: '总预算', desc: '限制存入 Agent 策略金库中的累计托管资金总额。' },
+      { name: '单笔限额', desc: '硬性执行单笔支付金额上限，杜绝单次超额支出。' },
+      { name: '每日限额', desc: '基于滚动窗口限制单日累计支出总额，控制整体支出节奏。' },
+      { name: '授权收款方', desc: '严格校验收款地址白名单，未经授权的地址一律拦截。' },
+      { name: '策略有效期', desc: '基于时间戳的授权有效期，到期后策略自动失效。' },
+      { name: '重复支付防护', desc: '按 Agent 独立命名空间记录 Request ID，防止重放与重复扣费。' },
+      { name: '明确的阻止原因', desc: '拦截时在链上抛出包含机器可读代码的 PaymentBlocked 事件。' }
+    ],
+    useCasesHeading: '示例应用场景 (Example Use Cases)',
+    useCasesBadge: '概念示例',
+    useCasesDisclaimer: '基于现有已验证策略原语的概念示例；不代表已完成与这些外部框架的生产集成。',
+    useCases: [
+      {
+        title: '数据/API 采购 Agent (Data/API purchasing agent)',
+        primitives: '单笔限额 + 授权收款方',
+        description: '在单笔严格限额内，向预设白名单内的 API 服务商采购实时市场数据或模型推理。'
+      },
+      {
+        title: '多服务采购研究 Agent (Research agent purchasing multiple services)',
+        primitives: '每日限额 + 授权收款方 + 总预算',
+        description: '在每日支出限额和总预算约束下，自主向多个已核准的服务商订购多维研究资源。'
+      },
+      {
+        title: '基础设施付费开发者 Agent (Developer agent paying for infrastructure/API usage)',
+        primitives: '总预算 + 策略有效期 + 单笔限额',
+        description: '为自动化开发任务采购临时算力与 RPC 配额，在预设有效时间窗口内受总预算保护。'
+      },
+      {
+        title: '自主商业交易 Agent (Autonomous commerce agent)',
+        primitives: '单笔限额 + 每日限额 + 重复支付防护',
+        description: '执行数字或实物商品的自动化结算，通过唯一 Request ID 防止重复扣款与异常重放。'
+      }
+    ]
+  },
   faucetModal: {
     title: 'Avalanche Fuji 测试网水龙头',
     subtitle: '领取 Fuji 测试网测试币用于开发测试',

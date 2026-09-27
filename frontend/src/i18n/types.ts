@@ -28,6 +28,30 @@ export interface SetupStepTranslation {
   actionText: string
 }
 
+export interface PolicyPrimitiveItem {
+  name: string
+  desc: string
+}
+
+export interface ExampleUseCaseItem {
+  title: string
+  primitives: string
+  description: string
+}
+
+export interface PolicyCoverageTranslation {
+  heading: string
+  subheading: string
+  verifiedBadge: string
+  noteText: string
+  capabilitiesHeading: string
+  capabilities: PolicyPrimitiveItem[]
+  useCasesHeading: string
+  useCasesBadge: string
+  useCasesDisclaimer: string
+  useCases: ExampleUseCaseItem[]
+}
+
 export interface TranslationDict {
   nav: {
     brandName: string
@@ -378,6 +402,7 @@ export interface TranslationDict {
     intentRationale: string
     requestId: string
   }
+  policyCoverage: PolicyCoverageTranslation
   faucetModal: {
     title: string
     subtitle: string

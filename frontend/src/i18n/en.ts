@@ -434,6 +434,47 @@ export const en: TranslationDict = {
     intentRationale: 'Intent Rationale:',
     requestId: 'Request ID:'
   },
+  policyCoverage: {
+    heading: 'POLICY COVERAGE',
+    subheading: 'Verified capability boundaries of the AvaFence on-chain policy engine.',
+    verifiedBadge: 'Verified On-Chain Capabilities',
+    noteText: 'The three demo scenarios illustrate how the current policy engine works. They do not represent the full range of agent payment workflows AvaFence is exploring.',
+    capabilitiesHeading: 'Verified Policy Capabilities',
+    capabilities: [
+      { name: 'Total Budget', desc: 'Caps cumulative escrow budget deposited into the agent policy vault.' },
+      { name: 'Per-Transaction Limit', desc: 'Hard maximum ceiling enforced on any single payment execution.' },
+      { name: 'Daily Spending Limit', desc: 'Enforces rolling daily spend boundary across multiple requests.' },
+      { name: 'Approved Recipients', desc: 'Strict allowlist whitelist; blocks payments to unknown destinations.' },
+      { name: 'Policy Expiry', desc: 'Automated time boundary after which agent authorization lapses.' },
+      { name: 'Replay Protection', desc: 'Agent-scoped Request ID tracking prevents duplicate transactions.' },
+      { name: 'Explicit Block Reasons', desc: 'Emits on-chain machine-readable reason codes when limits are breached.' }
+    ],
+    useCasesHeading: 'Example Use Cases',
+    useCasesBadge: 'Conceptual Examples',
+    useCasesDisclaimer: 'Illustrative use cases combining current verified policy primitives; external framework integrations are in exploration.',
+    useCases: [
+      {
+        title: 'Data/API purchasing agent',
+        primitives: 'Per-Transaction Limit + Approved Recipients',
+        description: 'Procures real-time market data or specialized inference from authorized endpoints within strict per-request cost bounds.'
+      },
+      {
+        title: 'Research agent purchasing multiple services',
+        primitives: 'Daily Spending Limit + Approved Recipients + Total Budget',
+        description: 'Autonomously gathers intelligence across diverse approved vendors while bounded by daily and total escrow caps.'
+      },
+      {
+        title: 'Developer agent paying for infrastructure/API usage',
+        primitives: 'Total Budget + Policy Expiry + Per-Transaction Limit',
+        description: 'Settles cloud compute and RPC query quotas under a time-bounded operational budget window.'
+      },
+      {
+        title: 'Autonomous commerce agent',
+        primitives: 'Per-Transaction Limit + Daily Spending Limit + Replay Protection',
+        description: 'Executes commercial settlement for digital assets while guaranteeing duplicate intents cannot double-charge.'
+      }
+    ]
+  },
   faucetModal: {
     title: 'Avalanche Fuji Testnet Faucets',
     subtitle: 'Claim free test AVAX on Fuji for development and testing',
