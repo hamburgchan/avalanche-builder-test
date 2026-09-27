@@ -438,40 +438,40 @@ export const zhCN: TranslationDict = {
     heading: '策略能力覆盖范围 (Policy Coverage)',
     subheading: 'AvaFence 链上策略引擎当前已验证的能力边界与原生原语。',
     verifiedBadge: '已验证链上能力',
-    noteText: '当前三个演示场景用于说明策略引擎的工作方式，并不代表 AvaFence 最终只支持这三种 Agent 支付场景。',
+    noteText: '当前三个演示场景用于说明当前策略引擎如何工作，并不代表 AvaFence 正在探索的全部 Agent 支付工作流。',
     capabilitiesHeading: '已验证策略能力',
     capabilities: [
-      { name: '总预算', desc: '限制存入 Agent 策略金库中的累计托管资金总额。' },
+      { name: '总预算', desc: '创建支付策略时一次性存入的初始 AVAX 预算，并在支付执行后持续跟踪剩余预算。' },
       { name: '单笔限额', desc: '硬性执行单笔支付金额上限，杜绝单次超额支出。' },
-      { name: '每日限额', desc: '基于滚动窗口限制单日累计支出总额，控制整体支出节奏。' },
+      { name: 'UTC 自然日支付上限', desc: '按 UTC 自然日累计当日支出，并执行每日支付上限。' },
       { name: '授权收款方', desc: '严格校验收款地址白名单，未经授权的地址一律拦截。' },
       { name: '策略有效期', desc: '基于时间戳的授权有效期，到期后策略自动失效。' },
-      { name: '重复支付防护', desc: '按 Agent 独立命名空间记录 Request ID，防止重放与重复扣费。' },
-      { name: '明确的阻止原因', desc: '拦截时在链上抛出包含机器可读代码的 PaymentBlocked 事件。' }
+      { name: '重复支付防护', desc: '防止已经成功执行过的同一 requestId 再次触发付款。' },
+      { name: '明确的阻止原因', desc: '当付款被阻止时返回明确原因，例如策略未激活、策略过期、已成功执行请求的重复使用、未授权收款方、单笔超限、每日超限或剩余预算不足。' }
     ],
     useCasesHeading: '示例应用场景 (Example Use Cases)',
     useCasesBadge: '概念示例',
-    useCasesDisclaimer: '基于现有已验证策略原语的概念示例；不代表已完成与这些外部框架的生产集成。',
+    useCasesDisclaimer: '基于已验证策略原语的概念示例；并非客户生产部署或已完成的集成。',
     useCases: [
       {
         title: '数据/API 采购 Agent (Data/API purchasing agent)',
         primitives: '单笔限额 + 授权收款方',
-        description: '在单笔严格限额内，向预设白名单内的 API 服务商采购实时市场数据或模型推理。'
+        description: '可用于数据获取 Agent 在严格单笔限额约束下，向已授权的 API 接口收款方支付查询费用。'
       },
       {
         title: '多服务采购研究 Agent (Research agent purchasing multiple services)',
-        primitives: '每日限额 + 授权收款方 + 总预算',
-        description: '在每日支出限额和总预算约束下，自主向多个已核准的服务商订购多维研究资源。'
+        primitives: 'UTC 自然日支付上限 + 授权收款方 + 总预算',
+        description: '可用于多任务调研 Agent 向多个已核准服务商付款，同时受 UTC 自然日支付上限与初始总预算的约束。'
       },
       {
         title: '基础设施付费开发者 Agent (Developer agent paying for infrastructure/API usage)',
         primitives: '总预算 + 策略有效期 + 单笔限额',
-        description: '为自动化开发任务采购临时算力与 RPC 配额，在预设有效时间窗口内受总预算保护。'
+        description: '可用于开发运维 Agent 在策略有效期内，向已授权的基础设施服务商支付资源费用。'
       },
       {
-        title: '自主商业交易 Agent (Autonomous commerce agent)',
-        primitives: '单笔限额 + 每日限额 + 重复支付防护',
-        description: '执行数字或实物商品的自动化结算，通过唯一 Request ID 防止重复扣款与异常重放。'
+        title: '自动化服务 Agent (Autonomous service agent)',
+        primitives: '总预算 + 单笔限额 + 授权收款方',
+        description: '自动化服务 Agent 可在预算和单笔限额约束下，向已授权收款方支付 AVAX 购买数字服务。'
       }
     ]
   },

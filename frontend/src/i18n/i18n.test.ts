@@ -123,7 +123,7 @@ describe('AvaFence i18n Bilingual Support & Integrity', () => {
     const expectedEnCaps = [
       'Total Budget',
       'Per-Transaction Limit',
-      'Daily Spending Limit',
+      'UTC calendar-day spending limit',
       'Approved Recipients',
       'Policy Expiry',
       'Replay Protection',
@@ -135,7 +135,7 @@ describe('AvaFence i18n Bilingual Support & Integrity', () => {
     const expectedZhCaps = [
       '总预算',
       '单笔限额',
-      '每日限额',
+      'UTC 自然日支付上限',
       '授权收款方',
       '策略有效期',
       '重复支付防护',
@@ -148,7 +148,7 @@ describe('AvaFence i18n Bilingual Support & Integrity', () => {
       'The three demo scenarios illustrate how the current policy engine works. They do not represent the full range of agent payment workflows AvaFence is exploring.'
     )
     expect(zhCN.policyCoverage.noteText).toBe(
-      '当前三个演示场景用于说明策略引擎的工作方式，并不代表 AvaFence 最终只支持这三种 Agent 支付场景。'
+      '当前三个演示场景用于说明当前策略引擎如何工作，并不代表 AvaFence 正在探索的全部 Agent 支付工作流。'
     )
 
     // 4 Example Use Cases
@@ -156,15 +156,39 @@ describe('AvaFence i18n Bilingual Support & Integrity', () => {
     expect(zhCN.policyCoverage.useCases.length).toBe(4)
     expect(en.policyCoverage.useCasesHeading).toBe('Example Use Cases')
     expect(zhCN.policyCoverage.useCasesHeading).toContain('Example Use Cases')
+    expect(en.policyCoverage.useCasesDisclaimer).toContain('Not customer deployments or completed integrations')
 
-    // Primitives matching check
+    // Truthfulness & forbidden phrasing checks in policy coverage
+    const enStr = JSON.stringify(en.policyCoverage)
+    const zhStr = JSON.stringify(zhCN.policyCoverage)
+
+    // 1. No rolling window
+    expect(enStr.toLowerCase()).not.toContain('rolling window')
+    expect(zhStr).not.toContain('滚动窗口')
+
+    // 2. No pooled balance / continuous deposits / 累计托管资金
+    expect(enStr.toLowerCase()).not.toContain('pooled balance')
+    expect(enStr.toLowerCase()).not.toContain('continuous deposits')
+    expect(zhStr).not.toContain('累计托管资金')
+
+    // 3. No 抛出 (revert connotation)
+    expect(zhStr).not.toContain('抛出')
+
+    // 4. No physical commerce or digital assets in use cases
+    expect(enStr.toLowerCase()).not.toContain('digital assets')
+    expect(zhStr).not.toContain('实物商品')
+    expect(zhStr).not.toContain('数字或实物商品自动化结算')
+
+    // 5. Permissive modality checks in use cases (could / may / can be used to; 可用于 / 可在)
     for (const uc of en.policyCoverage.useCases) {
       expect(uc.primitives.length).toBeGreaterThan(0)
-      expect(uc.description.length).toBeGreaterThan(0)
+      const descLower = uc.description.toLowerCase()
+      expect(descLower.includes('could') || descLower.includes('may') || descLower.includes('can be used to')).toBe(true)
+      expect(uc.description).not.toMatch(/\b(Procures|Settles|Executes)\b/)
     }
     for (const uc of zhCN.policyCoverage.useCases) {
       expect(uc.primitives.length).toBeGreaterThan(0)
-      expect(uc.description.length).toBeGreaterThan(0)
+      expect(uc.description.includes('可用于') || uc.description.includes('可在')).toBe(true)
     }
   })
 })
