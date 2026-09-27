@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { X, ExternalLink, Copy, Check, Droplets } from 'lucide-react'
-
+import { useTranslation } from '../i18n'
 
 interface FaucetModalProps {
   isOpen: boolean
@@ -9,6 +9,7 @@ interface FaucetModalProps {
 }
 
 export const FaucetModal: React.FC<FaucetModalProps> = ({ isOpen, onClose, account }) => {
+  const { t } = useTranslation()
   const [copied, setCopied] = useState(false)
 
   if (!isOpen) return null
@@ -36,15 +37,15 @@ export const FaucetModal: React.FC<FaucetModalProps> = ({ isOpen, onClose, accou
             <Droplets className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white">Avalanche Fuji 测试网水龙头 (Faucets)</h3>
-            <p className="text-xs text-slate-400">领取 Fuji 测试网免费 AVAX 用于开发测试</p>
+            <h3 className="text-lg font-bold text-white">{t.faucetModal.title}</h3>
+            <p className="text-xs text-slate-400">{t.faucetModal.subtitle}</p>
           </div>
         </div>
 
         {/* User Account */}
         {account && (
           <div className="mb-4 p-3 rounded-xl bg-slate-950 border border-slate-800">
-            <div className="text-[11px] text-slate-400 mb-1">当前连接的钱包地址:</div>
+            <div className="text-[11px] text-slate-400 mb-1">{t.faucetModal.connectedWallet}</div>
             <div className="flex items-center justify-between font-mono text-xs text-slate-200">
               <span className="truncate mr-2">{account}</span>
               <button
@@ -52,7 +53,7 @@ export const FaucetModal: React.FC<FaucetModalProps> = ({ isOpen, onClose, accou
                 className="flex items-center space-x-1 px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition"
               >
                 {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copied ? '已复制' : '复制 (Copy)'}</span>
+                <span>{copied ? t.faucetModal.copied : t.faucetModal.copy}</span>
               </button>
             </div>
           </div>
@@ -68,9 +69,9 @@ export const FaucetModal: React.FC<FaucetModalProps> = ({ isOpen, onClose, accou
           >
             <div>
               <div className="text-sm font-semibold text-white group-hover:text-red-400 transition">
-                Core 测试网水龙头 (推荐)
+                {t.faucetModal.coreFaucetTitle}
               </div>
-              <div className="text-xs text-slate-400">配合 Core 钱包领取速度最快</div>
+              <div className="text-xs text-slate-400">{t.faucetModal.coreFaucetDesc}</div>
             </div>
             <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-red-400" />
           </a>
@@ -83,9 +84,9 @@ export const FaucetModal: React.FC<FaucetModalProps> = ({ isOpen, onClose, accou
           >
             <div>
               <div className="text-sm font-semibold text-white group-hover:text-red-400 transition">
-                Avalanche Builder Hub 官方水龙头
+                {t.faucetModal.avaxHubTitle}
               </div>
-              <div className="text-xs text-slate-400">Avalanche 官方开发者门户水龙头</div>
+              <div className="text-xs text-slate-400">{t.faucetModal.avaxHubDesc}</div>
             </div>
             <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-red-400" />
           </a>
@@ -95,9 +96,10 @@ export const FaucetModal: React.FC<FaucetModalProps> = ({ isOpen, onClose, accou
           onClick={onClose}
           className="w-full py-2.5 rounded-xl font-semibold text-sm bg-slate-800 hover:bg-slate-700 text-white transition cursor-pointer"
         >
-          完成 (Done)
+          {t.faucetModal.done}
         </button>
       </div>
     </div>
   )
 }
+

@@ -19,6 +19,7 @@ import type { PolicyState } from './PolicyConsole'
 import { BlockReason, BLOCK_REASON_TEXT } from '../config/avalanche'
 import type { DemoExecution } from '../types/demo'
 import { siteConfig } from '../config/site.config'
+import { useTranslation } from '../i18n'
 
 interface AvaFencePanelProps {
   currentExecution: DemoExecution
@@ -46,17 +47,6 @@ interface AvaFencePanelProps {
   isSimulation?: boolean
 }
 
-const ORDERED_CHECKS = [
-  { id: 0, label: 'Scoped Agent Authorized', zh: '代理身份授权' },
-  { id: 1, label: 'Policy Active', zh: '策略激活状态' },
-  { id: 2, label: 'Not Expired', zh: '有效期检查' },
-  { id: 3, label: 'Request Fresh', zh: '防重放 Nonce' },
-  { id: 4, label: 'Recipient Authorized', zh: '收款方白名单' },
-  { id: 5, label: 'Per Tx Limit Check', zh: '单笔限额硬顶' },
-  { id: 6, label: 'Daily Limit Check', zh: '单日支出限额' },
-  { id: 7, label: 'Budget Available Check', zh: '剩余预算充足' }
-]
-
 export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
   currentExecution,
   policy,
@@ -76,6 +66,7 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
   onRevokePolicy,
   isSimulation = false
 }) => {
+  const { language, t } = useTranslation()
   const {
     scenario,
     stage,
@@ -125,13 +116,13 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
   let naturalReason = ''
   if (isDecisionReady) {
     if (isAllowed) {
-      naturalReason = 'Payment approved: within 0.003 AVAX per-tx limit and recipient is authorized.'
+      naturalReason = t.policyEvaluation.naturalAllow
     } else if (scenario === 'B' || verdict === BlockReason.MERCHANT_NOT_ALLOWED) {
-      naturalReason = 'Recipient is not authorized by policy.'
+      naturalReason = t.policyEvaluation.naturalBlockRecipient
     } else if (scenario === 'C' || verdict === BlockReason.PER_TX_LIMIT_EXCEEDED) {
-      naturalReason = 'Per-transaction limit of 0.003 AVAX exceeded.'
+      naturalReason = t.policyEvaluation.naturalBlockOverspend
     } else {
-      naturalReason = BLOCK_REASON_TEXT[verdict || BlockReason.POLICY_INACTIVE]?.description || 'Payment blocked by policy.'
+      naturalReason = BLOCK_REASON_TEXT[verdict || BlockReason.POLICY_INACTIVE]?.description || t.policyEvaluation.naturalBlockDefault
     }
   }
 
@@ -142,40 +133,40 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
         <div>
           <div className="flex items-center space-x-2">
             <Shield className="w-5 h-5 text-red-500" />
-            <h2 className="text-base font-black text-white tracking-tight">POLICY EVALUATION</h2>
+            <h2 className="text-base font-black text-white tracking-tight">{t.policyEvaluation.title}</h2>
           </div>
-          <p className="text-[11px] text-slate-400">Deterministic Financial Firewall</p>
+          <p className="text-[11px] text-slate-400">{t.policyEvaluation.sub}</p>
         </div>
 
         {/* Unified Status Badge */}
         {isSimulation ? (
           <span className="flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
             <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-            <span>SIMULATION SANDBOX</span>
+            <span>{t.policyEvaluation.simSandbox}</span>
           </span>
         ) : isEvaluating ? (
           <span className="flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 animate-pulse">
             <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-            <span>EVALUATING</span>
+            <span>{t.policyEvaluation.evaluating}</span>
           </span>
         ) : hasActivePolicy ? (
           <span className="flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
             <span className="w-2 h-2 rounded-full bg-emerald-400" />
-            <span>POLICY ACTIVE</span>
+            <span>{t.policyEvaluation.policyActive}</span>
           </span>
         ) : isExpired ? (
           <span className="flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
             <Clock className="w-3.5 h-3.5" />
-            <span>EXPIRED</span>
+            <span>{t.policyEvaluation.expired}</span>
           </span>
         ) : policy && !policy.active ? (
           <span className="flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
             <Ban className="w-3.5 h-3.5" />
-            <span>REVOKED</span>
+            <span>{t.policyEvaluation.revoked}</span>
           </span>
         ) : (
           <span className="flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-slate-800 text-slate-400 border border-slate-700">
-            <span>NOT CREATED</span>
+            <span>{t.policyEvaluation.notCreated}</span>
           </span>
         )}
       </div>
@@ -185,7 +176,7 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
         <div className="p-2.5 rounded-xl bg-rose-950/80 border border-rose-500 text-xs font-mono space-y-1.5">
           <div className="flex items-center space-x-1.5 text-rose-400 font-bold">
             <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>Notice: Leaked Agent Policy detected</span>
+            <span>{t.policyEvaluation.compromisedNotice}</span>
           </div>
           <button
             type="button"
@@ -193,7 +184,7 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
             disabled={isRevokingCompromised}
             className="w-full py-1.5 px-2 rounded-lg font-bold text-xs text-white bg-rose-600 hover:bg-rose-500 cursor-pointer transition disabled:opacity-50"
           >
-            {isRevokingCompromised ? 'Revoking...' : 'Revoke 0x82fF... & Recover 0.018 AVAX'}
+            {isRevokingCompromised ? t.policyEvaluation.revokingBtn : t.policyEvaluation.revokeCompromisedBtn}
           </button>
         </div>
       )}
@@ -203,58 +194,58 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
         <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono space-y-2">
           <div className="flex items-center justify-between border-b border-slate-900 pb-1.5">
             <span className="text-[10px] uppercase tracking-wider text-cyan-400 font-bold">
-              SIMULATED POLICY (ACTIVE)
+              {t.policyEvaluation.simulatedPolicyActive}
             </span>
             <span className="text-[10px] text-slate-400 font-mono">
-              Auto-Loaded Sandbox
+              {t.policyEvaluation.autoLoadedSandbox}
             </span>
           </div>
 
           <div className="grid grid-cols-2 gap-1.5 text-[11px]">
             <div className="p-1.5 rounded bg-slate-900/70 flex justify-between">
-              <span className="text-slate-400">Remaining:</span>
+              <span className="text-slate-400">{t.policyEvaluation.remaining}</span>
               <span className="text-emerald-400 font-bold">0.020 AVAX</span>
             </div>
             <div className="p-1.5 rounded bg-slate-900/70 flex justify-between">
-              <span className="text-slate-400">Max / Tx:</span>
+              <span className="text-slate-400">{t.policyEvaluation.maxTx}</span>
               <span className="text-white font-bold">0.003 AVAX</span>
             </div>
             <div className="p-1.5 rounded bg-slate-900/70 flex justify-between">
-              <span className="text-slate-400">Daily:</span>
+              <span className="text-slate-400">{t.policyEvaluation.daily}</span>
               <span className="text-slate-200 font-bold">0.000 / 0.010 AVAX</span>
             </div>
             <div className="p-1.5 rounded bg-slate-900/70 flex justify-between">
-              <span className="text-slate-400">Expires:</span>
+              <span className="text-slate-400">{t.policyEvaluation.expires}</span>
               <span className="text-slate-200 font-bold">60m</span>
             </div>
           </div>
 
           <div className="text-[10px] text-slate-400 flex items-center justify-between pt-1 border-t border-slate-900">
-            <span>Approved Recipient:</span>
-            <span className="text-emerald-400 font-semibold">✓ PremiumData API</span>
+            <span>{t.policyEvaluation.approvedRecipient}</span>
+            <span className="text-emerald-400 font-semibold">{t.policyEvaluation.approvedRecipientValue}</span>
           </div>
         </div>
       ) : !hasActivePolicy ? (
         <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono space-y-2">
           <div className="font-bold text-white text-xs uppercase tracking-wider flex items-center justify-between">
-            <span>SET AGENT SPENDING POLICY</span>
-            <span className="text-[10px] text-slate-400">Human Financial Bounds</span>
+            <span>{t.policyEvaluation.setPolicyTitle}</span>
+            <span className="text-[10px] text-slate-400">{t.policyEvaluation.setPolicySub}</span>
           </div>
           <div className="grid grid-cols-2 gap-1.5 text-[11px]">
             <div className="flex justify-between p-1.5 bg-slate-900/60 rounded">
-              <span className="text-slate-400">Budget:</span>
+              <span className="text-slate-400">{t.policyEvaluation.budget}</span>
               <span className="text-white font-bold">{budgetInput} AVAX</span>
             </div>
             <div className="flex justify-between p-1.5 bg-slate-900/60 rounded">
-              <span className="text-slate-400">Max / Tx:</span>
+              <span className="text-slate-400">{t.policyEvaluation.maxTx}</span>
               <span className="text-white font-bold">{maxTxInput} AVAX</span>
             </div>
             <div className="flex justify-between p-1.5 bg-slate-900/60 rounded">
-              <span className="text-slate-400">Daily:</span>
+              <span className="text-slate-400">{t.policyEvaluation.daily}</span>
               <span className="text-white font-bold">{dailyInput} AVAX</span>
             </div>
             <div className="flex justify-between p-1.5 bg-slate-900/60 rounded">
-              <span className="text-slate-400">Duration:</span>
+              <span className="text-slate-400">{t.policyEvaluation.duration}</span>
               <span className="text-white font-bold">60 mins</span>
             </div>
           </div>
@@ -269,45 +260,45 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
             ) : (
               <PlusCircle className="w-3.5 h-3.5" />
             )}
-            <span>{isCreatingPolicy ? 'Locking Budget on Fuji...' : 'Create Spending Policy on Fuji'}</span>
+            <span>{isCreatingPolicy ? t.policyEvaluation.lockingBudgetBtn : t.policyEvaluation.lockBudgetBtn}</span>
           </button>
         </div>
       ) : (
         <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono space-y-2">
           <div className="flex items-center justify-between border-b border-slate-900 pb-1.5">
-            <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">ACTIVE POLICY</span>
+            <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">{t.policyEvaluation.activePolicy}</span>
             <button
               type="button"
               onClick={onRevokePolicy}
               disabled={isRevokingPolicy}
               className="text-[10px] text-red-400 hover:text-red-300 font-semibold cursor-pointer underline disabled:opacity-50"
             >
-              {isRevokingPolicy ? 'Revoking...' : 'Revoke & Withdraw'}
+              {isRevokingPolicy ? t.policyEvaluation.revoking : t.policyEvaluation.revokeAndWithdraw}
             </button>
           </div>
 
           <div className="grid grid-cols-2 gap-1.5 text-[11px]">
             <div className="p-1.5 rounded bg-slate-900/70 flex justify-between">
-              <span className="text-slate-400">Remaining:</span>
+              <span className="text-slate-400">{t.policyEvaluation.remaining}</span>
               <span className="text-emerald-400 font-bold">{parseFloat(policy!.remainingBudget).toFixed(3)} AVAX</span>
             </div>
             <div className="p-1.5 rounded bg-slate-900/70 flex justify-between">
-              <span className="text-slate-400">Max / Tx:</span>
+              <span className="text-slate-400">{t.policyEvaluation.maxTx}</span>
               <span className="text-white font-bold">{parseFloat(policy!.maxPerTx).toFixed(3)} AVAX</span>
             </div>
             <div className="p-1.5 rounded bg-slate-900/70 flex justify-between">
-              <span className="text-slate-400">Daily:</span>
+              <span className="text-slate-400">{t.policyEvaluation.daily}</span>
               <span className="text-slate-200 font-bold">{parseFloat(policy!.dailySpent).toFixed(3)} / {parseFloat(policy!.dailyLimit).toFixed(3)}</span>
             </div>
             <div className="p-1.5 rounded bg-slate-900/70 flex justify-between">
-              <span className="text-slate-400">Expires:</span>
+              <span className="text-slate-400">{t.policyEvaluation.expires}</span>
               <span className="text-slate-200 font-bold">{timeLeftMinutes}m</span>
             </div>
           </div>
 
           {/* Agent Wallet Row & Low Gas warning */}
           <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-900 text-slate-400">
-            <span>Agent Wallet:</span>
+            <span>{t.policyEvaluation.agentWallet}</span>
             <div className="flex items-center space-x-1.5">
               <span className="text-slate-300 font-mono">{agentAddress ? `${agentAddress.slice(0, 6)}...${agentAddress.slice(-4)}` : '--'}</span>
               <span className={`font-bold ${agentGasLow ? 'text-amber-400' : 'text-emerald-400'}`}>
@@ -324,31 +315,31 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
               className="w-full py-1 px-2 rounded bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[10px] cursor-pointer hover:bg-amber-500/20 transition flex items-center justify-center space-x-1"
             >
               <Fuel className="w-3 h-3 text-amber-400" />
-              <span>{isFundingAgent ? 'Funding...' : 'Fund Agent Gas (0.005 AVAX)'}</span>
+              <span>{isFundingAgent ? t.policyEvaluation.funding : t.policyEvaluation.fundAgentGas}</span>
             </button>
           )}
 
           <div className="text-[10px] text-slate-400 flex items-center justify-between pt-1 border-t border-slate-900">
-            <span>Approved Recipient:</span>
-            <span className="text-emerald-400 font-semibold">✓ PremiumData API</span>
+            <span>{t.policyEvaluation.approvedRecipient}</span>
+            <span className="text-emerald-400 font-semibold">{t.policyEvaluation.approvedRecipientValue}</span>
           </div>
         </div>
       )}
 
-      {/* 3. PRIMARY DECISION CARD (Section 4 Priority Display & Section 5 Conflict Resolution) */}
+      {/* 3. PRIMARY DECISION CARD */}
       {!isIdle && (
         <div className="space-y-3">
           {verdictMismatch ? (
             <div className="py-3 px-3.5 rounded-xl bg-rose-950/90 border-2 border-rose-500 shadow-xl text-center space-y-1">
               <div className="text-[10px] uppercase font-bold text-rose-300 tracking-wider">
-                POLICY VERDICT CONFLICT
+                {t.policyEvaluation.conflictTitle}
               </div>
               <div className="text-base font-black text-rose-400 flex items-center justify-center space-x-1.5">
                 <ShieldAlert className="w-5 h-5" />
-                <span>VERDICT MISMATCH · DEMO HALTED</span>
+                <span>{t.policyEvaluation.conflictHeading}</span>
               </div>
               <div className="text-[11px] text-rose-200 font-mono">
-                Preview evaluation conflicted with on-chain event receipt. Flow halted for safety.
+                {t.policyEvaluation.conflictDesc}
               </div>
             </div>
           ) : previewVerdict !== null && verdict === null && (stage === 'POLICY_VISUALIZING' || stage === 'TX_SUBMITTING' || stage === 'TX_BROADCAST' || stage === 'WAITING_ACCEPTANCE') ? (
@@ -356,13 +347,13 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
             <div className="py-3 px-3.5 rounded-xl bg-cyan-950/40 border-2 border-cyan-500/60 shadow-xl text-center space-y-1.5">
               <div className="text-[10px] uppercase font-bold text-cyan-400 tracking-wider flex items-center justify-center space-x-1.5">
                 <Loader2 className="w-3 h-3 animate-spin text-cyan-400" />
-                <span>{isSimulation ? 'EVALUATING SPENDING POLICY' : 'EVALUATING · PENDING ON-CHAIN CONFIRMATION'}</span>
+                <span>{isSimulation ? t.policyEvaluation.evalSim : t.policyEvaluation.evalPending}</span>
               </div>
               <div className="text-sm font-bold text-white font-mono">
-                Preview: {previewVerdict === BlockReason.NONE ? 'ALLOW (Pre-check Passed)' : `BLOCK (${BLOCK_REASON_TEXT[previewVerdict]?.label || 'Policy Violation'})`}
+                {previewVerdict === BlockReason.NONE ? t.policyEvaluation.previewAllow : `${t.policyEvaluation.previewBlockPrefix} (${BLOCK_REASON_TEXT[previewVerdict]?.label || 'Policy Violation'})`}
               </div>
               <div className="text-[10px] text-cyan-300/80 font-mono">
-                {isSimulation ? 'Simulating deterministic on-chain logic...' : 'Submitting autonomous transaction to Avalanche Fuji...'}
+                {isSimulation ? t.policyEvaluation.simulatingOnChain : t.policyEvaluation.submittingAutoTx}
               </div>
             </div>
           ) : isDecisionReady ? (
@@ -374,16 +365,16 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
                 <div className="p-4 rounded-xl bg-emerald-950/40 border-2 border-emerald-500/80 shadow-xl space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] uppercase font-bold text-emerald-400 tracking-wider font-mono">
-                      SIMULATION RESULT
+                      {t.policyEvaluation.simResult}
                     </span>
                     <span className="px-2 py-0.5 rounded font-mono text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                      Simulation Decision: ALLOW
+                      {t.policyEvaluation.simDecisionAllowBadge}
                     </span>
                   </div>
 
                   <div className="text-2xl font-black text-emerald-400 flex items-center space-x-2">
                     <ShieldCheck className="w-6 h-6" />
-                    <span>ALLOW</span>
+                    <span>{t.policyEvaluation.allow}</span>
                   </div>
 
                   <div className="text-xs text-slate-200 font-medium leading-relaxed">
@@ -393,10 +384,10 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
                   <div className="p-2.5 rounded-lg bg-slate-950/90 border border-emerald-500/30 text-[11px] text-slate-300 space-y-1 font-mono">
                     <div className="text-emerald-400 font-semibold flex items-center space-x-1.5">
                       <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                      <span>Simulation Decision: ALLOW</span>
+                      <span>{t.policyEvaluation.simDecisionAllowBadge}</span>
                     </div>
-                    <div className="text-slate-400">No transaction was broadcast in this simulation.</div>
-                    <div className="text-slate-400">0 network gas consumed in this simulation.</div>
+                    <div className="text-slate-400">{t.policyEvaluation.noTxBroadcastSimText}</div>
+                    <div className="text-slate-400">{t.policyEvaluation.zeroGasSimText}</div>
                   </div>
                 </div>
               ) : (
@@ -404,16 +395,16 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
                 <div className="p-4 rounded-xl bg-rose-950/50 border-2 border-rose-500/80 shadow-xl space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] uppercase font-bold text-rose-400 tracking-wider font-mono">
-                      SIMULATION RESULT
+                      {t.policyEvaluation.simResult}
                     </span>
                     <span className="px-2 py-0.5 rounded font-mono text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40">
-                      Simulation Decision: BLOCK
+                      {t.policyEvaluation.simDecisionBlockBadge}
                     </span>
                   </div>
 
                   <div className="text-2xl font-black text-rose-400 flex items-center space-x-2">
                     <ShieldAlert className="w-6 h-6" />
-                    <span>BLOCKED</span>
+                    <span>{t.policyEvaluation.blocked}</span>
                   </div>
 
                   <div className="text-xs text-white font-semibold leading-relaxed">
@@ -423,11 +414,11 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
                   <div className="p-2.5 rounded-lg bg-slate-950/90 border border-rose-500/30 text-[11px] text-slate-300 space-y-1 font-mono">
                     <div className="text-rose-400 font-semibold flex items-center space-x-1.5">
                       <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
-                      <span>Simulation Decision: BLOCK</span>
+                      <span>{t.policyEvaluation.simDecisionBlockBadge}</span>
                     </div>
-                    <div className="text-slate-400">No transaction was broadcast.</div>
-                    <div className="text-rose-300 font-bold">0 AVAX transferred.</div>
-                    <div className="text-slate-400">0 network gas consumed in this simulation.</div>
+                    <div className="text-slate-400">{t.policyEvaluation.noTxBroadcastText}</div>
+                    <div className="text-rose-300 font-bold">{t.policyEvaluation.zeroTransferred}</div>
+                    <div className="text-slate-400">{t.policyEvaluation.zeroGasSimText}</div>
                   </div>
                 </div>
               )
@@ -438,16 +429,16 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
                 <div className="p-4 rounded-xl bg-emerald-950/40 border-2 border-emerald-500/80 shadow-xl space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] uppercase font-bold text-emerald-400 tracking-wider font-mono">
-                      FINAL POLICY DECISION
+                      {t.policyEvaluation.finalDecision}
                     </span>
                     <span className="px-2 py-0.5 rounded font-mono text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                      ALLOW
+                      {t.policyEvaluation.allow}
                     </span>
                   </div>
 
                   <div className="text-2xl font-black text-emerald-400 flex items-center space-x-2">
                     <ShieldCheck className="w-6 h-6" />
-                    <span>ALLOW</span>
+                    <span>{t.policyEvaluation.allow}</span>
                   </div>
 
                   <div className="text-xs text-slate-200 font-medium leading-relaxed">
@@ -455,13 +446,13 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
                   </div>
 
                   <div className="pt-2 border-t border-emerald-500/30 flex items-center justify-between font-mono text-xs">
-                    <span className="text-slate-400">Transferred to Recipient:</span>
+                    <span className="text-slate-400">{t.policyEvaluation.transferredToRecipient}</span>
                     <span className="text-emerald-400 font-extrabold text-sm">{currentExecution.transferredAmount}</span>
                   </div>
 
                   <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono">
-                    <span>Settlement:</span>
-                    <span className="text-emerald-300">Verified on Avalanche Fuji</span>
+                    <span>{t.policyEvaluation.settlement}</span>
+                    <span className="text-emerald-300">{t.policyEvaluation.verifiedOnFuji}</span>
                   </div>
                 </div>
               ) : (
@@ -469,16 +460,16 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
                 <div className="p-4 rounded-xl bg-rose-950/50 border-2 border-rose-500/80 shadow-xl space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] uppercase font-bold text-rose-400 tracking-wider font-mono">
-                      FINAL POLICY DECISION
+                      {t.policyEvaluation.finalDecision}
                     </span>
                     <span className="px-2 py-0.5 rounded font-mono text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40">
-                      BLOCKED
+                      {t.policyEvaluation.blocked}
                     </span>
                   </div>
 
                   <div className="text-2xl font-black text-rose-400 flex items-center space-x-2">
                     <ShieldAlert className="w-6 h-6" />
-                    <span>BLOCKED</span>
+                    <span>{t.policyEvaluation.blocked}</span>
                   </div>
 
                   <div className="text-xs text-white font-semibold leading-relaxed">
@@ -486,26 +477,26 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
                   </div>
 
                   <div className="pt-2 border-t border-rose-500/30 flex flex-col space-y-1 font-mono text-xs">
-                    <span className="text-slate-400">Transferred to Recipient:</span>
+                    <span className="text-slate-400">{t.policyEvaluation.transferredToRecipient}</span>
                     <span className="text-rose-300 font-extrabold text-xs bg-rose-500/20 px-2 py-1 rounded border border-rose-500/30 leading-snug">
-                      0 AVAX transferred to recipient; network gas was still consumed
+                      {t.policyEvaluation.zeroMovedGasConsumed}
                     </span>
                   </div>
 
                   <div className="p-2 rounded-lg bg-slate-950/80 border border-slate-800 text-[11px] text-slate-300 space-y-1 font-mono">
                     <div className="text-emerald-400 font-semibold flex items-center space-x-1">
                       <CheckCircle2 className="w-3 h-3 shrink-0" />
-                      <span>Policy decision recorded on Avalanche Fuji.</span>
+                      <span>{t.policyEvaluation.decisionRecordedFuji}</span>
                     </div>
                     <div className="text-rose-300 font-semibold flex items-center space-x-1">
                       <ShieldAlert className="w-3 h-3 shrink-0" />
-                      <span>0 AVAX transferred to recipient; network gas was still consumed.</span>
+                      <span>{t.policyEvaluation.zeroMovedGasConsumed}</span>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono">
-                    <span>Verification:</span>
-                    <span className="text-cyan-300">Verified on Avalanche Fuji</span>
+                    <span>{t.policyEvaluation.verification}</span>
+                    <span className="text-cyan-300">{t.policyEvaluation.verifiedOnFuji}</span>
                   </div>
                 </div>
               )
@@ -518,16 +509,16 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
               <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                 <div className="flex items-center space-x-1.5 text-cyan-400 font-bold font-sans text-xs">
                   <ShieldCheck className="w-4 h-4 text-cyan-400" />
-                  <span>Comparable Verified Fuji Evidence</span>
+                  <span>{t.policyEvaluation.historicalEvidenceTitle}</span>
                 </div>
                 <span className="px-1.5 py-0.5 rounded text-[10px] bg-cyan-950 text-cyan-300 border border-cyan-800">
-                  Historical On-Chain Proof
+                  {t.policyEvaluation.historicalEvidenceBadge}
                 </span>
               </div>
 
               {/* Mandatory Disclaimer */}
               <div className="p-2 rounded bg-cyan-950/30 border border-cyan-500/20 text-[11px] text-cyan-200/90 font-sans leading-relaxed">
-                This is a previous verified Fuji transaction demonstrating the same policy outcome. It is not the transaction from this simulation.
+                {t.policyEvaluation.historicalDisclaimer}
               </div>
 
               {/* Historical Metrics Table */}
@@ -536,43 +527,43 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
                 return (
                   <div className="space-y-1.5 text-[11px]">
                     <div className="flex justify-between items-center text-slate-400">
-                      <span>Historical TX:</span>
+                      <span>{t.policyEvaluation.historicalTx}</span>
                       <span className="text-slate-200">{historical.txHash.slice(0, 10)}...{historical.txHash.slice(-8)}</span>
                     </div>
                     <div className="flex justify-between items-center text-slate-400">
-                      <span>Historical Request ID:</span>
+                      <span>{t.policyEvaluation.historicalRequestId}</span>
                       <span className="text-slate-300">{historical.requestId.slice(0, 10)}...{historical.requestId.slice(-6)}</span>
                     </div>
                     <div className="flex justify-between items-center text-slate-400">
-                      <span>Block Number:</span>
+                      <span>{t.policyEvaluation.blockNumber}</span>
                       <span className="text-slate-200">#{historical.blockNumber}</span>
                     </div>
                     <div className="flex justify-between items-center text-slate-400">
-                      <span>Historical Event:</span>
+                      <span>{t.policyEvaluation.historicalEvent}</span>
                       <span className={historical.action === 'ALLOW' ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
                         {historical.eventEmitted}
                       </span>
                     </div>
                     <div className="flex justify-between items-start text-slate-400">
-                      <span>Actual Transferred:</span>
+                      <span>{t.policyEvaluation.actualTransferred}</span>
                       <span className="text-slate-200 text-right max-w-[200px]">
-                        {historical.transferredAmount}
+                        {historical.action === 'ALLOW' ? historical.transferredAmount : (language === 'zh' ? t.policyEvaluation.historicalTransferredB : historical.transferredAmount)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center text-slate-400">
-                      <span>Recipient Delta:</span>
+                      <span>{t.policyEvaluation.recipientDelta}</span>
                       <span className="text-slate-200 font-mono">{historical.recipientDelta}</span>
                     </div>
                     <div className="flex justify-between items-center text-slate-400">
-                      <span>Gas Used:</span>
+                      <span>{t.policyEvaluation.gasUsed}</span>
                       <span className="text-slate-200 font-mono">{historical.gasUsed}</span>
                     </div>
                     <div className="flex justify-between items-center text-slate-400">
-                      <span>Effective Gas Price:</span>
+                      <span>{t.policyEvaluation.effectiveGasPrice}</span>
                       <span className="text-slate-200 font-mono">{historical.effectiveGasPrice}</span>
                     </div>
                     <div className="flex justify-between items-center text-slate-400">
-                      <span>Network Gas Cost:</span>
+                      <span>{t.policyEvaluation.networkGasCost}</span>
                       <span className="text-slate-200 font-mono text-[10px] text-emerald-400">{historical.networkGasCost}</span>
                     </div>
 
@@ -583,7 +574,7 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
                         rel="noreferrer"
                         className="w-full py-2 px-3 rounded-lg bg-cyan-950/60 hover:bg-cyan-900/60 border border-cyan-500/40 text-cyan-300 hover:text-white text-xs font-mono font-bold flex items-center justify-center space-x-1.5 transition"
                       >
-                        <span>View On-Chain Receipt on Snowtrace Fuji</span>
+                        <span>{t.policyEvaluation.viewSnowtrace}</span>
                         <ExternalLink className="w-3.5 h-3.5" />
                       </a>
                     </div>
@@ -601,36 +592,36 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
               rel="noreferrer"
               className="w-full py-2 px-3 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-cyan-300 hover:text-white text-xs font-mono font-semibold flex items-center justify-center space-x-1.5 transition"
             >
-              <span>View On-Chain Receipt on Snowtrace Fuji</span>
+              <span>{t.policyEvaluation.viewSnowtrace}</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
           )}
         </div>
       )}
 
-      {/* 4. COLLAPSED TECHNICAL DETAILS & 8-CHECK PIPELINE (Section 4 Requirement) */}
+      {/* 4. COLLAPSED TECHNICAL DETAILS & 8-CHECK PIPELINE */}
       <details className="text-xs font-mono text-slate-400 border border-slate-800/80 rounded-xl bg-slate-950/50 p-2.5">
         <summary className="cursor-pointer hover:text-white flex items-center justify-between list-none font-semibold text-[11px] select-none">
           <span className="flex items-center space-x-1.5">
             <Info className="w-3.5 h-3.5 text-red-400" />
-            <span>Technical Details & Policy Evidence</span>
+            <span>{t.policyEvaluation.technicalDetailsTitle}</span>
           </span>
-          <span className="text-[10px] text-slate-500">Click to expand</span>
+          <span className="text-[10px] text-slate-500">{t.policyEvaluation.clickToExpand}</span>
         </summary>
 
         <div className="mt-3 pt-3 border-t border-slate-800 space-y-3">
           {/* Clarification of on-chain acceptance vs transfer execution */}
           <div className="p-2 rounded bg-slate-900 border border-slate-800 text-[10px] text-slate-300 leading-relaxed font-sans">
-            <strong>On-chain Semantics: </strong>
-            The policy-decision transaction was accepted on-chain. When a payment is blocked, AvaxGuard records the attempt and emits a PaymentBlocked event, but no funds leave the policy vault.
+            <strong>{t.policyEvaluation.onChainSemantics}</strong>
+            {t.policyEvaluation.onChainSemanticsDesc}
           </div>
 
           {/* 8-Check Sequential Checklist */}
           <div className="space-y-1">
             <div className="text-[10px] uppercase font-bold text-slate-400 pb-1">
-              8-Check Policy Evaluation Pipeline:
+              {t.policyEvaluation.pipelineTitle}
             </div>
-            {ORDERED_CHECKS.map((check, checkIndex) => {
+            {t.policyEvaluation.checks.map((check, checkIndex) => {
               const isEvaluatingThis = isEvaluating && revealStep === checkIndex
               const isFailed = firstFailIndex === checkIndex
               const isSkipped = firstFailIndex !== -1 && checkIndex > firstFailIndex
@@ -664,22 +655,22 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
                     {isEvaluatingThis ? (
                       <span className="text-amber-400 flex items-center space-x-1">
                         <Loader2 className="w-2.5 h-2.5 animate-spin" />
-                        <span>CHECKING</span>
+                        <span>{t.policyEvaluation.checking}</span>
                       </span>
                     ) : isFailed ? (
                       <span className="text-rose-400 flex items-center space-x-0.5">
                         <XCircle className="w-2.5 h-2.5" />
-                        <span>FAIL</span>
+                        <span>{t.policyEvaluation.fail}</span>
                       </span>
                     ) : isSkipped ? (
                       <span className="text-slate-500 flex items-center space-x-0.5">
                         <Minus className="w-2.5 h-2.5" />
-                        <span>SKIPPED</span>
+                        <span>{t.policyEvaluation.skipped}</span>
                       </span>
                     ) : isRevealed && isPassed ? (
                       <span className="text-emerald-400 flex items-center space-x-0.5">
                         <CheckCircle2 className="w-2.5 h-2.5" />
-                        <span>PASS</span>
+                        <span>{t.policyEvaluation.pass}</span>
                       </span>
                     ) : (
                       <span className="text-slate-600">--</span>
@@ -693,43 +684,43 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
           {/* Raw Diagnostics */}
           <div className="space-y-1.5 pt-2 border-t border-slate-800 text-[11px]">
             <div className="flex justify-between">
-              <span className="text-slate-500">Request ID:</span>
+              <span className="text-slate-500">{t.spendIntentCard.requestId}</span>
               <span className="text-slate-300 truncate max-w-[190px]">
                 {spendIntent?.requestId || '--'}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">Raw Bitmask:</span>
+              <span className="text-slate-500">{t.policyEvaluation.rawBitmask}</span>
               <span className="text-slate-300">
                 {checksPassed !== null ? `0b${checksPassed.toString(2).padStart(7, '0')} (${checksPassed})` : '--'}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">Block Number:</span>
+              <span className="text-slate-500">{t.policyEvaluation.blockNumber}</span>
               <span className="text-slate-300">{blockNumber ? `#${blockNumber}` : '--'}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">Gas Used:</span>
+              <span className="text-slate-500">{t.policyEvaluation.gasUsed}</span>
               <span className="text-slate-300">{gasUsed ? `${gasUsed} gas` : '--'}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">Network Gas Cost:</span>
+              <span className="text-slate-500">{t.policyEvaluation.networkGasCost}</span>
               <span className="text-slate-300">{networkGasCost || '--'}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">Acceptance Latency:</span>
+              <span className="text-slate-500">{t.policyEvaluation.acceptanceLatency}</span>
               <span className="text-slate-300">
                 {acceptanceLatencyMs ? `${acceptanceLatencyMs} ms (${latencySource || 'WSS'})` : '--'}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">Agent Principal:</span>
+              <span className="text-slate-500">{t.policyEvaluation.agentPrincipal}</span>
               <span className="text-slate-300 font-mono text-[10px]">
                 {agentAddress ? `${agentAddress.slice(0, 8)}...${agentAddress.slice(-6)}` : '--'}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">Contract Implementation:</span>
+              <span className="text-slate-500">{t.policyEvaluation.contractImplementation}</span>
               <span className="text-slate-300 font-mono text-[10px]">
                 AvaxGuard.sol ({contractAddress.slice(0, 6)}...{contractAddress.slice(-4)})
               </span>
@@ -740,3 +731,4 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
     </div>
   )
 }
+

@@ -38,8 +38,10 @@ import {
 } from './services/agentWallet'
 import { monitor } from './services/monitor'
 import { merchantService } from './services/merchant'
+import { useTranslation } from './i18n'
 
 export function App() {
+  const { t } = useTranslation()
   const [account, setAccount] = useState<string | null>(null)
   const [chainId, setChainId] = useState<number | null>(null)
   const [balance, setBalance] = useState<string>('0')
@@ -195,7 +197,7 @@ export function App() {
   const connectWallet = async () => {
     const ethereum = (window as any).ethereum
     if (!ethereum) {
-      alert('未检测到 Web3 钱包，请安装 MetaMask 或 Core 扩展插件！')
+      alert(t.alerts.noWeb3)
       return
     }
 
@@ -222,7 +224,7 @@ export function App() {
       }
     } catch (err: any) {
       console.error('Connect wallet failed:', err)
-      alert(`连接钱包失败: ${err.message || err}`)
+      alert(`${t.alerts.connectFailed}${err.message || err}`)
     } finally {
       setIsConnecting(false)
     }
@@ -280,7 +282,7 @@ export function App() {
   // Contract deployment handler
   const handleDeployContract = async () => {
     if (!account || !provider) {
-      alert('请先连接 MetaMask 钱包！')
+      alert(t.alerts.connectFirst)
       return
     }
 
@@ -314,7 +316,7 @@ export function App() {
       setContractAddr(newAddr)
       setIsContractDeployed(true)
 
-      alert(`AvaFence 智能合约部署成功！\n\n合约地址: ${newAddr}\n交易哈希: ${txHash}\nSnowtrace 浏览器: https://testnet.snowtrace.io/address/${newAddr}`)
+      alert(`${t.alerts.deploySuccess}${newAddr}\nTX: ${txHash}\nSnowtrace: https://testnet.snowtrace.io/address/${newAddr}`)
 
       await loadPolicy()
       await refreshBalances()
@@ -322,7 +324,7 @@ export function App() {
       console.error('Contract deployment failed:', err)
       const msg = err.message || String(err)
       setDeployError(msg)
-      alert(`合约部署失败: ${msg}`)
+      alert(`${t.alerts.deployFailed}${msg}`)
     } finally {
       setIsDeployingContract(false)
     }
@@ -335,7 +337,7 @@ export function App() {
       const prov = provider || new ethers.JsonRpcProvider(FUJI_CHAIN_CONFIG.rpcUrls[0])
       const code = await prov.getCode(verified)
       if (code === '0x' || code.length <= 2) {
-        alert(`字节码验证失败：地址 ${verified} 上未检测到已部署的智能合约 (eth_getCode 为 0x)`)
+        alert(`${t.alerts.bindFailedCode}${verified}`)
         return
       }
       setAvaxGuardAddress(verified)
@@ -343,16 +345,16 @@ export function App() {
       setIsContractDeployed(true)
       await loadPolicy()
       await refreshBalances()
-      alert(`成功绑定已验证的 AvaFence 合约: ${verified}`)
+      alert(`${t.alerts.bindSuccess}${verified}`)
     } catch (e: any) {
-      alert(`无效地址: ${e.message}`)
+      alert(`${t.alerts.invalidAddr}${e.message}`)
     }
   }
 
   // Fund Agent Gas (0.005 AVAX)
   const handleFundAgent = async () => {
     if (!account || !provider) {
-      alert('请先连接 MetaMask 钱包！')
+      alert(t.alerts.connectFirst)
       return
     }
 
@@ -376,10 +378,10 @@ export function App() {
       })
       await fujiRpc.waitForTransaction(txHash, 1, 30000)
       await refreshBalances()
-      alert(`成功为 Agent 独立钱包充值 0.005 AVAX Gas: ${currentAgent.address}`)
+      alert(`${t.alerts.fundingSuccess}${currentAgent.address}`)
     } catch (err: any) {
       console.error('Funding agent gas failed:', err)
-      alert(`Gas 充值失败: ${err.message || err}`)
+      alert(`${t.alerts.fundingFailed}${err.message || err}`)
     } finally {
       setIsFundingAgent(false)
     }
@@ -397,11 +399,11 @@ export function App() {
   // Create Policy
   const handleCreatePolicy = async (budget: string, maxTx: string, daily: string, durationSec: number) => {
     if (!account || !provider) {
-      alert('请先连接钱包！')
+      alert(t.alerts.connectFirst)
       return
     }
     if (!isContractDeployed) {
-      alert('链上状态未就绪：请先部署 AvaFence 智能合约！')
+      alert(t.alerts.needContract)
       return
     }
 
@@ -422,7 +424,7 @@ export function App() {
       if (isAlreadyUsed) {
         const newW = createNewAgentWallet()
         setAgentWallet(newW)
-        alert(`安全规则触发：当前 Agent 此前已绑定过生效策略。\n\nAvaFence 严格执行 “一个 Agent = 一个策略生命周期” 规则。\n\n系统已为您生成全新 Agent 钱包 (${newW.address})！\n\n请先点击 “充值 Agent Gas (0.005 AVAX)” 为其注入 Gas，然后再创建 Spending Policy。`)
+        alert(t.alerts.policyLifecycleRule)
         setIsCreatingPolicy(false)
         return
       }
@@ -453,7 +455,7 @@ export function App() {
       await refreshBalances()
     } catch (err: any) {
       console.error('Failed to create policy:', err)
-      alert(`创建策略失败: ${err.message || err}`)
+      alert(`${t.alerts.createPolicyFailed}${err.message || err}`)
     } finally {
       setIsCreatingPolicy(false)
     }
@@ -489,7 +491,7 @@ export function App() {
       await refreshBalances()
     } catch (err: any) {
       console.error('Failed to revoke policy:', err)
-      alert(`撤销策略失败: ${err.message || err}`)
+      alert(`${t.alerts.revokeFailed}${err.message || err}`)
     } finally {
       setIsRevokingPolicy(false)
     }
@@ -521,13 +523,13 @@ export function App() {
       })
       await fujiRpc.waitForTransaction(txHash, 1, 30000)
 
-      alert(`✅ 废弃受损 Agent 策略已成功撤销！\n交易哈希: ${txHash}\n剩余 0.018 AVAX 预算已返还至您的钱包。`)
+      alert(`${t.alerts.revokeCompromisedSuccess}${txHash}`)
       setHasCompromisedPolicy(false)
       await loadPolicy()
       await refreshBalances()
     } catch (err: any) {
       console.error('Failed to revoke compromised policy:', err)
-      alert(`撤销失败: ${err.message || err}`)
+      alert(`${t.alerts.revokeFailed}${err.message || err}`)
     } finally {
       setIsRevokingCompromised(false)
     }
@@ -553,35 +555,35 @@ export function App() {
   // Pre-flight Demo Readiness Verification
   const demoReadiness = useMemo(() => {
     if (demoMode === 'instant') {
-      return { ready: true, reason: 'Instant Simulation Ready (Zero Setup Required)' }
+      return { ready: true, reason: t.demoReadiness.instantReady }
     }
     if (!account) {
-      return { ready: false, reason: '请先连接 MetaMask 钱包' }
+      return { ready: false, reason: t.demoReadiness.connectWallet }
     }
     if (chainId !== 43113) {
-      return { ready: false, reason: '请切换至 Avalanche Fuji 测试网 (43113)' }
+      return { ready: false, reason: t.demoReadiness.switchNetwork }
     }
     if (!isContractDeployed || !contractAddress) {
-      return { ready: false, reason: 'AvaFence 合约未就绪' }
+      return { ready: false, reason: t.demoReadiness.contractNotReady }
     }
     if (!policy || !policy.active) {
-      return { ready: false, reason: '当前无活跃 Policy，请先创建策略' }
+      return { ready: false, reason: t.demoReadiness.noPolicy }
     }
     if (Date.now() / 1000 > policy.expiry) {
-      return { ready: false, reason: 'Policy 已过期，请重新创建' }
+      return { ready: false, reason: t.demoReadiness.policyExpired }
     }
     if (parseFloat(agentBalance || '0') < 0.002) {
-      return { ready: false, reason: 'Agent 钱包 Gas 不足 (需 >= 0.002 AVAX)' }
+      return { ready: false, reason: t.demoReadiness.insufficientGas }
     }
     if (parseFloat(policy.remainingBudget || '0') < 0.002) {
-      return { ready: false, reason: 'Policy 剩余预算不足 (需 >= 0.002 AVAX)' }
+      return { ready: false, reason: t.demoReadiness.insufficientBudget }
     }
     const dailyRemaining = parseFloat(policy.dailyLimit || '0') - parseFloat(policy.dailySpent || '0')
     if (dailyRemaining < 0.001) {
-      return { ready: false, reason: '单日限额已耗尽，请创建新 Policy' }
+      return { ready: false, reason: t.demoReadiness.dailyExhausted }
     }
-    return { ready: true, reason: 'Fuji 链上状态已验证就绪' }
-  }, [demoMode, account, chainId, isContractDeployed, contractAddress, policy, agentBalance])
+    return { ready: true, reason: t.demoReadiness.ready }
+  }, [demoMode, account, chainId, isContractDeployed, contractAddress, policy, agentBalance, t])
 
   // Guided Prepare Demo Handler (P0-3)
   const handlePrepareDemo = async () => {
@@ -598,23 +600,23 @@ export function App() {
       }
       if (parseFloat(balance || '0') < 0.01) {
         setIsFaucetOpen(true)
-        alert('您的 Fuji 钱包余额不足以支付 Gas 与创建策略。请通过弹出的水龙头窗口领取免费测试 AVAX。')
+        alert(t.alerts.faucetTip)
         return
       }
       if (!policy || !policy.active || Date.now() / 1000 > policy.expiry) {
-        alert('正在为您在 Fuji 链上创建演示策略 (0.02 AVAX 总预算, 0.003 AVAX 单笔限额, 有效期 1 小时)...')
+        alert(t.alerts.creatingPolicyTip)
         await handleCreatePolicy('0.02', '0.003', '0.01', 3600)
         return
       }
       if (parseFloat(agentBalance || '0') < 0.002) {
-        alert('正在为 Agent 独立签名钱包注入 0.005 AVAX 交易 Gas...')
+        alert(t.alerts.fundingGasTip)
         await handleFundAgent()
         return
       }
-      alert('演示环境已 100% 准备就绪！请在下方选择场景 A、B 或 C 并点击执行。')
+      alert(t.alerts.setupReadyTip)
     } catch (err: any) {
       console.error('Prepare demo failed:', err)
-      alert(`环境准备步骤中断: ${err.message || err}`)
+      alert(`${t.alerts.setupInterrupted}${err.message || err}`)
     } finally {
       setIsPreparingDemo(false)
     }
@@ -791,7 +793,7 @@ export function App() {
     }
 
     if (!demoReadiness.ready) {
-      alert(`无法运行 Demo: ${demoReadiness.reason}`)
+      alert(`${t.alerts.cannotRun}${demoReadiness.reason}`)
       return
     }
 
@@ -1184,9 +1186,9 @@ export function App() {
                     : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
                 }`}
               >
-                <span>⚡ Instant Demo</span>
+                <span>{t.modeSwitcher.instantDemo}</span>
                 <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${demoMode === 'instant' ? 'bg-red-950/80 text-rose-200' : 'bg-slate-800 text-slate-400'}`}>
-                  Zero Setup
+                  {t.modeSwitcher.zeroSetup}
                 </span>
               </button>
 
@@ -1202,9 +1204,9 @@ export function App() {
                     : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
                 }`}
               >
-                <span>⛓️ Run Live on Avalanche Fuji</span>
+                <span>{t.modeSwitcher.runLiveOnFuji}</span>
                 <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${demoMode === 'live' ? 'bg-red-950/80 text-rose-200' : 'bg-slate-800 text-slate-400'}`}>
-                  Guided Setup
+                  {t.modeSwitcher.guidedSetup}
                 </span>
               </button>
             </div>
@@ -1212,11 +1214,11 @@ export function App() {
             <div className="text-[11px] text-slate-400 font-mono flex items-center space-x-2 px-2">
               {demoMode === 'instant' ? (
                 <span className="text-amber-400 font-medium">
-                  ⚡ Interactive Simulation — no transaction is broadcast · verifiable Fuji evidence provided
+                  {t.modeSwitcher.instantBanner}
                 </span>
               ) : (
                 <span className="text-cyan-400 font-medium">
-                  ⛓️ Connected to Avalanche Fuji C-Chain (43113)
+                  {t.modeSwitcher.liveBanner}
                 </span>
               )}
             </div>
@@ -1297,7 +1299,7 @@ export function App() {
       </main>
 
       <footer className="border-t border-slate-900 py-6 text-center text-xs text-slate-500 font-mono">
-        AvaFence • The Verifiable Policy Firewall for AI Agent Payments • Built on Avalanche Fuji C-Chain
+        {t.footer.text}
       </footer>
 
       <FaucetModal

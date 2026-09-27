@@ -9,8 +9,10 @@ import {
   Copy,
   Layers
 } from 'lucide-react'
+import { useTranslation } from '../i18n'
 
 export const DeveloperIntegrationPreview: React.FC = () => {
+  const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState<'code' | 'intent' | 'decision'>('code')
   const [copied, setCopied] = useState(false)
 
@@ -76,14 +78,14 @@ return wallet.pay(paymentIntent)`
           <div className="flex items-center space-x-2">
             <Layers className="w-5 h-5 text-red-500" />
             <h2 className="text-base sm:text-lg font-black text-white tracking-tight">
-              HOW AVAFENCE FITS INTO YOUR AGENT
+              {t.developerIntegration.heading}
             </h2>
             <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
-              Planned SDK Interface — not yet released
+              {t.developerIntegration.plannedSdkBadge}
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            A programmable policy enforcement and decision-audit layer for agentic payments.
+            {t.developerIntegration.subheading}
           </p>
         </div>
 
@@ -96,7 +98,7 @@ return wallet.pay(paymentIntent)`
               activeTab === 'code' ? 'bg-red-500/20 text-red-400 font-bold' : 'text-slate-400 hover:text-white'
             }`}
           >
-            Illustrative Code
+            {t.developerIntegration.tabCode}
           </button>
           <button
             type="button"
@@ -105,7 +107,7 @@ return wallet.pay(paymentIntent)`
               activeTab === 'intent' ? 'bg-red-500/20 text-red-400 font-bold' : 'text-slate-400 hover:text-white'
             }`}
           >
-            Payment Intent
+            {t.developerIntegration.tabIntent}
           </button>
           <button
             type="button"
@@ -114,24 +116,24 @@ return wallet.pay(paymentIntent)`
               activeTab === 'decision' ? 'bg-red-500/20 text-red-400 font-bold' : 'text-slate-400 hover:text-white'
             }`}
           >
-            Decision Evidence
+            {t.developerIntegration.tabDecision}
           </button>
         </div>
       </div>
 
       {/* End-to-End Execution Pipeline Strip */}
       <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 text-center font-mono text-[11px] text-slate-300 flex flex-wrap items-center justify-center gap-1.5 mb-4">
-        <span className="text-cyan-400 font-bold">Agent</span>
+        <span className="text-cyan-400 font-bold">{t.developerIntegration.pipelineAgent}</span>
         <span className="text-slate-500">→</span>
-        <span className="text-amber-300 font-bold">Payment Intent</span>
+        <span className="text-amber-300 font-bold">{t.developerIntegration.pipelineIntent}</span>
         <span className="text-slate-500">→</span>
-        <span className="text-red-400 font-bold">AvaFence</span>
+        <span className="text-red-400 font-bold">{t.developerIntegration.pipelineAvaFence}</span>
         <span className="text-slate-500">→</span>
-        <span className="text-emerald-400 font-bold">ALLOW</span> / <span className="text-rose-400 font-bold">BLOCK</span>
+        <span className="text-emerald-400 font-bold">{t.developerIntegration.pipelineAllow}</span> / <span className="text-rose-400 font-bold">{t.developerIntegration.pipelineBlock}</span>
         <span className="text-slate-500">→</span>
-        <span className="text-slate-200 font-semibold">Wallet / x402 <span className="text-[9px] text-amber-400 font-mono">[Planned]</span></span>
+        <span className="text-slate-200 font-semibold">{t.developerIntegration.pipelineWallet} <span className="text-[9px] text-amber-400 font-mono">{t.developerIntegration.pipelinePlanned}</span></span>
         <span className="text-slate-500">→</span>
-        <span className="text-emerald-300 font-bold">Settlement</span>
+        <span className="text-emerald-300 font-bold">{t.developerIntegration.pipelineSettlement}</span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -140,9 +142,9 @@ return wallet.pay(paymentIntent)`
           <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 text-center">
             <div className="flex items-center justify-center space-x-2 text-white font-bold">
               <Cpu className="w-4 h-4 text-cyan-400" />
-              <span>YOUR AGENT</span>
+              <span>{t.developerIntegration.flowAgentTitle}</span>
             </div>
-            <div className="text-[10px] text-slate-400 mt-0.5">Autonomous task or tool query</div>
+            <div className="text-[10px] text-slate-400 mt-0.5">{t.developerIntegration.flowAgentSub}</div>
           </div>
 
           <div className="flex justify-center text-slate-500">
@@ -152,9 +154,9 @@ return wallet.pay(paymentIntent)`
           <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 text-center">
             <div className="text-white font-bold flex items-center justify-center space-x-1.5">
               <FileCode className="w-4 h-4 text-amber-400" />
-              <span>PAYMENT INTENT</span>
+              <span>{t.developerIntegration.flowIntentTitle}</span>
             </div>
-            <div className="text-[10px] text-slate-400 mt-0.5">Recipient, amount, asset, requestId</div>
+            <div className="text-[10px] text-slate-400 mt-0.5">{t.developerIntegration.flowIntentSub}</div>
           </div>
 
           <div className="flex justify-center text-slate-500">
@@ -165,10 +167,10 @@ return wallet.pay(paymentIntent)`
           <div className="p-3.5 rounded-xl bg-gradient-to-r from-red-950/50 to-rose-950/50 border-2 border-red-500/50 text-center shadow-lg">
             <div className="text-white font-black flex items-center justify-center space-x-2">
               <span className="w-2 h-2 rounded-full bg-red-400 animate-ping" />
-              <span className="text-red-400 tracking-wide">AVAFENCE POLICY EVALUATION</span>
+              <span className="text-red-400 tracking-wide">{t.developerIntegration.flowEvalTitle}</span>
             </div>
             <div className="text-[10px] text-slate-300 mt-1">
-              Independent deterministic checks: Limits · Recipient · Expiry · Budget
+              {t.developerIntegration.flowEvalSub}
             </div>
           </div>
 
@@ -177,19 +179,19 @@ return wallet.pay(paymentIntent)`
             <div className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/40 text-center space-y-1">
               <div className="flex items-center justify-center space-x-1 text-emerald-400 font-extrabold text-[11px]">
                 <ShieldCheck className="w-3.5 h-3.5" />
-                <span>ALLOW</span>
+                <span>{t.developerIntegration.flowAllowTitle}</span>
               </div>
-              <div className="text-[10px] text-slate-300">Wallet / x402 <span className="text-[9px] text-amber-400">[Planned]</span></div>
-              <div className="text-[9px] text-emerald-400 font-bold">Settlement Authorized</div>
+              <div className="text-[10px] text-slate-300">{t.developerIntegration.flowAllowWallet} <span className="text-[9px] text-amber-400">{t.developerIntegration.pipelinePlanned}</span></div>
+              <div className="text-[9px] text-emerald-400 font-bold">{t.developerIntegration.flowAllowSub}</div>
             </div>
 
             <div className="p-3 rounded-xl bg-rose-950/30 border border-rose-500/40 text-center space-y-1">
               <div className="flex items-center justify-center space-x-1 text-rose-400 font-extrabold text-[11px]">
                 <ShieldAlert className="w-3.5 h-3.5" />
-                <span>BLOCK</span>
+                <span>{t.developerIntegration.flowBlockTitle}</span>
               </div>
-              <div className="text-[10px] text-slate-300">Reason + Decision Evidence</div>
-              <div className="text-[9px] text-rose-400 font-bold">0 AVAX transferred to recipient</div>
+              <div className="text-[10px] text-slate-300">{t.developerIntegration.flowBlockReason}</div>
+              <div className="text-[9px] text-rose-400 font-bold">{t.developerIntegration.flowBlockTransferred}</div>
             </div>
           </div>
         </div>
@@ -210,7 +212,7 @@ return wallet.pay(paymentIntent)`
                 className="flex items-center space-x-1 px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white transition cursor-pointer"
               >
                 {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                <span>{copied ? 'Copied' : 'Copy'}</span>
+                <span>{copied ? t.developerIntegration.copied : t.developerIntegration.copy}</span>
               </button>
             </div>
 
@@ -222,10 +224,11 @@ return wallet.pay(paymentIntent)`
           </div>
 
           <div className="mt-2 text-[10px] text-slate-500 font-mono text-right">
-            Note: Illustrative planned interface. Production SDK will integrate natively with EVM agent wallets and x402.
+            {t.developerIntegration.sdkDisclaimer}
           </div>
         </div>
       </div>
     </div>
   )
 }
+

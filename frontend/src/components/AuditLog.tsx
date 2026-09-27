@@ -11,6 +11,7 @@ import {
   Radio
 } from 'lucide-react'
 import { BlockReason, DEMO_ADDRESSES } from '../config/avalanche'
+import { useTranslation } from '../i18n'
 
 export interface AuditRecord {
   id: string
@@ -86,6 +87,7 @@ interface AuditLogProps {
 }
 
 export const AuditLog: React.FC<AuditLogProps> = ({ logs }) => {
+  const { language, t } = useTranslation()
   const [showAll, setShowAll] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
@@ -141,10 +143,10 @@ export const AuditLog: React.FC<AuditLogProps> = ({ logs }) => {
         <div className="flex items-center space-x-2">
           <FileText className="w-4 h-4 text-red-500" />
           <h3 className="font-bold text-white text-sm uppercase tracking-wider">
-            DECISION EVIDENCE & AUDIT TRAIL
+            {t.auditTrail.title}
           </h3>
           <span className="px-2 py-0.5 rounded-full bg-slate-800 text-[10px] text-cyan-300 font-semibold border border-slate-700">
-            {showAll ? `All Records (${activeLogs.length})` : 'Representative 3-Scenario Evidence'}
+            {showAll ? `${t.auditTrail.allRecords} (${activeLogs.length})` : t.auditTrail.repView}
           </span>
         </div>
 
@@ -152,11 +154,11 @@ export const AuditLog: React.FC<AuditLogProps> = ({ logs }) => {
         <div className="flex items-center space-x-3 text-[10px] font-sans">
           <span className="inline-flex items-center space-x-1 text-emerald-400">
             <Radio className="w-2.5 h-2.5" />
-            <span>Live Fuji Execution</span>
+            <span>{t.auditTrail.liveExecution}</span>
           </span>
           <span className="inline-flex items-center space-x-1 text-cyan-300">
             <span className="w-2 h-2 rounded-full bg-cyan-400" />
-            <span>Historical Verified Receipt</span>
+            <span>{t.auditTrail.historicalReceipt}</span>
           </span>
         </div>
 
@@ -166,7 +168,7 @@ export const AuditLog: React.FC<AuditLogProps> = ({ logs }) => {
             onClick={() => setShowAll(!showAll)}
             className="flex items-center space-x-1 text-xs text-red-400 hover:text-red-300 cursor-pointer font-semibold transition"
           >
-            <span>{showAll ? 'Show Representative View' : `Show Full History (${activeLogs.length})`}</span>
+            <span>{showAll ? t.auditTrail.showRep : `${t.auditTrail.showFull} (${activeLogs.length})`}</span>
             {showAll ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
           </button>
         )}
@@ -177,14 +179,14 @@ export const AuditLog: React.FC<AuditLogProps> = ({ logs }) => {
         <table className="w-full text-left text-[11px]">
           <thead className="bg-slate-950/60 text-slate-400 border-b border-slate-800 font-mono uppercase text-[10px]">
             <tr>
-              <th className="p-2.5">Scenario</th>
-              <th className="p-2.5">Evidence Type</th>
-              <th className="p-2.5">Decision</th>
-              <th className="p-2.5">Requested</th>
-              <th className="p-2.5">Transferred</th>
-              <th className="p-2.5">Recipient</th>
-              <th className="p-2.5">Block Reason</th>
-              <th className="p-2.5 text-right">Fuji Explorer</th>
+              <th className="p-2.5">{t.auditTrail.thScenario}</th>
+              <th className="p-2.5">{t.auditTrail.thEvidenceType}</th>
+              <th className="p-2.5">{t.auditTrail.thDecision}</th>
+              <th className="p-2.5">{t.auditTrail.thRequested}</th>
+              <th className="p-2.5">{t.auditTrail.thTransferred}</th>
+              <th className="p-2.5">{t.auditTrail.thRecipient}</th>
+              <th className="p-2.5">{t.auditTrail.thBlockReason}</th>
+              <th className="p-2.5 text-right">{t.auditTrail.thExplorer}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/60">
@@ -196,14 +198,15 @@ export const AuditLog: React.FC<AuditLogProps> = ({ logs }) => {
               const isSceneA = !isSceneB && !isSceneC
 
               const scenarioName = isSceneA
-                ? 'Scenario A · Normal Purchase'
+                ? t.auditTrail.scenarioNameA
                 : isSceneB
-                ? 'Scenario B · Unauthorized Recipient'
-                : 'Scenario C · Per-Tx Overspend'
+                ? t.auditTrail.scenarioNameB
+                : t.auditTrail.scenarioNameC
 
               const transferred =
-                record.transferredAmount ||
-                (record.type === 'EXECUTED' ? `${record.amount} AVAX` : '0 AVAX')
+                record.type === 'EXECUTED'
+                  ? (record.transferredAmount || `${record.amount} AVAX`)
+                  : (language === 'zh' ? t.auditTrail.blockedTransferredText : (record.transferredAmount || '0 AVAX transferred to recipient; the historical blocked transaction consumed network gas.'))
 
               const isLive = record.isLiveExecution ?? (record.id.startsWith('audit-'))
 
@@ -229,12 +232,12 @@ export const AuditLog: React.FC<AuditLogProps> = ({ logs }) => {
                     {isLive ? (
                       <span className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] font-semibold">
                         <Radio className="w-2.5 h-2.5 text-emerald-400 animate-pulse" />
-                        <span>Live Fuji Execution</span>
+                        <span>{t.auditTrail.liveExecution}</span>
                       </span>
                     ) : (
                       <span className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 text-[10px] font-semibold">
                         <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                        <span>Historical Verified Receipt</span>
+                        <span>{t.auditTrail.historicalReceipt}</span>
                       </span>
                     )}
                   </td>
@@ -244,12 +247,12 @@ export const AuditLog: React.FC<AuditLogProps> = ({ logs }) => {
                     {record.type === 'EXECUTED' ? (
                       <span className="inline-flex items-center space-x-1 font-bold text-emerald-400">
                         <ShieldCheck className="w-3.5 h-3.5" />
-                        <span>ALLOW</span>
+                        <span>{t.policyEvaluation.allow}</span>
                       </span>
                     ) : (
                       <span className="inline-flex items-center space-x-1 font-bold text-rose-400">
                         <ShieldAlert className="w-3.5 h-3.5" />
-                        <span>BLOCK</span>
+                        <span>{t.policyEvaluation.blocked}</span>
                       </span>
                     )}
                   </td>
@@ -291,7 +294,7 @@ export const AuditLog: React.FC<AuditLogProps> = ({ logs }) => {
                     ) : (
                       <span className="text-rose-400 font-bold text-[10px]">
                         {record.reason === BlockReason.MERCHANT_NOT_ALLOWED
-                          ? 'recipient not authorized'
+                          ? (language === 'zh' ? 'recipient not authorized (未授权收款方)' : 'recipient not authorized')
                           : record.reason === BlockReason.PER_TX_LIMIT_EXCEEDED
                           ? 'PER_TX_LIMIT_EXCEEDED'
                           : 'PAYMENT_BLOCKED'}
@@ -335,12 +338,13 @@ export const AuditLog: React.FC<AuditLogProps> = ({ logs }) => {
       {/* Footer Notice */}
       <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between text-[10px] text-slate-400 gap-2">
         <div>
-          All displayed transactions are queryable on Avalanche Fuji RPC (Chain ID 43113) and verifiable on Snowtrace.
+          {t.auditTrail.footer}
         </div>
         <div className="text-slate-500 font-mono">
-          Smart Contract: 0xB6379ce69E73cC6d20E5284D14386F4fBF8Ed770
+          {t.auditTrail.contract}
         </div>
       </div>
     </div>
   )
 }
+

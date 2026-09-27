@@ -9,6 +9,7 @@ import {
   ShieldAlert
 } from 'lucide-react'
 import type { DemoSpendIntent } from '../types/demo'
+import { useTranslation } from '../i18n'
 
 export type SpendIntent = DemoSpendIntent
 
@@ -17,10 +18,12 @@ interface SpendIntentCardProps {
 }
 
 export const SpendIntentCard: React.FC<SpendIntentCardProps> = ({ intent }) => {
+  const { t } = useTranslation()
+
   if (!intent) {
     return (
       <div className="p-4 rounded-xl border border-dashed border-slate-800 bg-slate-950/40 text-center text-xs text-slate-500 font-mono py-6">
-        Waiting to select a scenario to generate Agent Payment Intent...
+        {t.spendIntentCard.waiting}
       </div>
     )
   }
@@ -42,21 +45,21 @@ export const SpendIntentCard: React.FC<SpendIntentCardProps> = ({ intent }) => {
       <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-800/80">
         <div className="flex items-center space-x-2 text-white font-bold">
           <Send className="w-4 h-4 text-red-500" />
-          <span className="text-sm font-sans tracking-tight">AGENT PAYMENT INTENT</span>
+          <span className="text-sm font-sans tracking-tight">{t.spendIntentCard.title}</span>
         </div>
         <div className="flex items-center space-x-1.5">
           {isSceneB ? (
             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-500/20 text-rose-400 border border-rose-500/40 flex items-center space-x-1">
               <AlertTriangle className="w-3 h-3" />
-              <span>Scenario B · UNAUTHORIZED RECIPIENT</span>
+              <span>{t.spendIntentCard.scenarioB}</span>
             </span>
           ) : isSceneC ? (
             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/40">
-              Scenario C · PER-TX OVERSPEND
+              {t.spendIntentCard.scenarioC}
             </span>
           ) : (
             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
-              Scenario A · NORMAL PURCHASE
+              {t.spendIntentCard.scenarioA}
             </span>
           )}
         </div>
@@ -66,7 +69,7 @@ export const SpendIntentCard: React.FC<SpendIntentCardProps> = ({ intent }) => {
       <div className="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800/90 mb-3 flex items-center justify-between">
         <div>
           <div className="text-[11px] uppercase tracking-wider text-slate-400 font-sans font-semibold">
-            Requested Amount (申请金额)
+            {t.spendIntentCard.requestedAmount}
           </div>
           <div
             className={`text-3xl sm:text-4xl font-black mt-0.5 tracking-tight ${
@@ -85,20 +88,20 @@ export const SpendIntentCard: React.FC<SpendIntentCardProps> = ({ intent }) => {
           {isSceneB ? (
             <div className="text-xs text-rose-400 font-bold flex items-center justify-end space-x-1">
               <XCircle className="w-3.5 h-3.5" />
-              <span>✕ Unauthorized Recipient</span>
+              <span>{t.spendIntentCard.unauthorizedRecipient}</span>
             </div>
           ) : isSceneC ? (
             <div className="text-xs text-amber-400 font-bold flex items-center justify-end space-x-1">
               <AlertTriangle className="w-3.5 h-3.5" />
-              <span>✕ Exceeds Limit (&gt; 0.003 AVAX)</span>
+              <span>{t.spendIntentCard.exceedsLimit}</span>
             </div>
           ) : (
             <div className="text-xs text-emerald-400 font-bold flex items-center justify-end space-x-1">
               <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>✓ Within Limit (≤ 0.003 AVAX)</span>
+              <span>{t.spendIntentCard.withinLimit}</span>
             </div>
           )}
-          <div className="text-[11px] text-slate-500 mt-1">AvaFence Policy Pre-evaluation</div>
+          <div className="text-[11px] text-slate-500 mt-1">{t.spendIntentCard.policyPreEval}</div>
         </div>
       </div>
 
@@ -107,7 +110,7 @@ export const SpendIntentCard: React.FC<SpendIntentCardProps> = ({ intent }) => {
         <div className="mb-3 p-2.5 rounded-xl bg-rose-950/60 border border-rose-500/50 flex items-center space-x-2 text-rose-300 text-xs">
           <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0" />
           <div className="leading-tight">
-            <strong>Policy Boundary Trigger:</strong> Amount <span className="text-emerald-400 font-bold">0.001 AVAX</span> is within budget, but the recipient address is not in the allowlist. {intent.secondaryExplanation}
+            <strong>{t.spendIntentCard.boundaryTrigger}</strong> {t.spendIntentCard.sceneBTrigger}
           </div>
         </div>
       )}
@@ -117,7 +120,7 @@ export const SpendIntentCard: React.FC<SpendIntentCardProps> = ({ intent }) => {
         <div className="mb-3 p-2.5 rounded-xl bg-amber-950/60 border border-amber-500/50 flex items-center space-x-2 text-amber-300 text-xs">
           <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
           <div className="leading-tight">
-            <strong>Policy Boundary Trigger:</strong> Requested amount <span className="text-amber-400 font-bold">0.010 AVAX</span> exceeds the active policy hard ceiling of <span className="text-white font-bold">0.003 AVAX</span> per transaction.
+            <strong>{t.spendIntentCard.boundaryTrigger}</strong> {t.spendIntentCard.sceneCTrigger}
           </div>
         </div>
       )}
@@ -128,7 +131,7 @@ export const SpendIntentCard: React.FC<SpendIntentCardProps> = ({ intent }) => {
         <div className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/80">
           <div className="text-[11px] uppercase tracking-wider text-slate-400 flex items-center space-x-1 font-sans mb-1">
             <FileText className="w-3 h-3 text-slate-400" />
-            <span>Target Resource (目标资源)</span>
+            <span>{t.spendIntentCard.targetResource}</span>
           </div>
           <div className="text-slate-200 font-semibold text-xs truncate">
             {intent.serviceName}
@@ -144,15 +147,15 @@ export const SpendIntentCard: React.FC<SpendIntentCardProps> = ({ intent }) => {
           }`}
         >
           <div className="text-[11px] uppercase tracking-wider text-slate-400 flex items-center justify-between font-sans mb-1">
-            <span>Recipient (收款方)</span>
+            <span>{t.spendIntentCard.recipient}</span>
             {isSceneB ? (
               <span className="text-[10px] font-bold text-rose-400 flex items-center space-x-0.5">
                 <XCircle className="w-3 h-3" />
-                <span>✕ Not Authorized</span>
+                <span>{t.spendIntentCard.notAuthorized}</span>
               </span>
             ) : (
               <span className="text-[10px] font-bold text-emerald-400">
-                ✓ Authorized
+                {t.spendIntentCard.authorized}
               </span>
             )}
           </div>
@@ -167,7 +170,7 @@ export const SpendIntentCard: React.FC<SpendIntentCardProps> = ({ intent }) => {
 
       {/* Task Description */}
       <div className="mt-2.5 p-2 rounded-lg bg-slate-950/40 border border-slate-800/60 text-slate-400 text-[11px]">
-        <span className="text-slate-300 font-semibold">Intent Rationale: </span>
+        <span className="text-slate-300 font-semibold">{t.spendIntentCard.intentRationale} </span>
         <span>{intent.taskDescription}</span>
       </div>
 
@@ -175,7 +178,7 @@ export const SpendIntentCard: React.FC<SpendIntentCardProps> = ({ intent }) => {
       <div className="mt-2 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
         <div className="flex items-center space-x-1 text-slate-500">
           <Hash className="w-3 h-3" />
-          <span>Request ID:</span>
+          <span>{t.spendIntentCard.requestId}</span>
         </div>
         <div className="font-mono text-slate-300 truncate max-w-[280px]">
           {intent.requestId}
@@ -184,3 +187,4 @@ export const SpendIntentCard: React.FC<SpendIntentCardProps> = ({ intent }) => {
     </div>
   )
 }
+

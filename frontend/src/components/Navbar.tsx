@@ -1,6 +1,7 @@
 import React from 'react'
 import { Wallet, Globe, ShieldCheck, Zap } from 'lucide-react'
 import { FUJI_CHAIN_CONFIG, switchToFuji } from '../config/avalanche'
+import { useTranslation } from '../i18n'
 
 interface NavbarProps {
   account: string | null
@@ -21,6 +22,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenFaucet,
   onNavClick
 }) => {
+  const { language, setLanguage, t } = useTranslation()
   const isFuji = chainId === FUJI_CHAIN_CONFIG.chainIdDecimal
 
   const handleNav = (id: string) => {
@@ -42,16 +44,16 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-lg font-black tracking-tight text-white">AvaFence</span>
+              <span className="text-lg font-black tracking-tight text-white">{t.nav.brandName}</span>
               <span className="text-[11px] px-2 py-0.5 rounded-full font-mono bg-red-500/10 text-red-400 border border-red-500/20 font-semibold">
-                Fuji Testnet
+                {t.nav.fujiBadge}
               </span>
               <span className="text-[10px] px-1.5 py-0.5 rounded font-mono bg-slate-900 text-slate-400 border border-slate-800 font-semibold hidden sm:inline">
-                Mainnet: Pending Deployment
+                {t.nav.mainnetBadge}
               </span>
             </div>
             <p className="text-xs text-slate-400 hidden sm:block">
-              The Verifiable Policy Firewall for AI Agent Payments
+              {t.nav.positioning}
             </p>
           </div>
         </div>
@@ -63,33 +65,62 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={() => handleNav('demo-section')}
             className="hover:text-white transition cursor-pointer"
           >
-            Interactive Demo
+            {t.nav.interactiveDemo}
           </button>
           <button
             type="button"
             onClick={() => handleNav('how-it-works')}
             className="hover:text-white transition cursor-pointer"
           >
-            How It Works
+            {t.nav.howItWorks}
           </button>
           <button
             type="button"
             onClick={() => handleNav('audit-evidence')}
             className="hover:text-white transition cursor-pointer"
           >
-            Decision Evidence
+            {t.nav.decisionEvidence}
           </button>
         </nav>
 
         {/* Actions */}
         <div className="flex items-center space-x-2 sm:space-x-3">
+          {/* Language Toggle */}
+          <div className="flex items-center rounded-lg bg-slate-900 border border-slate-800 p-0.5 text-xs font-mono">
+            <button
+              type="button"
+              onClick={() => setLanguage('en')}
+              className={`px-2 py-0.5 rounded transition cursor-pointer ${
+                language === 'en'
+                  ? 'bg-red-500/20 text-red-400 font-bold border border-red-500/30'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+              aria-label="Switch to English"
+            >
+              EN
+            </button>
+            <span className="text-slate-700 px-0.5">|</span>
+            <button
+              type="button"
+              onClick={() => setLanguage('zh')}
+              className={`px-2 py-0.5 rounded transition cursor-pointer ${
+                language === 'zh'
+                  ? 'bg-red-500/20 text-red-400 font-bold border border-red-500/30'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+              aria-label="Switch to Chinese"
+            >
+              中文
+            </button>
+          </div>
+
           <button
             type="button"
             onClick={onOpenFaucet}
             className="hidden sm:flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[11px] font-mono text-slate-400 hover:text-slate-200 bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition cursor-pointer"
           >
             <Globe className="w-3 h-3 text-red-400" />
-            <span>Fuji Faucet</span>
+            <span>{t.nav.fujiFaucet}</span>
           </button>
 
           {account && (
@@ -103,7 +134,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <span className={`w-2 h-2 rounded-full ${isFuji ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-              <span>{isFuji ? 'Fuji C-Chain (43113)' : 'Switch to Fuji'}</span>
+              <span>{isFuji ? t.nav.fujiCChain : t.nav.switchToFuji}</span>
             </button>
           )}
 
@@ -129,7 +160,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 shadow-lg shadow-red-600/30 transition transform active:scale-95 disabled:opacity-50 cursor-pointer"
             >
               <Wallet className="w-4 h-4" />
-              <span>{isConnecting ? 'Connecting...' : 'Connect Wallet'}</span>
+              <span>{isConnecting ? t.nav.connecting : t.nav.connectWallet}</span>
             </button>
           )}
         </div>
@@ -137,3 +168,4 @@ export const Navbar: React.FC<NavbarProps> = ({
     </header>
   )
 }
+
