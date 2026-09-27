@@ -144,7 +144,7 @@ export const DemoSetupProgress: React.FC<DemoSetupProgressProps> = ({
             className="self-start lg:self-auto px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-red-600 via-rose-600 to-red-500 hover:from-red-500 hover:to-rose-500 shadow-lg shadow-red-600/25 transition flex items-center space-x-2 disabled:opacity-50 cursor-pointer"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            <span>{isPreparingDemo ? 'Preparing Step...' : 'Guided Demo Setup (一键引导就绪)'}</span>
+            <span>{isPreparingDemo ? 'Preparing Step...' : 'Guided Demo Setup (引导演示设置)'}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         )}

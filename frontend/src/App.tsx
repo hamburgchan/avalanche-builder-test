@@ -38,7 +38,6 @@ import {
 } from './services/agentWallet'
 import { monitor } from './services/monitor'
 import { merchantService } from './services/merchant'
-import { siteConfig } from './config/site.config'
 
 export function App() {
   const [account, setAccount] = useState<string | null>(null)
@@ -682,17 +681,17 @@ export function App() {
     let firstFail = -1
 
     if (scenario === 'A') {
-      checksPassed = 127
+      checksPassed = 127 // All 7 checks pass (0b1111111)
       previewReason = BlockReason.NONE
       firstFail = -1
     } else if (scenario === 'B') {
-      checksPassed = 15 // Check 4 fails (Recipient Authorized)
+      checksPassed = 7 // Bits 0, 1, 2 pass (0b0000111 = 7); Bit 3 (Merchant Allowed) fails
       previewReason = BlockReason.MERCHANT_NOT_ALLOWED
-      firstFail = 4
+      firstFail = 4 // Check 4: Recipient Authorized
     } else if (scenario === 'C') {
-      checksPassed = 31 // Check 5 fails (Per Tx Limit Check)
+      checksPassed = 15 // Bits 0, 1, 2, 3 pass (0b0001111 = 15); Bit 4 (Per-Tx Limit) fails
       previewReason = BlockReason.PER_TX_LIMIT_EXCEEDED
-      firstFail = 5
+      firstFail = 5 // Check 5: Per Tx Limit Check
     }
 
     log(`[策略引擎] 判定结果: allowed=${previewReason === BlockReason.NONE}, reason=${previewReason}, bitmask=0b${checksPassed.toString(2).padStart(7, '0')}`)
@@ -715,41 +714,10 @@ export function App() {
       }
     }
 
-    // 4. Stage: TX_ACCEPTED (linked to authentic historical verified Fuji evidence)
-    const historical = siteConfig.historicalEvidence.find((e) => e.scenario === scenario) || siteConfig.historicalEvidence[0]
-    const txHash = historical.txHash
-    const blockNumber = historical.blockNumber
-    const latency = scenario === 'A' ? 820 : scenario === 'B' ? 780 : 760
-    const gasUsed = scenario === 'A' ? '142,850' : '68,420'
-    const networkGasCost = scenario === 'A' ? '~0.00357 AVAX' : '~0.00171 AVAX'
-
+    // 4. Stage: SIMULATION_COMPLETED (No transaction broadcast, zero fake telemetry)
     if (scenario === 'A') {
-      setCurrentExecution((prev) => ({
-        ...prev,
-        stage: 'TX_ACCEPTED',
-        txHash,
-        blockNumber,
-        gasUsed,
-        acceptanceLatencyMs: latency,
-        latencySource: 'WSS',
-        networkStatus: 'ACCEPTED',
-        networkGasCost,
-        verdict: BlockReason.NONE,
-        blockReason: BlockReason.NONE,
-        transferredAmount: `${intent.amount} AVAX`,
-        plainReason: 'Payment authorized by policy.'
-      }))
-
-      log('📡 正在将 PaymentExecuted 验证数据提交至商户 API...')
-      setCurrentExecution((prev) => ({ ...prev, stage: 'MERCHANT_VERIFYING' }))
-
-      await new Promise((r) => setTimeout(r, 220))
-
-      log('✅ 商户端核验通过: Orderbook Depth Feed v2 verified receipt. Dataset unlocked.')
-      log('📊 Agent 成功接收验证后的付费高价值数据集。')
-
-      setCurrentExecution((prev) => ({ ...prev, stage: 'SERVICE_RELEASED' }))
-      await new Promise((r) => setTimeout(r, 180))
+      log('📊 [模拟] AvaFence 策略评估通过: 满足单笔限额、白名单与有效预算。')
+      log('ℹ️ [模拟说明] 本地交互仿真 — 未向 Avalanche 网络广播真实交易。')
 
       confetti({
         particleCount: 70,
@@ -761,32 +729,18 @@ export function App() {
       setCurrentExecution((prev) => ({
         ...prev,
         stage: 'TASK_COMPLETED',
-        merchantResult: {
-          success: true,
-          message: 'Orderbook Depth Feed v2 verified receipt. Dataset unlocked.'
-        },
-        transferredAmount: `${intent.amount} AVAX`
+        txHash: null,
+        blockNumber: null,
+        gasUsed: null,
+        acceptanceLatencyMs: null,
+        latencySource: undefined,
+        networkStatus: 'READY',
+        networkGasCost: null,
+        verdict: BlockReason.NONE,
+        blockReason: BlockReason.NONE,
+        transferredAmount: `${intent.amount} AVAX`,
+        plainReason: 'Payment authorized: within 0.003 AVAX per-tx limit and recipient is authorized.'
       }))
-
-      setAuditLogs((prev) => [
-        {
-          id: 'audit-' + Date.now(),
-          timestamp: new Date().toLocaleTimeString(),
-          type: 'EXECUTED',
-          agent: '0x6ad50e7117c838c720c27d20247232f27bfcc1d7',
-          recipient: intent.recipient,
-          recipientAlias: intent.recipientAlias,
-          amount: intent.amount,
-          transferredAmount: `${intent.amount} AVAX`,
-          requestId: intent.requestId,
-          reason: BlockReason.NONE,
-          txHash,
-          latencyMs: latency,
-          sceneType: intent.sceneType,
-          isLiveExecution: false
-        },
-        ...prev
-      ])
     } else {
       const isB = scenario === 'B'
       const blockReason = isB ? BlockReason.MERCHANT_NOT_ALLOWED : BlockReason.PER_TX_LIMIT_EXCEEDED
@@ -794,44 +748,24 @@ export function App() {
         ? 'Recipient is not authorized by policy.'
         : 'Per-transaction limit of 0.003 AVAX exceeded.'
 
-      log(`🛡️ SPENDING BLOCKED BY AVAFENCE: 拦截原因 = ${BLOCK_REASON_TEXT[blockReason]?.label || (isB ? 'recipient not authorized' : 'per-tx limit exceeded')}`)
-      log('🔒 0 AVAX transferred to recipient; network gas was still consumed.')
+      log(`🛡️ [模拟] AvaFence 策略熔断拦截: 原因 = ${BLOCK_REASON_TEXT[blockReason]?.label || (isB ? 'recipient not authorized' : 'per-tx limit exceeded')}`)
+      log('ℹ️ [模拟说明] 仿真拦截 — 未广播交易，消耗 0 网络 Gas，0 AVAX 划转。')
 
       setCurrentExecution((prev) => ({
         ...prev,
         stage: 'BLOCKED_COMPLETED',
-        txHash,
-        blockNumber,
-        gasUsed,
-        acceptanceLatencyMs: latency,
-        latencySource: 'WSS',
-        networkStatus: 'ACCEPTED',
-        networkGasCost,
+        txHash: null,
+        blockNumber: null,
+        gasUsed: null,
+        acceptanceLatencyMs: null,
+        latencySource: undefined,
+        networkStatus: 'READY',
+        networkGasCost: null,
         verdict: blockReason,
         blockReason,
-        transferredAmount: '0 AVAX transferred to recipient; network gas was still consumed',
+        transferredAmount: '0 AVAX',
         plainReason: naturalReason
       }))
-
-      setAuditLogs((prev) => [
-        {
-          id: 'audit-' + Date.now(),
-          timestamp: new Date().toLocaleTimeString(),
-          type: 'BLOCKED',
-          agent: '0x6ad50e7117c838c720c27d20247232f27bfcc1d7',
-          recipient: intent.recipient,
-          recipientAlias: intent.recipientAlias,
-          amount: intent.amount,
-          transferredAmount: '0 AVAX transferred to recipient; network gas was still consumed',
-          requestId: intent.requestId,
-          reason: blockReason,
-          txHash,
-          latencyMs: latency,
-          sceneType: intent.sceneType,
-          isLiveExecution: false
-        },
-        ...prev
-      ])
     }
   }
 

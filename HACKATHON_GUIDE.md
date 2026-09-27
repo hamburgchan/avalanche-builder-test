@@ -45,7 +45,7 @@
   > “各位评委老师、Builder 伙伴们好！我们团队今天带来的项目是 **AvaxGuard**。在 2026 年，AI Agent 正在深入各行各业，但如何给 Agent 钱却成了最大的安全困境：每次让人签名，Agent 就不是自主的；把私钥交给 Agent，提示词注入或者越权消费会把你的钱洗劫一空。我们做的事情很简单：**把钱给 AI Agent，但不把你的钱包私钥给它**。人类在 Avalanche 链上设定策略预算，Agent 在策略沙盒内自主运作，一旦越权，底层合约直接熔断！”
   
 - **第 2 分钟：产品演示与实时上链（The Demo）**
-  > “请看我们现场部署在 Avalanche Fuji C-Chain 上的 DApp。首先演示 **Scene A**：Agent 为完成推理分析，自主向白名单数据商购买 0.002 AVAX 的高精度数据——大家看，Agent 自主签名上链，链上通过位掩码全绿通过，商户瞬间收到款项！接下来请看 **Scene B**：Agent 尝试超额购买 0.010 AVAX 的数据，合约瞬间拦截，触发 `PER_TX_LIMIT_EXCEEDED`，0 资金损失！最后是大家最关心的安全场景 **Scene C**：外部恶意数据注入指令，诱导 Agent 将资金转给黑客地址——智能合约白名单熔断生效，拒绝转账！黑客到账 0 AVAX，所有拦截记录在 Snowtrace 上永久可审计存证！”
+  > “请看我们现场部署在 Avalanche Fuji C-Chain 上的 DApp。首先演示 **Scene A**：Agent 为完成推理分析，自主向白名单数据商购买 0.002 AVAX 的高精度数据——大家看，Agent 自主签名上链，链上通过位掩码全绿通过，商户瞬间收到款项！接下来请看 **Scene B**：Agent 尝试超额购买 0.010 AVAX 的数据，合约瞬间拦截，触发 `PER_TX_LIMIT_EXCEEDED`，向收款方转账 0 AVAX（0 AVAX transferred to recipient; the historical blocked transaction consumed network gas）！最后是大家最关心的安全场景 **Scene C**：外部恶意数据注入指令，诱导 Agent 将资金转给黑客地址——智能合约白名单熔断生效，拒绝转账！黑客到账 0 AVAX，所有拦截记录在 Snowtrace 上永久可审计存证！”
   
 - **第 3 分钟：架构、商业价值与未来愿景（The Future）**
   > “在底层，AvaxGuard 采用 CEI 检查-生效-交互模式、Fail-Closed 位掩码决策引擎与 1:1 Agent 独立生命周期管理。未来，我们将利用 Avalanche Teleporter 跨链原语，把策略引擎拓展为多子网/多 L1 的通用 AI 财务网关。感谢大家，欢迎体验！”

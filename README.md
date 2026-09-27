@@ -3,7 +3,7 @@
 > **The Verifiable Policy Firewall for AI Agent Payments**  
 > *A programmable policy enforcement and decision-audit layer for agentic payments on Avalanche.*  
 > **Networks**:  
-> - **Avalanche C-Chain Mainnet** (Chain ID `43114`): 生产合约部署与链上真实性存证 (Production Proof)  
+> - **Avalanche C-Chain Mainnet** (Chain ID `43114`): 待广播部署 · Pre-Mainnet Verification Complete (Pending Deployment)  
 > - **Avalanche Fuji C-Chain** (Chain ID `43113`): 公开交互试用环境，无需真实 AVAX (Interactive Demo)  
 > **Live Demo**: [https://hamburgchan.github.io/avalanche-builder-test/](https://hamburgchan.github.io/avalanche-builder-test/)
 
@@ -64,7 +64,7 @@ AvaFence 采取“**主网链上存证，测试网公开交互**”的双轨架�
 
 | 网络 (Network) | Chain ID | 角色定位 (Role) | 目标地址 / 状态 | 说明 (Notes) |
 | :--- | :---: | :---: | :---: | :--- |
-| **Avalanche C-Chain Mainnet** | `43114` | 生产部署与真实性存证 (Pending Deployment) | 待广播部署 (Pending Deployment · RC1 Audit Passed) | 真实资金权限沙盒，提供不可篡改的主网部署与微支付策略放行/拦截存证 |
+| **Avalanche C-Chain Mainnet** | `43114` | 待广播部署 (Pending Deployment) | 待广播部署 (Pending Deployment · Pre-Mainnet Verification Complete) | 真实资金权限沙盒，提供不可篡改的主网部署与微支付策略放行/拦截存证 |
 | **Avalanche Fuji C-Chain** | `43113` | 公开交互试用环境 (Interactive Demo) | `0xB6379ce69E73cC6d20E5284D14386F4fBF8Ed770` | 保持默认交互，开发者与 Grant 评审可零成本体验 3 大安全场景 |
 
 ---
@@ -79,8 +79,8 @@ AvaFence 采取“**主网链上存证，测试网公开交互**”的双轨架�
 | **合约部署交易** | `0x741f45615cf4b5a9c98d085e3b70ede5673b11bf94f90d853c4633cb8a351ee1` | ✅ 成功 (区块 58476058) | [查看部署交易](https://testnet.snowtrace.io/tx/0x741f45615cf4b5a9c98d085e3b70ede5673b11bf94f90d853c4633cb8a351ee1) |
 | **支出策略创建 (PolicyCreated)** | `0xd46ed3bf9e58e1c4b7e4c2414775e110eb72093bd7de6c91461cc60dcc7b25cd` | ✅ 成功 (预算 0.02 AVAX) | [查看策略创建交易](https://testnet.snowtrace.io/tx/0xd46ed3bf9e58e1c4b7e4c2414775e110eb72093bd7de6c91461cc60dcc7b25cd) |
 | **Scenario A: 合法自主微支付** | `0xefbff0a69c9888d68a6415e046ed7d664e1406878f40170fd38dcaa2df1378a7` | ✅ 放行 (`PaymentExecuted`) | [查看 Scenario A 交易 (收款方+0.002 AVAX)](https://testnet.snowtrace.io/tx/0xefbff0a69c9888d68a6415e046ed7d664e1406878f40170fd38dcaa2df1378a7) |
-| **Scenario B: 未授权收款方拦截** | `0x9a2e7f67788bbc4c754340974adb0dd206ed298cc21405a9ed2dec41fcc9c2d9` | 🛡️ 拦截 (recipient not authorized) | [查看 Scenario B 拦截存证 (0 AVAX transferred to recipient; network gas was still consumed)](https://testnet.snowtrace.io/tx/0x9a2e7f67788bbc4c754340974adb0dd206ed298cc21405a9ed2dec41fcc9c2d9) |
-| **Scenario C: 超额单笔支出拦截** | `0xe6c790834d26d9af0b81251376e95cfacec77fe82211553664b56592bb480020` | 🛡️ 拦截 (`PER_TX_LIMIT_EXCEEDED`) | [查看 Scenario C 拦截存证 (0 AVAX transferred to recipient; network gas was still consumed)](https://testnet.snowtrace.io/tx/0xe6c790834d26d9af0b81251376e95cfacec77fe82211553664b56592bb480020) |
+| **Scenario B: 未授权收款方拦截** | `0x9a2e7f67788bbc4c754340974adb0dd206ed298cc21405a9ed2dec41fcc9c2d9` | 🛡️ 拦截 (recipient not authorized) | [查看 Scenario B 拦截存证 (0 AVAX transferred to recipient; the historical blocked transaction consumed network gas.)](https://testnet.snowtrace.io/tx/0x9a2e7f67788bbc4c754340974adb0dd206ed298cc21405a9ed2dec41fcc9c2d9) |
+| **Scenario C: 超额单笔支出拦截** | `0xe6c790834d26d9af0b81251376e95cfacec77fe82211553664b56592bb480020` | 🛡️ 拦截 (`PER_TX_LIMIT_EXCEEDED`) | [查看 Scenario C 拦截存证 (0 AVAX transferred to recipient; the historical blocked transaction consumed network gas.)](https://testnet.snowtrace.io/tx/0xe6c790834d26d9af0b81251376e95cfacec77fe82211553664b56592bb480020) |
 | **泄露策略撤销与资产回收** | `0x4309fe1653a1c09f16a056372527a12fb0724c4cab498c66596d9400179acf9f` | 🔐 成功 (`PolicyRevoked`) | [查看撤销退款存证 (0.018 AVAX 全额赎回)](https://testnet.snowtrace.io/tx/0x4309fe1653a1c09f16a056372527a12fb0724c4cab498c66596d9400179acf9f) |
 | **GitHub Actions CI 验证** | [Run ID: 35424563845](https://github.com/hamburgchan/avalanche-builder-test/actions/runs/35424563845) | ✅ 19/19 单测与密钥扫描全部通过 | [查看 GitHub Actions 运行记录](https://github.com/hamburgchan/avalanche-builder-test/actions/runs/35424563845) |
 

@@ -107,14 +107,14 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
 
   const firstFailIndex = useMemo(() => {
     if (isIdle || checksPassed === null) return -1
-    if (!agentAuthorized) return 0
+    if (!agentAuthorized && !isSimulation) return 0
     for (let bit = 0; bit < 7; bit++) {
       if ((checksPassed & (1 << bit)) === 0) {
         return bit + 1
       }
     }
     return -1
-  }, [checksPassed, agentAuthorized, isIdle])
+  }, [checksPassed, agentAuthorized, isIdle, isSimulation])
 
   const hasActivePolicy = policy && policy.active && !isExpired
 
@@ -366,94 +366,223 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
               </div>
             </div>
           ) : isDecisionReady ? (
-            /* FINAL VERIFIED DECISION DISPLAY */
-            isAllowed ? (
-              /* ALLOW CASE */
-              <div className="p-4 rounded-xl bg-emerald-950/40 border-2 border-emerald-500/80 shadow-xl space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase font-bold text-emerald-400 tracking-wider font-mono">
-                    FINAL POLICY DECISION
-                  </span>
-                  <span className="px-2 py-0.5 rounded font-mono text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                    ALLOW
-                  </span>
-                </div>
+            /* FINAL DECISION DISPLAY */
+            isSimulation ? (
+              /* SIMULATION CASE */
+              isAllowed ? (
+                /* SIMULATION ALLOW */
+                <div className="p-4 rounded-xl bg-emerald-950/40 border-2 border-emerald-500/80 shadow-xl space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] uppercase font-bold text-emerald-400 tracking-wider font-mono">
+                      SIMULATION RESULT
+                    </span>
+                    <span className="px-2 py-0.5 rounded font-mono text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                      Simulation Decision: ALLOW
+                    </span>
+                  </div>
 
-                <div className="text-2xl font-black text-emerald-400 flex items-center space-x-2">
-                  <ShieldCheck className="w-6 h-6" />
-                  <span>ALLOW</span>
-                </div>
+                  <div className="text-2xl font-black text-emerald-400 flex items-center space-x-2">
+                    <ShieldCheck className="w-6 h-6" />
+                    <span>ALLOW</span>
+                  </div>
 
-                {/* Plain-Language Reason */}
-                <div className="text-xs text-slate-200 font-medium leading-relaxed">
-                  {naturalReason}
-                </div>
+                  <div className="text-xs text-slate-200 font-medium leading-relaxed">
+                    {naturalReason}
+                  </div>
 
-                {/* Transferred Amount */}
-                <div className="pt-2 border-t border-emerald-500/30 flex items-center justify-between font-mono text-xs">
-                  <span className="text-slate-400">Transferred to Recipient:</span>
-                  <span className="text-emerald-400 font-extrabold text-sm">0.002 AVAX</span>
+                  <div className="p-2.5 rounded-lg bg-slate-950/90 border border-emerald-500/30 text-[11px] text-slate-300 space-y-1 font-mono">
+                    <div className="text-emerald-400 font-semibold flex items-center space-x-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                      <span>Simulation Decision: ALLOW</span>
+                    </div>
+                    <div className="text-slate-400">No transaction was broadcast in this simulation.</div>
+                    <div className="text-slate-400">0 network gas consumed in this simulation.</div>
+                  </div>
                 </div>
+              ) : (
+                /* SIMULATION BLOCK */
+                <div className="p-4 rounded-xl bg-rose-950/50 border-2 border-rose-500/80 shadow-xl space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] uppercase font-bold text-rose-400 tracking-wider font-mono">
+                      SIMULATION RESULT
+                    </span>
+                    <span className="px-2 py-0.5 rounded font-mono text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                      Simulation Decision: BLOCK
+                    </span>
+                  </div>
 
-                {/* Avalanche Verification */}
-                <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono">
-                  <span>Settlement:</span>
-                  <span className="text-emerald-300">{isSimulation ? 'Simulation Verified (Matches On-Chain Rules)' : 'Verified on Avalanche Fuji'}</span>
+                  <div className="text-2xl font-black text-rose-400 flex items-center space-x-2">
+                    <ShieldAlert className="w-6 h-6" />
+                    <span>BLOCKED</span>
+                  </div>
+
+                  <div className="text-xs text-white font-semibold leading-relaxed">
+                    {naturalReason}
+                  </div>
+
+                  <div className="p-2.5 rounded-lg bg-slate-950/90 border border-rose-500/30 text-[11px] text-slate-300 space-y-1 font-mono">
+                    <div className="text-rose-400 font-semibold flex items-center space-x-1.5">
+                      <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
+                      <span>Simulation Decision: BLOCK</span>
+                    </div>
+                    <div className="text-slate-400">No transaction was broadcast.</div>
+                    <div className="text-rose-300 font-bold">0 AVAX transferred.</div>
+                    <div className="text-slate-400">0 network gas consumed in this simulation.</div>
+                  </div>
                 </div>
-              </div>
+              )
             ) : (
-              /* BLOCK CASE */
-              <div className="p-4 rounded-xl bg-rose-950/50 border-2 border-rose-500/80 shadow-xl space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase font-bold text-rose-400 tracking-wider font-mono">
-                    FINAL POLICY DECISION
-                  </span>
-                  <span className="px-2 py-0.5 rounded font-mono text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40">
-                    BLOCKED
-                  </span>
-                </div>
-
-                <div className="text-2xl font-black text-rose-400 flex items-center space-x-2">
-                  <ShieldAlert className="w-6 h-6" />
-                  <span>BLOCKED</span>
-                </div>
-
-                {/* Plain-Language Reason */}
-                <div className="text-xs text-white font-semibold leading-relaxed">
-                  {naturalReason}
-                </div>
-
-                {/* Transferred Amount: MUST SHOW 0 AVAX transferred to recipient; network gas was still consumed */}
-                <div className="pt-2 border-t border-rose-500/30 flex flex-col space-y-1 font-mono text-xs">
-                  <span className="text-slate-400">Transferred to Recipient:</span>
-                  <span className="text-rose-300 font-extrabold text-xs bg-rose-500/20 px-2 py-1 rounded border border-rose-500/30 leading-snug">
-                    0 AVAX transferred to recipient; network gas was still consumed
-                  </span>
-                </div>
-
-                {/* Plain-language explanation resolving TX ACCEPTED conflict */}
-                <div className="p-2 rounded-lg bg-slate-950/80 border border-slate-800 text-[11px] text-slate-300 space-y-1 font-mono">
-                  <div className="text-emerald-400 font-semibold flex items-center space-x-1">
-                    <CheckCircle2 className="w-3 h-3 shrink-0" />
-                    <span>Policy decision recorded on Avalanche Fuji.</span>
+              /* LIVE ON-CHAIN CASE */
+              isAllowed ? (
+                /* LIVE ALLOW CASE */
+                <div className="p-4 rounded-xl bg-emerald-950/40 border-2 border-emerald-500/80 shadow-xl space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] uppercase font-bold text-emerald-400 tracking-wider font-mono">
+                      FINAL POLICY DECISION
+                    </span>
+                    <span className="px-2 py-0.5 rounded font-mono text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                      ALLOW
+                    </span>
                   </div>
-                  <div className="text-rose-300 font-semibold flex items-center space-x-1">
-                    <ShieldAlert className="w-3 h-3 shrink-0" />
-                    <span>0 AVAX transferred to recipient; network gas was still consumed.</span>
+
+                  <div className="text-2xl font-black text-emerald-400 flex items-center space-x-2">
+                    <ShieldCheck className="w-6 h-6" />
+                    <span>ALLOW</span>
+                  </div>
+
+                  <div className="text-xs text-slate-200 font-medium leading-relaxed">
+                    {naturalReason}
+                  </div>
+
+                  <div className="pt-2 border-t border-emerald-500/30 flex items-center justify-between font-mono text-xs">
+                    <span className="text-slate-400">Transferred to Recipient:</span>
+                    <span className="text-emerald-400 font-extrabold text-sm">{currentExecution.transferredAmount}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono">
+                    <span>Settlement:</span>
+                    <span className="text-emerald-300">Verified on Avalanche Fuji</span>
                   </div>
                 </div>
+              ) : (
+                /* LIVE BLOCK CASE */
+                <div className="p-4 rounded-xl bg-rose-950/50 border-2 border-rose-500/80 shadow-xl space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] uppercase font-bold text-rose-400 tracking-wider font-mono">
+                      FINAL POLICY DECISION
+                    </span>
+                    <span className="px-2 py-0.5 rounded font-mono text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                      BLOCKED
+                    </span>
+                  </div>
 
-                {/* Avalanche Verification */}
-                <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono">
-                  <span>Verification:</span>
-                  <span className="text-cyan-300">{isSimulation ? 'Deterministic Simulation Match' : 'Verified on Avalanche Fuji'}</span>
+                  <div className="text-2xl font-black text-rose-400 flex items-center space-x-2">
+                    <ShieldAlert className="w-6 h-6" />
+                    <span>BLOCKED</span>
+                  </div>
+
+                  <div className="text-xs text-white font-semibold leading-relaxed">
+                    {naturalReason}
+                  </div>
+
+                  <div className="pt-2 border-t border-rose-500/30 flex flex-col space-y-1 font-mono text-xs">
+                    <span className="text-slate-400">Transferred to Recipient:</span>
+                    <span className="text-rose-300 font-extrabold text-xs bg-rose-500/20 px-2 py-1 rounded border border-rose-500/30 leading-snug">
+                      0 AVAX transferred to recipient; network gas was still consumed
+                    </span>
+                  </div>
+
+                  <div className="p-2 rounded-lg bg-slate-950/80 border border-slate-800 text-[11px] text-slate-300 space-y-1 font-mono">
+                    <div className="text-emerald-400 font-semibold flex items-center space-x-1">
+                      <CheckCircle2 className="w-3 h-3 shrink-0" />
+                      <span>Policy decision recorded on Avalanche Fuji.</span>
+                    </div>
+                    <div className="text-rose-300 font-semibold flex items-center space-x-1">
+                      <ShieldAlert className="w-3 h-3 shrink-0" />
+                      <span>0 AVAX transferred to recipient; network gas was still consumed.</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono">
+                    <span>Verification:</span>
+                    <span className="text-cyan-300">Verified on Avalanche Fuji</span>
+                  </div>
                 </div>
-              </div>
+              )
             )
           ) : null}
 
-          {/* Evidence / Explorer link */}
-          {txHash ? (
+          {/* 3.B Comparable Verified Fuji Evidence (Independent Historical Section for Instant Simulation) */}
+          {isSimulation && isDecisionReady && (
+            <div className="p-3.5 rounded-xl bg-slate-950/90 border border-cyan-500/30 shadow-lg space-y-2.5 font-mono text-xs">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                <div className="flex items-center space-x-1.5 text-cyan-400 font-bold font-sans text-xs">
+                  <ShieldCheck className="w-4 h-4 text-cyan-400" />
+                  <span>Comparable Verified Fuji Evidence</span>
+                </div>
+                <span className="px-1.5 py-0.5 rounded text-[10px] bg-cyan-950 text-cyan-300 border border-cyan-800">
+                  Historical On-Chain Proof
+                </span>
+              </div>
+
+              {/* Mandatory Disclaimer */}
+              <div className="p-2 rounded bg-cyan-950/30 border border-cyan-500/20 text-[11px] text-cyan-200/90 font-sans leading-relaxed">
+                This is a previous verified Fuji transaction demonstrating the same policy outcome. It is not the transaction from this simulation.
+              </div>
+
+              {/* Historical Metrics Table */}
+              {(() => {
+                const historical = siteConfig.historicalEvidence.find((e) => e.scenario === scenario) || siteConfig.historicalEvidence[0]
+                return (
+                  <div className="space-y-1.5 text-[11px]">
+                    <div className="flex justify-between items-center text-slate-400">
+                      <span>Historical TX:</span>
+                      <span className="text-slate-200">{historical.txHash.slice(0, 10)}...{historical.txHash.slice(-8)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-slate-400">
+                      <span>Historical Request ID:</span>
+                      <span className="text-slate-300">{historical.requestId.slice(0, 10)}...{historical.requestId.slice(-6)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-slate-400">
+                      <span>Block Number:</span>
+                      <span className="text-slate-200">#{historical.blockNumber}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-slate-400">
+                      <span>Historical Event:</span>
+                      <span className={historical.action === 'ALLOW' ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
+                        {historical.eventEmitted}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-start text-slate-400">
+                      <span>Actual Transferred:</span>
+                      <span className="text-slate-200 text-right max-w-[200px]">
+                        {historical.transferredAmount}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-slate-400">
+                      <span>Actual Gas Consumed:</span>
+                      <span className="text-slate-200">{historical.gasUsed} gas ({historical.networkGasCost})</span>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-900 mt-1">
+                      <a
+                        href={historical.snowtraceUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="w-full py-2 px-3 rounded-lg bg-cyan-950/60 hover:bg-cyan-900/60 border border-cyan-500/40 text-cyan-300 hover:text-white text-xs font-mono font-bold flex items-center justify-center space-x-1.5 transition"
+                      >
+                        <span>View On-Chain Receipt on Snowtrace Fuji</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
+                  </div>
+                )
+              })()}
+            </div>
+          )}
+
+          {/* Evidence / Explorer link for Live mode */}
+          {!isSimulation && txHash && (
             <a
               href={`https://testnet.snowtrace.io/tx/${txHash}`}
               target="_blank"
@@ -463,17 +592,7 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
               <span>View On-Chain Receipt on Snowtrace Fuji</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
-          ) : isSimulation && isDecisionReady ? (
-            <a
-              href={siteConfig.historicalEvidence.find((e) => e.scenario === scenario)?.snowtraceUrl || 'https://testnet.snowtrace.io'}
-              target="_blank"
-              rel="noreferrer"
-              className="w-full py-2.5 px-3 rounded-xl bg-red-950/40 hover:bg-red-900/50 border border-red-500/40 text-red-300 hover:text-white text-xs font-mono font-bold flex items-center justify-center space-x-2 transition"
-            >
-              <span>View verified Fuji evidence</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
-          ) : null}
+          )}
         </div>
       )}
 
