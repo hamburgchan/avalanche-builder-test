@@ -11,10 +11,12 @@ import {
   Terminal,
   Hash,
   ShieldCheck,
-  ShieldAlert
+  ShieldAlert,
+  ExternalLink
 } from 'lucide-react'
 import type { DemoExecution, DemoScenario } from '../types/demo'
 import { DEMO_ADDRESSES } from '../config/avalanche'
+import { siteConfig } from '../config/site.config'
 
 interface AgentWorkspaceProps {
   currentExecution: DemoExecution
@@ -22,6 +24,7 @@ interface AgentWorkspaceProps {
   onSelectScenario: (scenario: DemoScenario) => void
   onTriggerExecution: () => void
   demoReadiness: { ready: boolean; reason: string }
+  isSimulation?: boolean
 }
 
 export const AgentWorkspace: React.FC<AgentWorkspaceProps> = ({
@@ -29,7 +32,8 @@ export const AgentWorkspace: React.FC<AgentWorkspaceProps> = ({
   isExecuting,
   onSelectScenario,
   onTriggerExecution,
-  demoReadiness
+  demoReadiness,
+  isSimulation = false
 }) => {
   const {
     scenario,
@@ -90,7 +94,12 @@ export const AgentWorkspace: React.FC<AgentWorkspaceProps> = ({
           <h2 className="text-base font-black text-white tracking-tight">AGENT WORKSPACE</h2>
         </div>
         <div>
-          {demoReadiness.ready ? (
+          {isSimulation ? (
+            <span className="flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+              <span>Interactive Simulation — no transaction is broadcast</span>
+            </span>
+          ) : demoReadiness.ready ? (
             <span className="flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
               <span>DEMO READY · Fuji Verified</span>
@@ -300,25 +309,61 @@ export const AgentWorkspace: React.FC<AgentWorkspaceProps> = ({
               <div className="flex items-center space-x-2 text-emerald-400"><CheckCircle2 className="w-3.5 h-3.5 shrink-0" /><span>Task directive parsed</span></div>
               <div className="flex items-center space-x-2 text-emerald-400"><CheckCircle2 className="w-3.5 h-3.5 shrink-0" /><span>Payment intent generated: 0.002 AVAX to Approved Recipient</span></div>
               <div className="flex items-center space-x-2 text-emerald-400"><CheckCircle2 className="w-3.5 h-3.5 shrink-0" /><span>AvaFence policy evaluation: ALLOW (All checks passed)</span></div>
-              <div className="flex items-center space-x-2 text-emerald-400"><CheckCircle2 className="w-3.5 h-3.5 shrink-0" /><span>Transaction accepted on Fuji · 0.002 AVAX settled ({latencyDisplay})</span></div>
+              <div className="flex items-center space-x-2 text-emerald-400"><CheckCircle2 className="w-3.5 h-3.5 shrink-0" /><span>{isSimulation ? 'Simulation: payment authorized · 0.002 AVAX transferred' : `Transaction accepted on Fuji · 0.002 AVAX settled (${latencyDisplay})`}</span></div>
               <div className="flex items-center space-x-2 text-emerald-400 font-bold"><CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-300" /><span>Research mission completed successfully</span></div>
+              <div className="pt-1.5 flex items-center justify-between border-t border-slate-900 mt-1">
+                <span className="text-[10px] text-slate-500">{isSimulation ? '⚡ Interactive Simulation' : '⛓️ Live Fuji Transaction'}</span>
+                <a
+                  href={siteConfig.historicalEvidence[0].snowtraceUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center space-x-1 text-[11px] font-bold text-red-400 hover:text-red-300 underline font-mono"
+                >
+                  <span>View verified Fuji evidence</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
             </>
           ) : scenario === 'B' && stage === 'BLOCKED_COMPLETED' ? (
             <>
               <div className="flex items-center space-x-2 text-emerald-400"><CheckCircle2 className="w-3.5 h-3.5 shrink-0" /><span>Untrusted tool output changed destination</span></div>
               <div className="flex items-center space-x-2 text-emerald-400"><CheckCircle2 className="w-3.5 h-3.5 shrink-0" /><span>Payment intent created for 0.001 AVAX</span></div>
-              <div className="flex items-center space-x-2 text-rose-400 font-bold"><XCircle className="w-3.5 h-3.5 shrink-0" /><span>Recipient allowlist check failed · Recipient not authorized</span></div>
-              <div className="flex items-center space-x-2 text-rose-400 font-bold"><ShieldAlert className="w-3.5 h-3.5 shrink-0" /><span>AvaFence policy: BLOCKED (RECIPIENT_NOT_ALLOWED)</span></div>
-              <div className="flex items-center space-x-2 text-emerald-400"><CheckCircle2 className="w-3.5 h-3.5 shrink-0" /><span>Policy decision recorded on Avalanche Fuji ({latencyDisplay})</span></div>
-              <div className="flex items-center space-x-2 text-emerald-400 font-bold"><CheckCircle2 className="w-3.5 h-3.5 shrink-0" /><span>Transferred to recipient: 0 AVAX (Principal protected)</span></div>
+              <div className="flex items-center space-x-2 text-rose-400 font-bold"><XCircle className="w-3.5 h-3.5 shrink-0" /><span>Recipient allowlist check failed · recipient not authorized</span></div>
+              <div className="flex items-center space-x-2 text-rose-400 font-bold"><ShieldAlert className="w-3.5 h-3.5 shrink-0" /><span>AvaFence policy: BLOCKED (recipient not authorized)</span></div>
+              <div className="flex items-center space-x-2 text-emerald-400"><CheckCircle2 className="w-3.5 h-3.5 shrink-0" /><span>{isSimulation ? 'Policy decision recorded in simulation' : `Policy decision recorded on Avalanche Fuji (${latencyDisplay})`}</span></div>
+              <div className="flex items-center space-x-2 text-rose-300 font-semibold"><ShieldAlert className="w-3.5 h-3.5 shrink-0 text-rose-400" /><span>0 AVAX transferred to recipient; network gas was still consumed</span></div>
+              <div className="pt-1.5 flex items-center justify-between border-t border-slate-900 mt-1">
+                <span className="text-[10px] text-slate-500">{isSimulation ? '⚡ Interactive Simulation' : '⛓️ Live Fuji Transaction'}</span>
+                <a
+                  href={siteConfig.historicalEvidence[1].snowtraceUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center space-x-1 text-[11px] font-bold text-red-400 hover:text-red-300 underline font-mono"
+                >
+                  <span>View verified Fuji evidence</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
             </>
           ) : scenario === 'C' && stage === 'BLOCKED_COMPLETED' ? (
             <>
               <div className="flex items-center space-x-2 text-emerald-400"><CheckCircle2 className="w-3.5 h-3.5 shrink-0" /><span>Agent requested high-tier dataset (0.010 AVAX)</span></div>
               <div className="flex items-center space-x-2 text-amber-400 font-bold"><XCircle className="w-3.5 h-3.5 shrink-0" /><span>Per-tx limit exceeded (0.010 &gt; 0.003 AVAX ceiling)</span></div>
               <div className="flex items-center space-x-2 text-amber-400 font-bold"><ShieldAlert className="w-3.5 h-3.5 shrink-0" /><span>AvaFence policy: BLOCKED (PER_TX_LIMIT_EXCEEDED)</span></div>
-              <div className="flex items-center space-x-2 text-emerald-400"><CheckCircle2 className="w-3.5 h-3.5 shrink-0" /><span>Policy decision recorded on Avalanche Fuji ({latencyDisplay})</span></div>
-              <div className="flex items-center space-x-2 text-emerald-400 font-bold"><CheckCircle2 className="w-3.5 h-3.5 shrink-0" /><span>Transferred to recipient: 0 AVAX (Overspend prevented)</span></div>
+              <div className="flex items-center space-x-2 text-emerald-400"><CheckCircle2 className="w-3.5 h-3.5 shrink-0" /><span>{isSimulation ? 'Policy decision recorded in simulation' : `Policy decision recorded on Avalanche Fuji (${latencyDisplay})`}</span></div>
+              <div className="flex items-center space-x-2 text-rose-300 font-semibold"><ShieldAlert className="w-3.5 h-3.5 shrink-0 text-rose-400" /><span>0 AVAX transferred to recipient; network gas was still consumed</span></div>
+              <div className="pt-1.5 flex items-center justify-between border-t border-slate-900 mt-1">
+                <span className="text-[10px] text-slate-500">{isSimulation ? '⚡ Interactive Simulation' : '⛓️ Live Fuji Transaction'}</span>
+                <a
+                  href={siteConfig.historicalEvidence[2].snowtraceUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center space-x-1 text-[11px] font-bold text-red-400 hover:text-red-300 underline font-mono"
+                >
+                  <span>View verified Fuji evidence</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
             </>
           ) : isExecuting ? (
             <>
@@ -483,15 +528,23 @@ export const AgentWorkspace: React.FC<AgentWorkspaceProps> = ({
             <>
               <Play className="w-4 h-4 fill-white" />
               <span>
-                {scenario === 'A' && 'Run Scenario A · Normal Purchase (0.002 AVAX → ALLOW)'}
-                {scenario === 'B' && 'Run Scenario B · Unauthorized Recipient (0.001 AVAX → BLOCK)'}
-                {scenario === 'C' && 'Run Scenario C · Per-Tx Overspend (0.010 AVAX → BLOCK)'}
+                {isSimulation
+                  ? scenario === 'A'
+                    ? 'Simulate Policy Execution · Normal Purchase (0.002 AVAX → ALLOW)'
+                    : scenario === 'B'
+                    ? 'Simulate Policy Execution · Unauthorized Recipient (0.001 AVAX → BLOCK)'
+                    : 'Simulate Policy Execution · Per-Tx Overspend (0.010 AVAX → BLOCK)'
+                  : scenario === 'A'
+                  ? 'Run Scenario A · Normal Purchase (0.002 AVAX → ALLOW)'
+                  : scenario === 'B'
+                  ? 'Run Scenario B · Unauthorized Recipient (0.001 AVAX → BLOCK)'
+                  : 'Run Scenario C · Per-Tx Overspend (0.010 AVAX → BLOCK)'}
               </span>
             </>
           )}
         </button>
 
-        {!demoReadiness.ready && (
+        {!isSimulation && !demoReadiness.ready && (
           <div className="text-[10px] text-amber-400 font-mono text-center">
             ⚠ {demoReadiness.reason} (Complete setup steps above)
           </div>

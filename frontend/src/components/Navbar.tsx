@@ -47,7 +47,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 Fuji Testnet
               </span>
               <span className="text-[10px] px-1.5 py-0.5 rounded font-mono bg-slate-900 text-slate-400 border border-slate-800 font-semibold hidden sm:inline">
-                RC1 Hardened
+                Mainnet: Pending Deployment
               </span>
             </div>
             <p className="text-xs text-slate-400 hidden sm:block">
@@ -63,7 +63,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={() => handleNav('demo-section')}
             className="hover:text-white transition cursor-pointer"
           >
-            Fuji Demo
+            Interactive Demo
           </button>
           <button
             type="button"

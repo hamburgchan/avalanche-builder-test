@@ -55,7 +55,7 @@ export const DEFAULT_DEMO_AUDIT_LOGS: AuditRecord[] = [
     recipient: DEMO_ADDRESSES.ATTACKER,
     recipientAlias: 'Unauthorized Recipient (Untrusted Destination)',
     amount: '0.001',
-    transferredAmount: '0 AVAX',
+    transferredAmount: '0 AVAX transferred to recipient; network gas was still consumed',
     requestId: '0xd6a0b9a5114dada3d8d1803056531a6b99fb908b1cf3e4fe3110c305dc8f78cd',
     reason: BlockReason.MERCHANT_NOT_ALLOWED,
     txHash: '0x9a2e7f67788bbc4c754340974adb0dd206ed298cc21405a9ed2dec41fcc9c2d9',
@@ -71,7 +71,7 @@ export const DEFAULT_DEMO_AUDIT_LOGS: AuditRecord[] = [
     recipient: DEMO_ADDRESSES.MERCHANT,
     recipientAlias: 'Approved Recipient (PremiumData API)',
     amount: '0.010',
-    transferredAmount: '0 AVAX',
+    transferredAmount: '0 AVAX transferred to recipient; network gas was still consumed',
     requestId: '0x8a10e7b895c0f2bc4f8e9c011d3f7955748dfa38ca5e79ef8acb9072e13f832a',
     reason: BlockReason.PER_TX_LIMIT_EXCEEDED,
     txHash: '0xe6c790834d26d9af0b81251376e95cfacec77fe82211553664b56592bb480020',
@@ -291,7 +291,7 @@ export const AuditLog: React.FC<AuditLogProps> = ({ logs }) => {
                     ) : (
                       <span className="text-rose-400 font-bold text-[10px]">
                         {record.reason === BlockReason.MERCHANT_NOT_ALLOWED
-                          ? 'RECIPIENT_NOT_ALLOWED'
+                          ? 'recipient not authorized'
                           : record.reason === BlockReason.PER_TX_LIMIT_EXCEEDED
                           ? 'PER_TX_LIMIT_EXCEEDED'
                           : 'PAYMENT_BLOCKED'}

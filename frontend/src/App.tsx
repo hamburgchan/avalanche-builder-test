@@ -38,6 +38,7 @@ import {
 } from './services/agentWallet'
 import { monitor } from './services/monitor'
 import { merchantService } from './services/merchant'
+import { siteConfig } from './config/site.config'
 
 export function App() {
   const [account, setAccount] = useState<string | null>(null)
@@ -47,6 +48,7 @@ export function App() {
   const [isConnecting, setIsConnecting] = useState<boolean>(false)
   const [isFaucetOpen, setIsFaucetOpen] = useState<boolean>(false)
   const [isPreparingDemo, setIsPreparingDemo] = useState<boolean>(false)
+  const [demoMode, setDemoMode] = useState<'instant' | 'live'>('instant')
 
   // Contract deployment state
   const [contractAddress, setContractAddr] = useState<string>(getAvaxGuardAddress())
@@ -540,6 +542,9 @@ export function App() {
 
   // Pre-flight Demo Readiness Verification
   const demoReadiness = useMemo(() => {
+    if (demoMode === 'instant') {
+      return { ready: true, reason: 'Instant Simulation Ready (Zero Setup Required)' }
+    }
     if (!account) {
       return { ready: false, reason: '请先连接 MetaMask 钱包' }
     }
@@ -566,7 +571,7 @@ export function App() {
       return { ready: false, reason: '单日限额已耗尽，请创建新 Policy' }
     }
     return { ready: true, reason: 'Fuji 链上状态已验证就绪' }
-  }, [account, chainId, isContractDeployed, contractAddress, policy, agentBalance])
+  }, [demoMode, account, chainId, isContractDeployed, contractAddress, policy, agentBalance])
 
   // Guided Prepare Demo Handler (P0-3)
   const handlePrepareDemo = async () => {
@@ -610,9 +615,235 @@ export function App() {
     setCurrentExecution(createInitialExecution(scenario))
   }
 
-  // Autonomous AI Agent Trigger: 100% Real Fuji C-Chain Execution
+  // Instant Simulation Handler (Interactive Simulation — no transaction is broadcast)
+  const handleTriggerSimulation = async () => {
+    if (isExecuting) return
+
+    const scenario = currentExecution.scenario
+    const curNonce = localNonce
+    setLocalNonce((prev) => prev + 1)
+
+    const intent = createInitialSpendIntent(scenario, curNonce)
+    const execId = `sim_${scenario}_${curNonce}`
+
+    // 1. Stage: PREPARING
+    setCurrentExecution((prev) => ({
+      ...prev,
+      executionId: execId,
+      stage: 'PREPARING',
+      requestId: intent.requestId,
+      spendIntent: intent,
+      revealStep: -1,
+      checksPassed: null,
+      previewVerdict: null,
+      verdict: null,
+      blockReason: null,
+      verdictMismatch: false,
+      transferredAmount: '0 AVAX',
+      plainReason: '',
+      networkStatus: 'READY',
+      txHash: null,
+      blockNumber: null,
+      gasUsed: null,
+      acceptanceLatencyMs: null,
+      networkGasCost: null,
+      merchantResult: null,
+      errorMessage: null,
+      errorStage: null,
+      executionLogs: []
+    }))
+
+    const log = (msg: string) => {
+      console.log(`[Simulation Stage] ${msg}`)
+      setCurrentExecution((prev) => ({
+        ...prev,
+        executionLogs: [...prev.executionLogs, msg]
+      }))
+    }
+
+    await new Promise((r) => setTimeout(r, 150))
+
+    log(`[意图声明] 目标资源: ${intent.serviceName}`)
+    log(`[意图声明] 收款方: ${intent.recipientAlias} (${intent.recipient.slice(0, 6)}...${intent.recipient.slice(-4)})`)
+    log(`[意图声明] 申请金额: ${intent.amount} AVAX | Request ID: ${intent.requestId.slice(0, 10)}...${intent.requestId.slice(-6)}`)
+
+    // 2. Stage: POLICY_EVALUATING
+    setCurrentExecution((prev) => ({
+      ...prev,
+      stage: 'POLICY_EVALUATING',
+      networkStatus: 'READY'
+    }))
+    log('🔍 执行 AvaFence 策略评估 (模拟沙盒)...')
+
+    await new Promise((r) => setTimeout(r, 200))
+
+    let checksPassed = 127
+    let previewReason: BlockReason = BlockReason.NONE
+    let firstFail = -1
+
+    if (scenario === 'A') {
+      checksPassed = 127
+      previewReason = BlockReason.NONE
+      firstFail = -1
+    } else if (scenario === 'B') {
+      checksPassed = 15 // Check 4 fails (Recipient Authorized)
+      previewReason = BlockReason.MERCHANT_NOT_ALLOWED
+      firstFail = 4
+    } else if (scenario === 'C') {
+      checksPassed = 31 // Check 5 fails (Per Tx Limit Check)
+      previewReason = BlockReason.PER_TX_LIMIT_EXCEEDED
+      firstFail = 5
+    }
+
+    log(`[策略引擎] 判定结果: allowed=${previewReason === BlockReason.NONE}, reason=${previewReason}, bitmask=0b${checksPassed.toString(2).padStart(7, '0')}`)
+
+    // 3. Stage: POLICY_VISUALIZING
+    setCurrentExecution((prev) => ({
+      ...prev,
+      stage: 'POLICY_VISUALIZING',
+      checksPassed,
+      previewVerdict: previewReason,
+      networkStatus: 'READY'
+    }))
+
+    for (let step = 0; step <= 7; step++) {
+      setCurrentExecution((prev) => ({ ...prev, revealStep: step }))
+      await new Promise((r) => setTimeout(r, 80))
+      if (firstFail !== -1 && step === firstFail) {
+        await new Promise((r) => setTimeout(r, 120))
+        break
+      }
+    }
+
+    // 4. Stage: TX_ACCEPTED (linked to authentic historical verified Fuji evidence)
+    const historical = siteConfig.historicalEvidence.find((e) => e.scenario === scenario) || siteConfig.historicalEvidence[0]
+    const txHash = historical.txHash
+    const blockNumber = historical.blockNumber
+    const latency = scenario === 'A' ? 820 : scenario === 'B' ? 780 : 760
+    const gasUsed = scenario === 'A' ? '142,850' : '68,420'
+    const networkGasCost = scenario === 'A' ? '~0.00357 AVAX' : '~0.00171 AVAX'
+
+    if (scenario === 'A') {
+      setCurrentExecution((prev) => ({
+        ...prev,
+        stage: 'TX_ACCEPTED',
+        txHash,
+        blockNumber,
+        gasUsed,
+        acceptanceLatencyMs: latency,
+        latencySource: 'WSS',
+        networkStatus: 'ACCEPTED',
+        networkGasCost,
+        verdict: BlockReason.NONE,
+        blockReason: BlockReason.NONE,
+        transferredAmount: `${intent.amount} AVAX`,
+        plainReason: 'Payment authorized by policy.'
+      }))
+
+      log('📡 正在将 PaymentExecuted 验证数据提交至商户 API...')
+      setCurrentExecution((prev) => ({ ...prev, stage: 'MERCHANT_VERIFYING' }))
+
+      await new Promise((r) => setTimeout(r, 220))
+
+      log('✅ 商户端核验通过: Orderbook Depth Feed v2 verified receipt. Dataset unlocked.')
+      log('📊 Agent 成功接收验证后的付费高价值数据集。')
+
+      setCurrentExecution((prev) => ({ ...prev, stage: 'SERVICE_RELEASED' }))
+      await new Promise((r) => setTimeout(r, 180))
+
+      confetti({
+        particleCount: 70,
+        spread: 60,
+        origin: { y: 0.6 },
+        colors: ['#ef4444', '#10b981', '#ffffff']
+      })
+
+      setCurrentExecution((prev) => ({
+        ...prev,
+        stage: 'TASK_COMPLETED',
+        merchantResult: {
+          success: true,
+          message: 'Orderbook Depth Feed v2 verified receipt. Dataset unlocked.'
+        },
+        transferredAmount: `${intent.amount} AVAX`
+      }))
+
+      setAuditLogs((prev) => [
+        {
+          id: 'audit-' + Date.now(),
+          timestamp: new Date().toLocaleTimeString(),
+          type: 'EXECUTED',
+          agent: '0x6ad50e7117c838c720c27d20247232f27bfcc1d7',
+          recipient: intent.recipient,
+          recipientAlias: intent.recipientAlias,
+          amount: intent.amount,
+          transferredAmount: `${intent.amount} AVAX`,
+          requestId: intent.requestId,
+          reason: BlockReason.NONE,
+          txHash,
+          latencyMs: latency,
+          sceneType: intent.sceneType,
+          isLiveExecution: false
+        },
+        ...prev
+      ])
+    } else {
+      const isB = scenario === 'B'
+      const blockReason = isB ? BlockReason.MERCHANT_NOT_ALLOWED : BlockReason.PER_TX_LIMIT_EXCEEDED
+      const naturalReason = isB
+        ? 'Recipient is not authorized by policy.'
+        : 'Per-transaction limit of 0.003 AVAX exceeded.'
+
+      log(`🛡️ SPENDING BLOCKED BY AVAFENCE: 拦截原因 = ${BLOCK_REASON_TEXT[blockReason]?.label || (isB ? 'recipient not authorized' : 'per-tx limit exceeded')}`)
+      log('🔒 0 AVAX transferred to recipient; network gas was still consumed.')
+
+      setCurrentExecution((prev) => ({
+        ...prev,
+        stage: 'BLOCKED_COMPLETED',
+        txHash,
+        blockNumber,
+        gasUsed,
+        acceptanceLatencyMs: latency,
+        latencySource: 'WSS',
+        networkStatus: 'ACCEPTED',
+        networkGasCost,
+        verdict: blockReason,
+        blockReason,
+        transferredAmount: '0 AVAX transferred to recipient; network gas was still consumed',
+        plainReason: naturalReason
+      }))
+
+      setAuditLogs((prev) => [
+        {
+          id: 'audit-' + Date.now(),
+          timestamp: new Date().toLocaleTimeString(),
+          type: 'BLOCKED',
+          agent: '0x6ad50e7117c838c720c27d20247232f27bfcc1d7',
+          recipient: intent.recipient,
+          recipientAlias: intent.recipientAlias,
+          amount: intent.amount,
+          transferredAmount: '0 AVAX transferred to recipient; network gas was still consumed',
+          requestId: intent.requestId,
+          reason: blockReason,
+          txHash,
+          latencyMs: latency,
+          sceneType: intent.sceneType,
+          isLiveExecution: false
+        },
+        ...prev
+      ])
+    }
+  }
+
+  // Autonomous AI Agent Trigger: Real Fuji C-Chain Execution or Instant Simulation
   const handleTriggerExecution = async () => {
     if (isExecuting) return
+
+    if (demoMode === 'instant') {
+      await handleTriggerSimulation()
+      return
+    }
+
     if (!demoReadiness.ready) {
       alert(`无法运行 Demo: ${demoReadiness.reason}`)
       return
@@ -979,34 +1210,84 @@ export function App() {
       <main className="flex-1 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 space-y-6">
         {/* Section 6: Hero */}
         <Hero
-          onTryDemo={() => handleScrollToSection('demo-section')}
+          onTryInstantDemo={() => {
+            setDemoMode('instant')
+            handleScrollToSection('demo-section')
+          }}
+          onRunLiveOnFuji={() => {
+            setDemoMode('live')
+            handleScrollToSection('demo-section')
+          }}
           onHowItWorks={() => handleScrollToSection('how-it-works')}
         />
 
-        {/* Section 7: Developer Integration Preview */}
-        <DeveloperIntegrationPreview />
-
-        {/* P0-5: Current Capabilities vs Planned Roadmap */}
-        <CurrentVsPlanned />
-
         {/* Section 8 & P0-3: Interactive Demo Section */}
         <div id="demo-section" className="pt-2">
-          {/* Setup Progress */}
-          <DemoSetupProgress
-            account={account}
-            chainId={chainId}
-            balance={balance}
-            policyActive={!!(policy && policy.active && Date.now() / 1000 <= policy.expiry)}
-            agentGasBalance={agentBalance}
-            isExecuting={isExecuting}
-            onConnectWallet={connectWallet}
-            onSwitchToFuji={switchToFuji}
-            onOpenFaucet={() => setIsFaucetOpen(true)}
-            onCreatePolicy={() => handleCreatePolicy('0.02', '0.003', '0.01', 3600)}
-            onFundAgent={handleFundAgent}
-            onPrepareDemo={handlePrepareDemo}
-            isPreparingDemo={isPreparingDemo}
-          />
+          {/* Mode Switcher Tabs */}
+          <div className="flex flex-col sm:flex-row items-center justify-between bg-slate-900/90 border border-slate-800 rounded-2xl p-2.5 mb-4 shadow-lg gap-2">
+            <div className="flex items-center space-x-1.5 w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={() => setDemoMode('instant')}
+                className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2 cursor-pointer ${
+                  demoMode === 'instant'
+                    ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-md shadow-red-600/30'
+                    : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                }`}
+              >
+                <span>⚡ Instant Demo</span>
+                <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${demoMode === 'instant' ? 'bg-red-950/80 text-rose-200' : 'bg-slate-800 text-slate-400'}`}>
+                  Zero Setup
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setDemoMode('live')}
+                className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2 cursor-pointer ${
+                  demoMode === 'live'
+                    ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-md shadow-red-600/30'
+                    : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                }`}
+              >
+                <span>⛓️ Run Live on Avalanche Fuji</span>
+                <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${demoMode === 'live' ? 'bg-red-950/80 text-rose-200' : 'bg-slate-800 text-slate-400'}`}>
+                  Guided Setup
+                </span>
+              </button>
+            </div>
+
+            <div className="text-[11px] text-slate-400 font-mono flex items-center space-x-2 px-2">
+              {demoMode === 'instant' ? (
+                <span className="text-amber-400 font-medium">
+                  ⚡ Interactive Simulation — no transaction is broadcast · verifiable Fuji evidence provided
+                </span>
+              ) : (
+                <span className="text-cyan-400 font-medium">
+                  ⛓️ Connected to Avalanche Fuji C-Chain (43113)
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Setup Progress: Only shown in live mode */}
+          {demoMode === 'live' && (
+            <DemoSetupProgress
+              account={account}
+              chainId={chainId}
+              balance={balance}
+              policyActive={!!(policy && policy.active && Date.now() / 1000 <= policy.expiry)}
+              agentGasBalance={agentBalance}
+              isExecuting={isExecuting}
+              onConnectWallet={connectWallet}
+              onSwitchToFuji={switchToFuji}
+              onOpenFaucet={() => setIsFaucetOpen(true)}
+              onCreatePolicy={() => handleCreatePolicy('0.02', '0.003', '0.01', 3600)}
+              onFundAgent={handleFundAgent}
+              onPrepareDemo={handlePrepareDemo}
+              isPreparingDemo={isPreparingDemo}
+            />
+          )}
 
           {/* Main Stage (64%) & AvaFence Guard Panel (36%) */}
           <div className="grid grid-cols-1 lg:grid-cols-[64fr_36fr] gap-4 sm:gap-5 items-start">
@@ -1018,6 +1299,7 @@ export function App() {
                 demoReadiness={demoReadiness}
                 onSelectScenario={handleSelectScenario}
                 onTriggerExecution={handleTriggerExecution}
+                isSimulation={demoMode === 'instant'}
               />
             </div>
 
@@ -1046,10 +1328,17 @@ export function App() {
                 onCreatePolicy={handleCreatePolicy}
                 onRevokePolicy={handleRevokePolicy}
                 onResetAgent={handleResetAgent}
+                isSimulation={demoMode === 'instant'}
               />
             </div>
           </div>
         </div>
+
+        {/* Section 7: Developer Integration Preview (Immediately following Instant Demo) */}
+        <DeveloperIntegrationPreview />
+
+        {/* P0-5: Current Capabilities vs Planned Roadmap */}
+        <CurrentVsPlanned />
 
         {/* P0-1: Decision Evidence & Audit Trail */}
         <AuditLog logs={auditLogs} />

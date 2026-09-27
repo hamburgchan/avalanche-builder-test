@@ -27,7 +27,7 @@
 - **定位**：自主 AI Agent 链上财务防火墙与支出策略引擎（On-Chain Financial Policy Engine）。
 - **痛点**：2026 年自主 AI Agent 正在接管工作流。但人类面临严峻的支出困境（The Spend Dilemma）：要么每次微支付都需要人类点击钱包签名（Agent 失去自主性）；要么把钱包私钥直接交给 Agent（Agent 提示词注入或越权消费将导致资产瞬间被清空）。
 - **AvaxGuard 创新解法**：
-  1. **私钥物理隔离**：人类 Owner 永不暴露钱包私钥，只在 Avalanche C-Chain 创建并注资策略池；Agent 运行在独立的本地客户端 Scoped 钱包。
+  1. **私钥独立沙盒隔离**：人类 Owner 永不暴露钱包私钥，只在 Avalanche C-Chain 创建并注资策略池；Agent 运行在独立的本地客户端 Scoped 钱包。
   2. **可编程链上策略**：智能合约底层硬编码单笔上限（MaxPerTx）、每日额度（DailyLimit）、商户白名单（Allowlist）和防重放 Nonce。
   3. **Fail-Closed 链上熔断与实证存证**：合规支付原子放行，违规支付（如超额、诱导转给黑客）链上直接拒绝，转账 0 AVAX，并持久化 `PaymentBlocked` 审计存证。
 - **三大现场 Demo 场景**：

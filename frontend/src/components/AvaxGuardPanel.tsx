@@ -18,6 +18,7 @@ import {
 import type { PolicyState } from './PolicyConsole'
 import { BlockReason, BLOCK_REASON_TEXT } from '../config/avalanche'
 import type { DemoExecution } from '../types/demo'
+import { siteConfig } from '../config/site.config'
 
 interface AvaFencePanelProps {
   currentExecution: DemoExecution
@@ -42,6 +43,7 @@ interface AvaFencePanelProps {
   onCreatePolicy: (budget: string, maxTx: string, daily: string, durationSec: number) => Promise<void>
   onRevokePolicy: () => Promise<void>
   onResetAgent: () => void
+  isSimulation?: boolean
 }
 
 const ORDERED_CHECKS = [
@@ -71,7 +73,8 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
   onFundAgent,
   onRevokeCompromisedPolicy,
   onCreatePolicy,
-  onRevokePolicy
+  onRevokePolicy,
+  isSimulation = false
 }) => {
   const {
     scenario,
@@ -145,7 +148,12 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
         </div>
 
         {/* Unified Status Badge */}
-        {isEvaluating ? (
+        {isSimulation ? (
+          <span className="flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+            <span>SIMULATION SANDBOX</span>
+          </span>
+        ) : isEvaluating ? (
           <span className="flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 animate-pulse">
             <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
             <span>EVALUATING</span>
@@ -173,7 +181,7 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
       </div>
 
       {/* P0 Security Action: Compromised Agent Policy Recovery */}
-      {hasCompromisedPolicy && (
+      {hasCompromisedPolicy && !isSimulation && (
         <div className="p-2.5 rounded-xl bg-rose-950/80 border border-rose-500 text-xs font-mono space-y-1.5">
           <div className="flex items-center space-x-1.5 text-rose-400 font-bold">
             <AlertCircle className="w-4 h-4 shrink-0" />
@@ -191,7 +199,42 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
       )}
 
       {/* 2. Active Policy Summary Card */}
-      {!hasActivePolicy ? (
+      {isSimulation ? (
+        <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono space-y-2">
+          <div className="flex items-center justify-between border-b border-slate-900 pb-1.5">
+            <span className="text-[10px] uppercase tracking-wider text-cyan-400 font-bold">
+              SIMULATED POLICY (ACTIVE)
+            </span>
+            <span className="text-[10px] text-slate-400 font-mono">
+              Auto-Loaded Sandbox
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-1.5 text-[11px]">
+            <div className="p-1.5 rounded bg-slate-900/70 flex justify-between">
+              <span className="text-slate-400">Remaining:</span>
+              <span className="text-emerald-400 font-bold">0.020 AVAX</span>
+            </div>
+            <div className="p-1.5 rounded bg-slate-900/70 flex justify-between">
+              <span className="text-slate-400">Max / Tx:</span>
+              <span className="text-white font-bold">0.003 AVAX</span>
+            </div>
+            <div className="p-1.5 rounded bg-slate-900/70 flex justify-between">
+              <span className="text-slate-400">Daily:</span>
+              <span className="text-slate-200 font-bold">0.000 / 0.010 AVAX</span>
+            </div>
+            <div className="p-1.5 rounded bg-slate-900/70 flex justify-between">
+              <span className="text-slate-400">Expires:</span>
+              <span className="text-slate-200 font-bold">60m</span>
+            </div>
+          </div>
+
+          <div className="text-[10px] text-slate-400 flex items-center justify-between pt-1 border-t border-slate-900">
+            <span>Approved Recipient:</span>
+            <span className="text-emerald-400 font-semibold">✓ PremiumData API</span>
+          </div>
+        </div>
+      ) : !hasActivePolicy ? (
         <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono space-y-2">
           <div className="font-bold text-white text-xs uppercase tracking-wider flex items-center justify-between">
             <span>SET AGENT SPENDING POLICY</span>
@@ -313,13 +356,13 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
             <div className="py-3 px-3.5 rounded-xl bg-cyan-950/40 border-2 border-cyan-500/60 shadow-xl text-center space-y-1.5">
               <div className="text-[10px] uppercase font-bold text-cyan-400 tracking-wider flex items-center justify-center space-x-1.5">
                 <Loader2 className="w-3 h-3 animate-spin text-cyan-400" />
-                <span>EVALUATING · PENDING ON-CHAIN CONFIRMATION</span>
+                <span>{isSimulation ? 'EVALUATING SPENDING POLICY' : 'EVALUATING · PENDING ON-CHAIN CONFIRMATION'}</span>
               </div>
               <div className="text-sm font-bold text-white font-mono">
                 Preview: {previewVerdict === BlockReason.NONE ? 'ALLOW (Pre-check Passed)' : `BLOCK (${BLOCK_REASON_TEXT[previewVerdict]?.label || 'Policy Violation'})`}
               </div>
               <div className="text-[10px] text-cyan-300/80 font-mono">
-                Submitting autonomous transaction to Avalanche Fuji...
+                {isSimulation ? 'Simulating deterministic on-chain logic...' : 'Submitting autonomous transaction to Avalanche Fuji...'}
               </div>
             </div>
           ) : isDecisionReady ? (
@@ -355,11 +398,11 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
                 {/* Avalanche Verification */}
                 <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono">
                   <span>Settlement:</span>
-                  <span className="text-emerald-300">Verified on Avalanche Fuji</span>
+                  <span className="text-emerald-300">{isSimulation ? 'Simulation Verified (Matches On-Chain Rules)' : 'Verified on Avalanche Fuji'}</span>
                 </div>
               </div>
             ) : (
-              /* BLOCK CASE (Section 5 Resolved) */
+              /* BLOCK CASE */
               <div className="p-4 rounded-xl bg-rose-950/50 border-2 border-rose-500/80 shadow-xl space-y-2.5">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] uppercase font-bold text-rose-400 tracking-wider font-mono">
@@ -380,11 +423,11 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
                   {naturalReason}
                 </div>
 
-                {/* Transferred Amount: MUST SHOW 0 AVAX */}
-                <div className="pt-2 border-t border-rose-500/30 flex items-center justify-between font-mono text-xs">
+                {/* Transferred Amount: MUST SHOW 0 AVAX transferred to recipient; network gas was still consumed */}
+                <div className="pt-2 border-t border-rose-500/30 flex flex-col space-y-1 font-mono text-xs">
                   <span className="text-slate-400">Transferred to Recipient:</span>
-                  <span className="text-white font-extrabold text-sm bg-rose-500/20 px-2 py-0.5 rounded border border-rose-500/30">
-                    0 AVAX
+                  <span className="text-rose-300 font-extrabold text-xs bg-rose-500/20 px-2 py-1 rounded border border-rose-500/30 leading-snug">
+                    0 AVAX transferred to recipient; network gas was still consumed
                   </span>
                 </div>
 
@@ -396,21 +439,21 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
                   </div>
                   <div className="text-rose-300 font-semibold flex items-center space-x-1">
                     <ShieldAlert className="w-3 h-3 shrink-0" />
-                    <span>Payment blocked by policy. 0 AVAX transferred to recipient.</span>
+                    <span>0 AVAX transferred to recipient; network gas was still consumed.</span>
                   </div>
                 </div>
 
                 {/* Avalanche Verification */}
                 <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono">
                   <span>Verification:</span>
-                  <span className="text-cyan-300">Verified on Avalanche Fuji</span>
+                  <span className="text-cyan-300">{isSimulation ? 'Deterministic Simulation Match' : 'Verified on Avalanche Fuji'}</span>
                 </div>
               </div>
             )
           ) : null}
 
-          {/* Explorer link if tx completed */}
-          {txHash && (
+          {/* Evidence / Explorer link */}
+          {txHash ? (
             <a
               href={`https://testnet.snowtrace.io/tx/${txHash}`}
               target="_blank"
@@ -420,7 +463,17 @@ export const AvaxGuardPanel: React.FC<AvaFencePanelProps> = ({
               <span>View On-Chain Receipt on Snowtrace Fuji</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
-          )}
+          ) : isSimulation && isDecisionReady ? (
+            <a
+              href={siteConfig.historicalEvidence.find((e) => e.scenario === scenario)?.snowtraceUrl || 'https://testnet.snowtrace.io'}
+              target="_blank"
+              rel="noreferrer"
+              className="w-full py-2.5 px-3 rounded-xl bg-red-950/40 hover:bg-red-900/50 border border-red-500/40 text-red-300 hover:text-white text-xs font-mono font-bold flex items-center justify-center space-x-2 transition"
+            >
+              <span>View verified Fuji evidence</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          ) : null}
         </div>
       )}
 

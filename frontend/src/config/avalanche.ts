@@ -189,24 +189,24 @@ export const BLOCK_REASON_TEXT: Record<BlockReason, { label: string; labelZh: st
     description: 'Replay protection: this Request ID was already executed.'
   },
   [BlockReason.MERCHANT_NOT_ALLOWED]: {
-    label: 'UNAUTHORIZED_RECIPIENT',
+    label: 'recipient not authorized',
     labelZh: '未授权收款方',
-    description: 'Recipient is not authorized by policy. (0 AVAX transferred)'
+    description: 'Recipient is not authorized by policy. 0 AVAX transferred to recipient; network gas was still consumed.'
   },
   [BlockReason.PER_TX_LIMIT_EXCEEDED]: {
     label: 'PER_TX_LIMIT_EXCEEDED',
     labelZh: '单笔金额超限',
-    description: 'Payment amount exceeds the 0.003 AVAX per-transaction limit. (0 AVAX transferred)'
+    description: 'Payment amount exceeds the 0.003 AVAX per-transaction limit. 0 AVAX transferred to recipient; network gas was still consumed.'
   },
   [BlockReason.DAILY_LIMIT_EXCEEDED]: {
     label: 'DAILY_LIMIT_EXCEEDED',
     labelZh: '单日限额超限',
-    description: 'Cumulative spending exceeds daily budget limit. (0 AVAX transferred)'
+    description: 'Cumulative spending exceeds daily budget limit. 0 AVAX transferred to recipient; network gas was still consumed.'
   },
   [BlockReason.INSUFFICIENT_BUDGET]: {
     label: 'INSUFFICIENT_BUDGET',
     labelZh: '剩余预算不足',
-    description: 'Requested payment exceeds remaining policy pool budget. (0 AVAX transferred)'
+    description: 'Requested payment exceeds remaining policy pool budget. 0 AVAX transferred to recipient; network gas was still consumed.'
   }
 }
 

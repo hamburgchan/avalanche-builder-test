@@ -119,6 +119,21 @@ return wallet.pay(paymentIntent)`
         </div>
       </div>
 
+      {/* End-to-End Execution Pipeline Strip */}
+      <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 text-center font-mono text-[11px] text-slate-300 flex flex-wrap items-center justify-center gap-1.5 mb-4">
+        <span className="text-cyan-400 font-bold">Agent</span>
+        <span className="text-slate-500">→</span>
+        <span className="text-amber-300 font-bold">Payment Intent</span>
+        <span className="text-slate-500">→</span>
+        <span className="text-red-400 font-bold">AvaFence</span>
+        <span className="text-slate-500">→</span>
+        <span className="text-emerald-400 font-bold">ALLOW</span> / <span className="text-rose-400 font-bold">BLOCK</span>
+        <span className="text-slate-500">→</span>
+        <span className="text-slate-200 font-semibold">Wallet / x402 <span className="text-[9px] text-amber-400 font-mono">[Planned]</span></span>
+        <span className="text-slate-500">→</span>
+        <span className="text-emerald-300 font-bold">Settlement</span>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Visual Architecture Flow (Left Column) */}
         <div className="lg:col-span-5 flex flex-col justify-between space-y-3 font-mono text-xs">
@@ -164,7 +179,7 @@ return wallet.pay(paymentIntent)`
                 <ShieldCheck className="w-3.5 h-3.5" />
                 <span>ALLOW</span>
               </div>
-              <div className="text-[10px] text-slate-300">Wallet / x402 Gateway</div>
+              <div className="text-[10px] text-slate-300">Wallet / x402 <span className="text-[9px] text-amber-400">[Planned]</span></div>
               <div className="text-[9px] text-emerald-400 font-bold">Settlement Authorized</div>
             </div>
 
@@ -174,7 +189,7 @@ return wallet.pay(paymentIntent)`
                 <span>BLOCK</span>
               </div>
               <div className="text-[10px] text-slate-300">Reason + Decision Evidence</div>
-              <div className="text-[9px] text-rose-400 font-bold">0 Funds Transferred</div>
+              <div className="text-[9px] text-rose-400 font-bold">0 AVAX transferred to recipient</div>
             </div>
           </div>
         </div>

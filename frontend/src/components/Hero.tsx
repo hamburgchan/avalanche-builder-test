@@ -3,11 +3,16 @@ import { ArrowRight, Play, Layers } from 'lucide-react'
 import { siteConfig } from '../config/site.config'
 
 interface HeroProps {
-  onTryDemo: () => void
+  onTryInstantDemo: () => void
+  onRunLiveOnFuji: () => void
   onHowItWorks: () => void
 }
 
-export const Hero: React.FC<HeroProps> = ({ onTryDemo, onHowItWorks }) => {
+export const Hero: React.FC<HeroProps> = ({
+  onTryInstantDemo,
+  onRunLiveOnFuji,
+  onHowItWorks
+}) => {
   return (
     <div className="relative pt-6 pb-6 text-center font-sans">
       <div className="max-w-4xl mx-auto px-4">
@@ -44,22 +49,33 @@ export const Hero: React.FC<HeroProps> = ({ onTryDemo, onHowItWorks }) => {
 
         {/* Action CTAs */}
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          {/* Primary 1-Click Instant Demo */}
           <button
             type="button"
-            onClick={onTryDemo}
+            onClick={onTryInstantDemo}
             className="px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-red-600 via-rose-600 to-red-500 hover:from-red-500 hover:to-rose-500 shadow-lg shadow-red-600/30 transition transform active:scale-95 flex items-center space-x-2 cursor-pointer"
           >
             <Play className="w-4 h-4 fill-white" />
-            <span>Try the Fuji Demo</span>
+            <span>⚡ Try Instant Demo (Zero Setup)</span>
             <ArrowRight className="w-4 h-4" />
           </button>
 
+          {/* Secondary Live On-Chain CTA */}
+          <button
+            type="button"
+            onClick={onRunLiveOnFuji}
+            className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-slate-900/90 hover:bg-slate-800 border border-slate-700 hover:border-slate-600 shadow-md transition flex items-center space-x-2 cursor-pointer"
+          >
+            <span>⛓️ Run Live on Avalanche Fuji</span>
+          </button>
+
+          {/* Tertiary How It Works CTA */}
           <button
             type="button"
             onClick={onHowItWorks}
-            className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-300 hover:text-white bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 transition flex items-center space-x-2 cursor-pointer"
+            className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-400 hover:text-white bg-transparent hover:bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 transition flex items-center space-x-1.5 cursor-pointer"
           >
-            <Layers className="w-4 h-4 text-slate-400" />
+            <Layers className="w-3.5 h-3.5 text-slate-400" />
             <span>How It Works</span>
           </button>
         </div>
