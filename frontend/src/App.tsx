@@ -1164,6 +1164,7 @@ export function App() {
           }}
           onRunLiveOnFuji={() => {
             setDemoMode('live')
+            ensureAgentWallet()
             handleScrollToSection('demo-section')
           }}
           onHowItWorks={() => handleScrollToSection('how-it-works')}

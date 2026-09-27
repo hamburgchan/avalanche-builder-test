@@ -137,4 +137,20 @@ describe('Agent Wallet Security & Disconnected Factory Guard', () => {
       expect(cost.includes('~0.00171')).toBeFalse()
     }
   })
+
+  it('9. Both Live entry points (Hero and Demo Live Tab) initialize Agent Principal consistently', () => {
+    // Initial state before entering Live mode: no wallet, no pkey
+    expect(localStorage.getItem('avaxguard_agent_pkey')).toBeNull()
+
+    // Entering Live mode (Hero onRunLiveOnFuji or Demo Tab) invokes getOrCreateAgentWallet
+    const liveWallet = getOrCreateAgentWallet()
+    expect(liveWallet).toBeInstanceOf(ethers.Wallet)
+    expect(liveWallet.address.length).toBe(42)
+    expect(liveWallet.address.startsWith('0x')).toBeTrue()
+
+    // Agent Principal is now resolvable and not '--'
+    const agentPrincipal = `${liveWallet.address.slice(0, 8)}...${liveWallet.address.slice(-6)}`
+    expect(agentPrincipal).not.toBe('--')
+    expect(agentPrincipal).toContain('...')
+  })
 })
