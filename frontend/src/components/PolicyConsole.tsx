@@ -277,9 +277,9 @@ export const PolicyConsole: React.FC<PolicyConsoleProps> = ({
           </button>
         )}
 
-        {/* Allowed Merchant Row */}
+        {/* Allowed Recipient Row */}
         <div className="flex items-center justify-between text-slate-400 py-1 px-2 rounded-lg bg-slate-950/40 border border-slate-800/50">
-          <span className="text-xs text-slate-400">Allowed Merchant:</span>
+          <span className="text-xs text-slate-400">Allowed Recipient:</span>
           <span className="text-xs text-slate-300 truncate max-w-[65%]">
             PremiumData API ({DEMO_ADDRESSES.MERCHANT.slice(0, 6)}...{DEMO_ADDRESSES.MERCHANT.slice(-4)})
           </span>

@@ -3,6 +3,9 @@ import { ethers } from 'ethers'
 import confetti from 'canvas-confetti'
 import { Navbar } from './components/Navbar'
 import { Hero } from './components/Hero'
+import { DeveloperIntegrationPreview } from './components/DeveloperIntegrationPreview'
+import { CurrentVsPlanned } from './components/CurrentVsPlanned'
+import { DemoSetupProgress } from './components/DemoSetupProgress'
 import type { PolicyState } from './components/PolicyConsole'
 import { AgentWorkspace } from './components/AgentWorkspace'
 import { AvaxGuardPanel } from './components/AvaxGuardPanel'
@@ -25,7 +28,8 @@ import {
   FUJI_CHAIN_CONFIG,
   assertFujiNetwork,
   assertBrowserSigningAllowed,
-  validateAddressOrThrow
+  validateAddressOrThrow,
+  switchToFuji
 } from './config/avalanche'
 import {
   getOrCreateAgentWallet,
@@ -42,6 +46,7 @@ export function App() {
   const [provider, setProvider] = useState<ethers.BrowserProvider | null>(null)
   const [isConnecting, setIsConnecting] = useState<boolean>(false)
   const [isFaucetOpen, setIsFaucetOpen] = useState<boolean>(false)
+  const [isPreparingDemo, setIsPreparingDemo] = useState<boolean>(false)
 
   // Contract deployment state
   const [contractAddress, setContractAddr] = useState<string>(getAvaxGuardAddress())
@@ -60,9 +65,12 @@ export function App() {
   const [policy, setPolicy] = useState<PolicyState | null>(null)
   const [isCreatingPolicy, setIsCreatingPolicy] = useState<boolean>(false)
   const [isRevokingPolicy, setIsRevokingPolicy] = useState<boolean>(false)
-
-  // Unified Demo Execution State Machine (Item 2 & 3)
   const [agentAuthorized, setAgentAuthorized] = useState<boolean>(false)
+
+  // Local nonce for guaranteed unique on-chain request IDs
+  const [localNonce, setLocalNonce] = useState<number>(() => Date.now() % 1000000)
+
+  // Unified Demo Execution State Machine (Initial Scenario A)
   const [currentExecution, setCurrentExecution] = useState<DemoExecution>(() =>
     createInitialExecution('A')
   )
@@ -72,6 +80,7 @@ export function App() {
     currentExecution.stage !== 'TASK_COMPLETED' &&
     currentExecution.stage !== 'BLOCKED_COMPLETED' &&
     currentExecution.stage !== 'EXECUTION_ERROR'
+
   const [auditLogs, setAuditLogs] = useState<AuditRecord[]>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -82,24 +91,23 @@ export function App() {
     return []
   })
 
-  // Persist audit logs
+  // Persist audit logs to localStorage
   useEffect(() => {
-    if (typeof window !== 'undefined' && auditLogs.length > 0) {
+    if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem('AVAX_GUARD_AUDIT_LOGS', JSON.stringify(auditLogs.slice(0, 50)))
-      } catch {}
+        localStorage.setItem('AVAX_GUARD_AUDIT_LOGS', JSON.stringify(auditLogs))
+      } catch (e) {
+        console.warn('Failed to save audit logs to localStorage:', e)
+      }
     }
   }, [auditLogs])
-
-  // Nonce counter for deterministic request IDs
-  const [localNonce, setLocalNonce] = useState<number>(Date.now() % 1000000)
 
   // Init WSS monitor once
   useEffect(() => {
     monitor.init()
   }, [])
 
-  // Direct static read-only Fuji RPC provider (Bypasses MetaMask completely for all queries)
+  // Direct static read-only Fuji RPC provider (Bypasses MetaMask for all queries)
   const fujiReadOnlyRpc = useMemo(
     () => new ethers.JsonRpcProvider(FUJI_CHAIN_CONFIG.rpcUrls[0], 43113, { staticNetwork: true }),
     []
@@ -178,7 +186,7 @@ export function App() {
   const connectWallet = async () => {
     const ethereum = (window as any).ethereum
     if (!ethereum) {
-      alert('请先在浏览器安装 MetaMask 或 Core Wallet 扩展插件！')
+      alert('未检测到 Web3 钱包，请安装 MetaMask 或 Core 扩展插件！')
       return
     }
 
@@ -186,69 +194,81 @@ export function App() {
     try {
       const browserProvider = new ethers.BrowserProvider(ethereum)
       const accounts = await browserProvider.send('eth_requestAccounts', [])
-      const network = await browserProvider.getNetwork()
+      if (accounts.length > 0) {
+        const checksummed = ethers.getAddress(accounts[0])
+        setAccount(checksummed)
+        setProvider(browserProvider)
 
-      if (Number(network.chainId) !== 43113) {
-        await assertFujiNetwork(browserProvider)
+        const network = await browserProvider.getNetwork()
+        setChainId(Number(network.chainId))
+
+        if (Number(network.chainId) !== 43113) {
+          await switchToFuji()
+          const updatedNet = await browserProvider.getNetwork()
+          setChainId(Number(updatedNet.chainId))
+        }
+
+        const bal = await browserProvider.getBalance(checksummed)
+        setBalance(ethers.formatEther(bal))
       }
-
-      setProvider(browserProvider)
-      setAccount(accounts[0] || null)
-      setChainId(Number(network.chainId))
-
-      const bal = await browserProvider.getBalance(accounts[0])
-      setBalance(ethers.formatEther(bal))
     } catch (err: any) {
-      console.error('Wallet connection rejected:', err)
+      console.error('Connect wallet failed:', err)
+      alert(`连接钱包失败: ${err.message || err}`)
     } finally {
       setIsConnecting(false)
     }
   }
 
-  // Auto connect
+  // Listen to chain/account changes
   useEffect(() => {
     const ethereum = (window as any).ethereum
     if (!ethereum) return
 
-    const handleAccounts = (accounts: string[]) => {
-      if (accounts.length > 0) {
-        setAccount(accounts[0])
-        refreshBalances()
-      } else {
+    const handleAccountsChanged = (accounts: string[]) => {
+      if (accounts.length === 0) {
         setAccount(null)
         setBalance('0')
+        setPolicy(null)
+        setAgentAuthorized(false)
+      } else {
+        const checksummed = ethers.getAddress(accounts[0])
+        setAccount(checksummed)
+        refreshBalances()
+        loadPolicy()
       }
     }
 
-    const handleChain = (cId: string) => {
-      setChainId(parseInt(cId, 16))
+    const handleChainChanged = (hexChain: string) => {
+      const cId = parseInt(hexChain, 16)
+      setChainId(cId)
+      if (cId !== 43113) {
+        switchToFuji().catch(console.error)
+      }
       refreshBalances()
+      loadPolicy()
     }
 
-    ethereum.on('accountsChanged', handleAccounts)
-    ethereum.on('chainChanged', handleChain)
+    ethereum.on('accountsChanged', handleAccountsChanged)
+    ethereum.on('chainChanged', handleChainChanged)
 
-    const init = async () => {
-      const browserProvider = new ethers.BrowserProvider(ethereum)
-      const accounts = await browserProvider.listAccounts()
-      if (accounts.length > 0) {
-        setProvider(browserProvider)
-        setAccount(accounts[0].address)
-        const net = await browserProvider.getNetwork()
-        setChainId(Number(net.chainId))
-        const bal = await browserProvider.getBalance(accounts[0].address)
-        setBalance(ethers.formatEther(bal))
+    ethereum.request({ method: 'eth_accounts' }).then((accs: string[]) => {
+      if (accs.length > 0) {
+        const checksummed = ethers.getAddress(accs[0])
+        setAccount(checksummed)
+        setProvider(new ethers.BrowserProvider(ethereum))
+        ethereum.request({ method: 'eth_chainId' }).then((hexCId: string) => {
+          setChainId(parseInt(hexCId, 16))
+        })
       }
-    }
-    init()
+    }).catch(console.error)
 
     return () => {
-      ethereum.removeListener('accountsChanged', handleAccounts)
-      ethereum.removeListener('chainChanged', handleChain)
+      ethereum.removeListener('accountsChanged', handleAccountsChanged)
+      ethereum.removeListener('chainChanged', handleChainChanged)
     }
-  }, [refreshBalances])
+  }, [loadPolicy, refreshBalances])
 
-  // In-DApp 1-Click Contract Deployer via MetaMask (P0-DEPLOYMENT)
+  // Contract deployment handler
   const handleDeployContract = async () => {
     if (!account || !provider) {
       alert('请先连接 MetaMask 钱包！')
@@ -257,89 +277,35 @@ export function App() {
 
     setIsDeployingContract(true)
     setDeployError(null)
+
     try {
       await assertFujiNetwork(provider)
-      const fujiRpc = new ethers.JsonRpcProvider(FUJI_CHAIN_CONFIG.rpcUrls[0], 43113, { staticNetwork: true })
+      const signer = await provider.getSigner()
 
-      // Pre-fetch nonce from reliable Fuji RPC
-      const curNonce = await fujiRpc.getTransactionCount(account).catch(() => undefined)
+      const factory = new ethers.ContractFactory(
+        AVAX_GUARD_ABI,
+        AVAX_GUARD_BYTECODE,
+        signer
+      )
 
-      console.log('Initiating contract deployment via raw EIP-1193 eth_sendTransaction...')
-      let txHash: string
-      try {
-        const rawTxParams: any = {
-          from: account,
-          data: AVAX_GUARD_BYTECODE,
-          gas: '0x2625a0', // 2,500,000 gas in hex
-        }
-        if (curNonce !== undefined) {
-          rawTxParams.nonce = '0x' + curNonce.toString(16)
-        }
-        txHash = await (window as any).ethereum.request({
-          method: 'eth_sendTransaction',
-          params: [rawTxParams]
-        })
-      } catch (sendErr: any) {
-        if (sendErr?.message?.includes('-32002') || sendErr?.code === -32002) {
-          throw new Error('MetaMask RPC circuit-breaker tripped (-32002). Please switch your MetaMask Fuji RPC to https://avalanche-fuji-c-chain-rpc.publicnode.com or deploy via CLI.')
-        }
-        throw sendErr
-      }
+      const feeData = await fujiReadOnlyRpc.getFeeData().catch(() => ({ gasPrice: 25000000000n }))
+      const gasPrice = (feeData.gasPrice || 25000000000n) * 120n / 100n
 
-      console.log('Deployment tx submitted:', txHash)
+      const deployedContract = await factory.deploy({
+        gasLimit: 3000000,
+        gasPrice
+      })
 
-      // Wait for receipt using direct Fuji RPC to bypass MetaMask polling
-      let deployReceipt = await fujiRpc.waitForTransaction(txHash, 1, 45000)
-      if (!deployReceipt) {
-        deployReceipt = await fujiRpc.getTransactionReceipt(txHash)
-      }
-      if (!deployReceipt || deployReceipt.status !== 1) {
-        throw new Error('Deployment transaction failed or reverted on Fuji.')
-      }
+      const txHash = deployedContract.deploymentTransaction()?.hash || '0x'
+      await deployedContract.deploymentTransaction()?.wait(1)
 
-      const txNonce = curNonce ?? (await fujiRpc.getTransactionCount(account)) - 1
-      const newAddr = deployReceipt.contractAddress || ethers.getCreateAddress({ from: account, nonce: txNonce })
-
-      // Verify eth_getCode != 0x
-      const code = await fujiRpc.getCode(newAddr)
-      if (code === '0x' || code.length <= 2) {
-        throw new Error('Bytecode verification failed: eth_getCode returned 0x.')
-      }
+      const newAddr = await deployedContract.getAddress()
 
       setAvaxGuardAddress(newAddr)
       setContractAddr(newAddr)
       setIsContractDeployed(true)
 
-      const deployLog = `
-========================================
-P0-DEPLOYMENT: DONE
-
-Contract Address:
-${newAddr}
-
-Deployment Tx:
-${txHash}
-
-Chain ID:
-43113
-
-Block:
-${deployReceipt.blockNumber}
-
-Deployer:
-${account}
-
-Gas Used:
-${deployReceipt.gasUsed.toString()}
-
-Snowtrace:
-https://testnet.snowtrace.io/address/${newAddr}
-
-eth_getCode:
-VERIFIED (${code.length} bytes)
-========================================`
-      console.log(deployLog)
-      alert(`P0-DEPLOYMENT 部署成功！\n\n合约地址: ${newAddr}\n交易哈希: ${txHash}\nSnowtrace 浏览器: https://testnet.snowtrace.io/address/${newAddr}`)
+      alert(`AvaFence 智能合约部署成功！\n\n合约地址: ${newAddr}\n交易哈希: ${txHash}\nSnowtrace 浏览器: https://testnet.snowtrace.io/address/${newAddr}`)
 
       await loadPolicy()
       await refreshBalances()
@@ -368,13 +334,13 @@ VERIFIED (${code.length} bytes)
       setIsContractDeployed(true)
       await loadPolicy()
       await refreshBalances()
-      alert(`成功绑定已验证的 AvaxGuard 合约: ${verified}`)
+      alert(`成功绑定已验证的 AvaFence 合约: ${verified}`)
     } catch (e: any) {
       alert(`无效地址: ${e.message}`)
     }
   }
 
-  // Human Action: Fund Agent Gas (0.005 AVAX)
+  // Fund Agent Gas (0.005 AVAX)
   const handleFundAgent = async () => {
     if (!account || !provider) {
       alert('请先连接 MetaMask 钱包！')
@@ -409,7 +375,7 @@ VERIFIED (${code.length} bytes)
     }
   }
 
-  // Reset Agent Scoped Wallet (New key for fresh policy lifecycle)
+  // Reset Agent Scoped Wallet
   const handleResetAgent = () => {
     const newW = createNewAgentWallet()
     setAgentWallet(newW)
@@ -418,14 +384,14 @@ VERIFIED (${code.length} bytes)
     setAgentAuthorized(false)
   }
 
-  // Human Action: Create Policy
+  // Create Policy
   const handleCreatePolicy = async (budget: string, maxTx: string, daily: string, durationSec: number) => {
     if (!account || !provider) {
       alert('请先连接钱包！')
       return
     }
     if (!isContractDeployed) {
-      alert('链上状态未就绪：请先通过上方按钮部署 AvaxGuard 智能合约！')
+      alert('链上状态未就绪：请先部署 AvaFence 智能合约！')
       return
     }
 
@@ -440,13 +406,12 @@ VERIFIED (${code.length} bytes)
       const maxTxWei = ethers.parseEther(maxTx)
       const dailyWei = ethers.parseEther(daily)
 
-      // Pre-check on-chain rule: One Agent = One Policy Lifecycle
       const contractCheck = new ethers.Contract(contractAddress, AVAX_GUARD_ABI, fujiRpc)
       const isAlreadyUsed = await contractCheck.agentEverBound(agentWallet.address).catch(() => false)
       if (isAlreadyUsed) {
         const newW = createNewAgentWallet()
         setAgentWallet(newW)
-        alert(`安全规则触发：当前 Agent 此前已绑定过生效策略。\n\nAvaxGuard 严格执行 “一个 Agent = 一个策略生命周期 (One Agent = One Policy Lifecycle)” 护栏规则。\n\n系统已为您生成全新 Agent 钱包 (${newW.address})！\n\n请先点击 “充值 Agent Gas (0.005 AVAX)” 为其注入 Gas，然后再点击 “创建 Spending Policy”。`)
+        alert(`安全规则触发：当前 Agent 此前已绑定过生效策略。\n\nAvaFence 严格执行 “一个 Agent = 一个策略生命周期” 规则。\n\n系统已为您生成全新 Agent 钱包 (${newW.address})！\n\n请先点击 “充值 Agent Gas (0.005 AVAX)” 为其注入 Gas，然后再创建 Spending Policy。`)
         setIsCreatingPolicy(false)
         return
       }
@@ -483,7 +448,7 @@ VERIFIED (${code.length} bytes)
     }
   }
 
-  // Human Action: Revoke Policy
+  // Revoke Policy
   const handleRevokePolicy = async () => {
     if (!account || !provider || !isContractDeployed) return
     setIsRevokingPolicy(true)
@@ -502,7 +467,7 @@ VERIFIED (${code.length} bytes)
           from: account,
           to: contractAddress,
           data: callData,
-          gas: '0x493e0', // 300,000 gas
+          gas: '0x493e0',
           gasPrice: gasPriceHex
         }]
       })
@@ -518,9 +483,10 @@ VERIFIED (${code.length} bytes)
     }
   }
 
-  // Emergency Revoke for the retired/compromised legacy agent (0x82fF...1A51)
+  // Revoke Compromised Legacy Policy
   const handleRevokeCompromisedPolicy = async () => {
-    if (!account || !provider || isRevokingCompromised) return
+    if (!account || !provider || !isContractDeployed) return
+    const RETIRED_LEAKED_AGENT = '0x82fF1466015f208dB33e4E198e529b03f6fa1A51'
     setIsRevokingCompromised(true)
     try {
       await assertFujiNetwork(provider)
@@ -529,7 +495,7 @@ VERIFIED (${code.length} bytes)
       const gasPriceHex = '0x' + ((feeData.gasPrice || 25000000000n) * 120n / 100n).toString(16)
 
       const iface = new ethers.Interface(AVAX_GUARD_ABI)
-      const callData = iface.encodeFunctionData('revokePolicy', ['0x82fF1466015f208dB33e4E198e529b03f6fa1A51'])
+      const callData = iface.encodeFunctionData('revokePolicy', [RETIRED_LEAKED_AGENT])
 
       const txHash: string = await (window as any).ethereum.request({
         method: 'eth_sendTransaction',
@@ -537,7 +503,7 @@ VERIFIED (${code.length} bytes)
           from: account,
           to: contractAddress,
           data: callData,
-          gas: '0x493e0', // 300,000 gas
+          gas: '0x493e0',
           gasPrice: gasPriceHex
         }]
       })
@@ -555,7 +521,7 @@ VERIFIED (${code.length} bytes)
     }
   }
 
-  // Async Timeout Helper (Requirement 25: No infinite loading)
+  // Async Timeout Helper
   function withTimeout<T>(promise: Promise<T>, ms: number, stepName: string): Promise<T> {
     let timer: any
     const timeoutPromise = new Promise<T>((_, reject) => {
@@ -572,19 +538,22 @@ VERIFIED (${code.length} bytes)
     ])
   }
 
-  // Pre-flight Demo Readiness Verification (Requirement 27 & 28)
+  // Pre-flight Demo Readiness Verification
   const demoReadiness = useMemo(() => {
     if (!account) {
       return { ready: false, reason: '请先连接 MetaMask 钱包' }
+    }
+    if (chainId !== 43113) {
+      return { ready: false, reason: '请切换至 Avalanche Fuji 测试网 (43113)' }
     }
     if (!isContractDeployed || !contractAddress) {
       return { ready: false, reason: 'AvaFence 合约未就绪' }
     }
     if (!policy || !policy.active) {
-      return { ready: false, reason: '当前无活跃 Policy，请先在右侧创建' }
+      return { ready: false, reason: '当前无活跃 Policy，请先创建策略' }
     }
     if (Date.now() / 1000 > policy.expiry) {
-      return { ready: false, reason: 'Policy 已过期，请在右侧重新创建' }
+      return { ready: false, reason: 'Policy 已过期，请重新创建' }
     }
     if (parseFloat(agentBalance || '0') < 0.002) {
       return { ready: false, reason: 'Agent 钱包 Gas 不足 (需 >= 0.002 AVAX)' }
@@ -597,15 +566,51 @@ VERIFIED (${code.length} bytes)
       return { ready: false, reason: '单日限额已耗尽，请创建新 Policy' }
     }
     return { ready: true, reason: 'Fuji 链上状态已验证就绪' }
-  }, [account, isContractDeployed, contractAddress, policy, agentBalance])
+  }, [account, chainId, isContractDeployed, contractAddress, policy, agentBalance])
 
-  // Scenario Selection Handler with Immediate State Reset (Item 1: Scene Isolation)
+  // Guided Prepare Demo Handler (P0-3)
+  const handlePrepareDemo = async () => {
+    setIsPreparingDemo(true)
+    try {
+      if (!account) {
+        await connectWallet()
+        return
+      }
+      if (chainId !== 43113) {
+        await switchToFuji()
+        return
+      }
+      if (parseFloat(balance || '0') < 0.01) {
+        setIsFaucetOpen(true)
+        alert('您的 Fuji 钱包余额不足以支付 Gas 与创建策略。请通过弹出的水龙头窗口领取免费测试 AVAX。')
+        return
+      }
+      if (!policy || !policy.active || Date.now() / 1000 > policy.expiry) {
+        alert('正在为您在 Fuji 链上创建演示策略 (0.02 AVAX 总预算, 0.003 AVAX 单笔限额, 有效期 1 小时)...')
+        await handleCreatePolicy('0.02', '0.003', '0.01', 3600)
+        return
+      }
+      if (parseFloat(agentBalance || '0') < 0.002) {
+        alert('正在为 Agent 独立签名钱包注入 0.005 AVAX 交易 Gas...')
+        await handleFundAgent()
+        return
+      }
+      alert('演示环境已 100% 准备就绪！请在下方选择场景 A、B 或 C 并点击执行。')
+    } catch (err: any) {
+      console.error('Prepare demo failed:', err)
+      alert(`环境准备步骤中断: ${err.message || err}`)
+    } finally {
+      setIsPreparingDemo(false)
+    }
+  }
+
+  // Scenario Selection Handler with Immediate State Reset
   const handleSelectScenario = (scenario: DemoScenario) => {
     if (isExecuting) return
     setCurrentExecution(createInitialExecution(scenario))
   }
 
-  // Autonomous AI Agent Trigger: 100% Real Fuji C-Chain Execution with Choreographed Staging
+  // Autonomous AI Agent Trigger: 100% Real Fuji C-Chain Execution
   const handleTriggerExecution = async () => {
     if (isExecuting) return
     if (!demoReadiness.ready) {
@@ -633,18 +638,22 @@ VERIFIED (${code.length} bytes)
       verdict: null,
       blockReason: null,
       verdictMismatch: false,
+      transferredAmount: '0 AVAX',
+      plainReason: '',
       networkStatus: 'READY',
       txHash: null,
       blockNumber: null,
       gasUsed: null,
       acceptanceLatencyMs: null,
+      networkGasCost: null,
       merchantResult: null,
       errorMessage: null,
       errorStage: null,
-      executionLogs: [`[${new Date().toLocaleTimeString()}] 🤖 Agent 接收任务并构建支出意图 (${scenario === 'A' ? '正常采购' : scenario === 'B' ? '超额采购' : '受外部诱导'})`]
+      executionLogs: []
     }))
 
     const log = (msg: string) => {
+      console.log(`[AvaFence Stage] ${msg}`)
       setCurrentExecution((prev) => ({
         ...prev,
         executionLogs: [...prev.executionLogs, msg]
@@ -655,17 +664,17 @@ VERIFIED (${code.length} bytes)
 
     try {
       const amountWei = ethers.parseEther(intent.amount)
-      log(`[意图声明] 目标服务: ${intent.serviceName}`)
-      log(`[意图声明] 收款方: ${intent.merchantAlias} (${intent.merchant.slice(0, 6)}...${intent.merchant.slice(-4)})`)
+      log(`[意图声明] 目标资源: ${intent.serviceName}`)
+      log(`[意图声明] 收款方: ${intent.recipientAlias} (${intent.recipient.slice(0, 6)}...${intent.recipient.slice(-4)})`)
       log(`[意图声明] 申请金额: ${intent.amount} AVAX | Request ID: ${intent.requestId.slice(0, 10)}...${intent.requestId.slice(-6)}`)
 
-      // 2. Stage: POLICY_EVALUATING (Real on-chain evaluateSpend called ONCE - Requirement 1)
+      // 2. Stage: POLICY_EVALUATING
       setCurrentExecution((prev) => ({
         ...prev,
         stage: 'POLICY_EVALUATING',
         networkStatus: 'READY'
       }))
-      log('🔍 调用 Fuji 链上 AvaFence.evaluateSpend() 静态只读预检 (单次调用)...')
+      log('🔍 调用 Fuji 链上 AvaFence.evaluateSpend() 静态只读预检...')
 
       const fujiProvider = new ethers.JsonRpcProvider(FUJI_CHAIN_CONFIG.rpcUrls[0], 43113, { staticNetwork: true })
       await assertFujiNetwork(fujiProvider)
@@ -675,7 +684,7 @@ VERIFIED (${code.length} bytes)
         guardContract.evaluateSpend(
           account,
           agentWallet.address,
-          intent.merchant,
+          intent.recipient,
           amountWei,
           intent.requestId
         ),
@@ -689,7 +698,7 @@ VERIFIED (${code.length} bytes)
 
       log(`[策略引擎] 链上预检结果返回: allowed=${onChainAllowed}, reason=${onChainReason}, bitmask=0b${onChainBits.toString(2).padStart(7, '0')}`)
 
-      // 3. Stage: POLICY_VISUALIZING (Sequential Reveal Choreography - Requirement 2 & 3)
+      // 3. Stage: POLICY_VISUALIZING
       let firstFail = -1
       if (!agentAuthorized) {
         firstFail = 0
@@ -710,20 +719,19 @@ VERIFIED (${code.length} bytes)
         networkStatus: 'READY'
       }))
 
-      // Sequential visual reveal promise (0.8s - 1.2s total)
+      // Sequential visual reveal promise
       const revealPromise = (async () => {
         for (let step = 0; step <= 7; step++) {
           setCurrentExecution((prev) => ({ ...prev, revealStep: step }))
           await new Promise((r) => setTimeout(r, 120))
           if (firstFail !== -1 && step === firstFail) {
-            // First failing check reached! Subsequent checks immediately become SKIPPED
             await new Promise((r) => setTimeout(r, 140))
             break
           }
         }
       })()
 
-      // 4. In Parallel: Autonomous Execution on Avalanche Fuji (No artificial delay - Requirement 14)
+      // 4. In Parallel: Autonomous Execution on Avalanche Fuji
       const txPromise: Promise<{ txHash: string; receipt: any; acceptedRes: any; latency: number }> = (async () => {
         log('⚡ Agent 使用独立钱包私钥签署 attemptSpend 并广播至 Avalanche Fuji C-Chain...')
         assertBrowserSigningAllowed(chainId)
@@ -732,41 +740,36 @@ VERIFIED (${code.length} bytes)
 
         const t0 = performance.now()
         const tx = await withTimeout(
-          agentContract.attemptSpend(intent.merchant, amountWei, intent.requestId),
+          agentContract.attemptSpend(intent.recipient, amountWei, intent.requestId),
           20000,
           'Tx Submission (广播交易)'
         )
         const txHash = tx.hash
         log(`📝 交易已广播: ${txHash.slice(0, 18)}...`)
 
-        // Update broadcast status
         setCurrentExecution((prev) => ({
           ...prev,
           txHash,
           networkStatus: 'BROADCAST'
         }))
 
-        // Wait for acceptance on Avalanche (WSS / receipt polling)
         const waitPromise = monitor.waitForAccepted(txHash, t0, fujiProvider, 30000)
         const receipt: any = await withTimeout(tx.wait(), 30000, 'Tx Receipt (等待出块)')
         const acceptedRes = await waitPromise
         const latency = acceptedRes.latencyMs
-        log(`🏁 Avalanche 区块 #${receipt.blockNumber} 确认完成 (Observed Acceptance: ${latency} ms，来源: ${acceptedRes.source})`)
+        log(`🏁 Avalanche 区块 #${receipt.blockNumber} 确认完成 (延迟: ${latency} ms，来源: ${acceptedRes.source})`)
 
         return { txHash, receipt, acceptedRes, latency }
       })()
 
-      // Wait for UI reveal to finish first (Requirement 15: even if tx finishes faster, let reveal complete gracefully)
       await revealPromise
 
-      // Update to WAITING_ACCEPTANCE if tx is still in-flight (Requirement 16)
       setCurrentExecution((prev) => ({
         ...prev,
         stage: 'WAITING_ACCEPTANCE',
         networkStatus: prev.txHash ? 'BROADCAST' : 'SUBMITTING'
       }))
 
-      // Await real tx results with timeout
       const { txHash, receipt, acceptedRes, latency } = await txPromise
 
       // 5. Parse Receipt Logs for PaymentExecuted / PaymentBlocked
@@ -792,7 +795,6 @@ VERIFIED (${code.length} bytes)
         }
       }
 
-      // Requirement 5: Check for Verdict Mismatch
       const previewAllowed = (onChainReason === BlockReason.NONE)
       const receiptAllowed = isExecuted && !isBlocked
       if (previewAllowed !== receiptAllowed) {
@@ -812,7 +814,7 @@ VERIFIED (${code.length} bytes)
       const realGasCostEth = ethers.formatEther(receipt.gasUsed * effectiveGasPrice)
       const finalVerdict = isExecuted ? BlockReason.NONE : blockReasonParsed
 
-      // 6. Stage: TX_ACCEPTED (Confirmed only from Receipt Event - Requirement 5)
+      // 6. Stage: TX_ACCEPTED
       setCurrentExecution((prev) => ({
         ...prev,
         stage: 'TX_ACCEPTED',
@@ -824,11 +826,19 @@ VERIFIED (${code.length} bytes)
         networkStatus: 'ACCEPTED',
         networkGasCost: `~${parseFloat(realGasCostEth).toFixed(5)} AVAX`,
         verdict: finalVerdict,
-        blockReason: finalVerdict
+        blockReason: finalVerdict,
+        transferredAmount: isExecuted ? `${intent.amount} AVAX` : '0 AVAX',
+        plainReason: isExecuted
+          ? 'Payment authorized by policy.'
+          : scenario === 'B' || finalVerdict === BlockReason.MERCHANT_NOT_ALLOWED
+          ? 'Recipient is not authorized by policy.'
+          : scenario === 'C' || finalVerdict === BlockReason.PER_TX_LIMIT_EXCEEDED
+          ? 'Per-transaction limit of 0.003 AVAX exceeded.'
+          : (BLOCK_REASON_TEXT[finalVerdict]?.description || 'Payment blocked by policy.')
       }))
 
       if (isExecuted) {
-        // APPROVED BRANCH (Scene A)
+        // APPROVED BRANCH (Scenario A)
         log('📡 正在将 PaymentExecuted 链上收据提交至商户 API 进行核验...')
         setCurrentExecution((prev) => ({ ...prev, stage: 'MERCHANT_VERIFYING' }))
 
@@ -842,7 +852,7 @@ VERIFIED (${code.length} bytes)
             contractAddress
           ),
           10000,
-          'Merchant Verification (商户服务核验)'
+          'Merchant Verification'
         )
 
         if (merchantRes.success) {
@@ -862,7 +872,8 @@ VERIFIED (${code.length} bytes)
           setCurrentExecution((prev) => ({
             ...prev,
             stage: 'TASK_COMPLETED',
-            merchantResult: merchantRes
+            merchantResult: merchantRes,
+            transferredAmount: `${intent.amount} AVAX`
           }))
 
           setAuditLogs((prev) => [
@@ -871,14 +882,16 @@ VERIFIED (${code.length} bytes)
               timestamp: new Date().toLocaleTimeString(),
               type: 'EXECUTED',
               agent: agentWallet.address,
-              recipient: intent.merchant,
-              recipientAlias: intent.merchantAlias,
+              recipient: intent.recipient,
+              recipientAlias: intent.recipientAlias,
               amount: intent.amount,
+              transferredAmount: `${intent.amount} AVAX`,
               requestId: intent.requestId,
               reason: BlockReason.NONE,
               txHash,
               latencyMs: latency,
-              sceneType: intent.sceneType
+              sceneType: intent.sceneType,
+              isLiveExecution: true
             },
             ...prev
           ])
@@ -892,13 +905,20 @@ VERIFIED (${code.length} bytes)
           }))
         }
       } else if (isBlocked) {
-        // BLOCKED BRANCH (Scene B & C)
+        // BLOCKED BRANCH (Scenario B & C)
         log(`🛡️ SPENDING BLOCKED BY AVAFENCE: 拦截原因 = ${BLOCK_REASON_TEXT[finalVerdict]?.label || finalVerdict}`)
-        log(`🔒 0 非授权资金损失：人类委托的本金受到 100% 链上保护。`)
+        log(`🔒 0 AVAX transferred to recipient: 本金受 100% 链上策略保护。`)
 
         setCurrentExecution((prev) => ({
           ...prev,
-          stage: 'BLOCKED_COMPLETED'
+          stage: 'BLOCKED_COMPLETED',
+          transferredAmount: '0 AVAX',
+          plainReason:
+            scenario === 'B' || finalVerdict === BlockReason.MERCHANT_NOT_ALLOWED
+              ? 'Recipient is not authorized by policy.'
+              : scenario === 'C' || finalVerdict === BlockReason.PER_TX_LIMIT_EXCEEDED
+              ? 'Per-transaction limit of 0.003 AVAX exceeded.'
+              : (BLOCK_REASON_TEXT[finalVerdict]?.description || 'Payment blocked by policy.')
         }))
 
         setAuditLogs((prev) => [
@@ -907,14 +927,16 @@ VERIFIED (${code.length} bytes)
             timestamp: new Date().toLocaleTimeString(),
             type: 'BLOCKED',
             agent: agentWallet.address,
-            recipient: intent.merchant,
-            recipientAlias: intent.merchantAlias,
+            recipient: intent.recipient,
+            recipientAlias: intent.recipientAlias,
             amount: intent.amount,
+            transferredAmount: '0 AVAX',
             requestId: intent.requestId,
             reason: finalVerdict,
             txHash,
             latencyMs: latency,
-            sceneType: intent.sceneType
+            sceneType: intent.sceneType,
+            isLiveExecution: true
           },
           ...prev
         ])
@@ -923,15 +945,22 @@ VERIFIED (${code.length} bytes)
       await loadPolicy()
       await refreshBalances()
     } catch (err: any) {
-      console.error('Execution error:', err)
-      const errMsg = err?.message || String(err)
-      log(`❌ 执行异常: ${errMsg}`)
+      console.error('Scenario execution failed:', err)
+      const errMsg = err.message || String(err)
+      log(`❌ 执行失败: ${errMsg}`)
       setCurrentExecution((prev) => ({
         ...prev,
         stage: 'EXECUTION_ERROR',
         errorMessage: errMsg,
         networkStatus: 'ERROR'
       }))
+    }
+  }
+
+  const handleScrollToSection = (sectionId: string) => {
+    const el = document.getElementById(sectionId)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' })
     }
   }
 
@@ -944,59 +973,90 @@ VERIFIED (${code.length} bytes)
         isConnecting={isConnecting}
         onConnect={connectWallet}
         onOpenFaucet={() => setIsFaucetOpen(true)}
+        onNavClick={handleScrollToSection}
       />
 
-      <main className="flex-1 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 space-y-4">
-        <Hero />
+      <main className="flex-1 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 space-y-6">
+        {/* Section 6: Hero */}
+        <Hero
+          onTryDemo={() => handleScrollToSection('demo-section')}
+          onHowItWorks={() => handleScrollToSection('how-it-works')}
+        />
 
-        {/* Main Stage (64%) & AvaFence Guard Panel (36%) */}
-        <div className="grid grid-cols-1 lg:grid-cols-[64fr_36fr] gap-4 sm:gap-5 items-start">
-          {/* Main Stage: 64% Agent Mission & Workspace */}
-          <div className="w-full">
-            <AgentWorkspace
-              currentExecution={currentExecution}
-              isExecuting={isExecuting}
-              demoReadiness={demoReadiness}
-              onSelectScenario={handleSelectScenario}
-              onTriggerExecution={handleTriggerExecution}
-            />
-          </div>
+        {/* Section 7: Developer Integration Preview */}
+        <DeveloperIntegrationPreview />
 
-          {/* Right Guard Panel: 36% AvaFence Financial Permission Layer */}
-          <div className="w-full">
-            <AvaxGuardPanel
-              currentExecution={currentExecution}
-              policy={policy}
-              account={account}
-              contractAddress={contractAddress}
-              isContractDeployed={isContractDeployed}
-              isDeployingContract={isDeployingContract}
-              deployError={deployError}
-              hasCompromisedPolicy={hasCompromisedPolicy}
-              isRevokingCompromised={isRevokingCompromised}
-              agentAddress={agentWallet.address}
-              agentBalance={agentBalance}
-              isFundingAgent={isFundingAgent}
-              onFundAgent={handleFundAgent}
-              isCreatingPolicy={isCreatingPolicy}
-              isRevokingPolicy={isRevokingPolicy}
-              agentAuthorized={agentAuthorized}
-              onDeployContract={handleDeployContract}
-              onBindCustomContract={handleBindCustomContract}
-              onRevokeCompromisedPolicy={handleRevokeCompromisedPolicy}
-              onCreatePolicy={handleCreatePolicy}
-              onRevokePolicy={handleRevokePolicy}
-              onResetAgent={handleResetAgent}
-            />
+        {/* P0-5: Current Capabilities vs Planned Roadmap */}
+        <CurrentVsPlanned />
+
+        {/* Section 8 & P0-3: Interactive Demo Section */}
+        <div id="demo-section" className="pt-2">
+          {/* Setup Progress */}
+          <DemoSetupProgress
+            account={account}
+            chainId={chainId}
+            balance={balance}
+            policyActive={!!(policy && policy.active && Date.now() / 1000 <= policy.expiry)}
+            agentGasBalance={agentBalance}
+            isExecuting={isExecuting}
+            onConnectWallet={connectWallet}
+            onSwitchToFuji={switchToFuji}
+            onOpenFaucet={() => setIsFaucetOpen(true)}
+            onCreatePolicy={() => handleCreatePolicy('0.02', '0.003', '0.01', 3600)}
+            onFundAgent={handleFundAgent}
+            onPrepareDemo={handlePrepareDemo}
+            isPreparingDemo={isPreparingDemo}
+          />
+
+          {/* Main Stage (64%) & AvaFence Guard Panel (36%) */}
+          <div className="grid grid-cols-1 lg:grid-cols-[64fr_36fr] gap-4 sm:gap-5 items-start">
+            {/* Main Stage: 64% Agent Mission & Workspace */}
+            <div className="w-full">
+              <AgentWorkspace
+                currentExecution={currentExecution}
+                isExecuting={isExecuting}
+                demoReadiness={demoReadiness}
+                onSelectScenario={handleSelectScenario}
+                onTriggerExecution={handleTriggerExecution}
+              />
+            </div>
+
+            {/* Right Guard Panel: 36% Policy Evaluation & Evidence */}
+            <div className="w-full">
+              <AvaxGuardPanel
+                currentExecution={currentExecution}
+                policy={policy}
+                account={account}
+                contractAddress={contractAddress}
+                isContractDeployed={isContractDeployed}
+                isDeployingContract={isDeployingContract}
+                deployError={deployError}
+                hasCompromisedPolicy={hasCompromisedPolicy}
+                isRevokingCompromised={isRevokingCompromised}
+                agentAddress={agentWallet.address}
+                agentBalance={agentBalance}
+                isFundingAgent={isFundingAgent}
+                onFundAgent={handleFundAgent}
+                isCreatingPolicy={isCreatingPolicy}
+                isRevokingPolicy={isRevokingPolicy}
+                agentAuthorized={agentAuthorized}
+                onDeployContract={handleDeployContract}
+                onBindCustomContract={handleBindCustomContract}
+                onRevokeCompromisedPolicy={handleRevokeCompromisedPolicy}
+                onCreatePolicy={handleCreatePolicy}
+                onRevokePolicy={handleRevokePolicy}
+                onResetAgent={handleResetAgent}
+              />
+            </div>
           </div>
         </div>
 
-        {/* Bottom Full-Width On-Chain Evidence */}
+        {/* P0-1: Decision Evidence & Audit Trail */}
         <AuditLog logs={auditLogs} />
       </main>
 
       <footer className="border-t border-slate-900 py-6 text-center text-xs text-slate-500 font-mono">
-        AvaFence • 面向自主 AI Agent 的链上资金权限边界 • Built on Avalanche Fuji C-Chain
+        AvaFence • The Verifiable Policy Firewall for AI Agent Payments • Built on Avalanche Fuji C-Chain
       </footer>
 
       <FaucetModal

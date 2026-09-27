@@ -171,42 +171,42 @@ export const BLOCK_REASON_TEXT: Record<BlockReason, { label: string; labelZh: st
   [BlockReason.NONE]: {
     label: 'APPROVED',
     labelZh: '放行通过',
-    description: '链上 7 项安全策略检查全部通过。'
+    description: 'All on-chain policy security checks passed. Payment authorized.'
   },
   [BlockReason.POLICY_INACTIVE]: {
     label: 'POLICY_INACTIVE',
     labelZh: '策略未激活',
-    description: '支出策略已被人类 Owner 撤销或尚未激活。'
+    description: 'Spending policy is inactive or has been revoked by owner.'
   },
   [BlockReason.POLICY_EXPIRED]: {
     label: 'POLICY_EXPIRED',
     labelZh: '策略已过期',
-    description: '交易时间戳已超过策略有效时长上限。'
+    description: 'Transaction timestamp exceeds the policy active time window.'
   },
   [BlockReason.REQUEST_ALREADY_EXECUTED]: {
     label: 'REQUEST_ALREADY_EXECUTED',
     labelZh: '防重放拦截',
-    description: '防重放保护：该 RequestId 意图已被执行过。'
+    description: 'Replay protection: this Request ID was already executed.'
   },
   [BlockReason.MERCHANT_NOT_ALLOWED]: {
-    label: 'MERCHANT_NOT_ALLOWED',
-    labelZh: '非白名单商户',
-    description: '收款地址未在人类 Owner 授权的商户白名单中。'
+    label: 'UNAUTHORIZED_RECIPIENT',
+    labelZh: '未授权收款方',
+    description: 'Recipient is not authorized by policy. (0 AVAX transferred)'
   },
   [BlockReason.PER_TX_LIMIT_EXCEEDED]: {
     label: 'PER_TX_LIMIT_EXCEEDED',
     labelZh: '单笔金额超限',
-    description: '请求支付金额超过了智能合约单笔硬顶限额。'
+    description: 'Payment amount exceeds the 0.003 AVAX per-transaction limit. (0 AVAX transferred)'
   },
   [BlockReason.DAILY_LIMIT_EXCEEDED]: {
     label: 'DAILY_LIMIT_EXCEEDED',
     labelZh: '单日限额超限',
-    description: '今日累计支出金额超过了单日预算上限。'
+    description: 'Cumulative spending exceeds daily budget limit. (0 AVAX transferred)'
   },
   [BlockReason.INSUFFICIENT_BUDGET]: {
     label: 'INSUFFICIENT_BUDGET',
     labelZh: '剩余预算不足',
-    description: '请求支付金额超过了策略池剩余可用总预算。'
+    description: 'Requested payment exceeds remaining policy pool budget. (0 AVAX transferred)'
   }
 }
 
@@ -215,7 +215,7 @@ export const TRACE_BITS = [
   { bit: 0, key: 'POLICY_ACTIVE', label: '1. 策略激活状态 (Policy Active)' },
   { bit: 1, key: 'NOT_EXPIRED', label: '2. 有效期检查 (Not Expired)' },
   { bit: 2, key: 'REQUEST_FRESH', label: '3. 防重放 Nonce (Request Fresh)' },
-  { bit: 3, key: 'MERCHANT_ALLOWED', label: '4. 商户白名单 (Merchant Allowlist)' },
+  { bit: 3, key: 'MERCHANT_ALLOWED', label: '4. 收款方白名单 (Recipient Authorized)' },
   { bit: 4, key: 'PER_TX_LIMIT_OK', label: '5. 单笔限额检查 (Max / Tx Check)' },
   { bit: 5, key: 'DAILY_LIMIT_OK', label: '6. 单日限额检查 (Daily Limit Check)' },
   { bit: 6, key: 'BUDGET_AVAILABLE', label: '7. 剩余预算检查 (Budget Available)' }

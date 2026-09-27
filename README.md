@@ -1,7 +1,7 @@
-# 🛡️ AvaxGuard: On-Chain Financial Policy Engine for Autonomous AI Agents
+# 🛡️ AvaFence: The Verifiable Policy Firewall for AI Agent Payments
 
-> **Avalanche Builder Day Shenzhen 2026** (One-Day Coding Hackathon)  
-> **Tagline**: *Give AI agents money — without giving them your wallet.*  
+> **The Verifiable Policy Firewall for AI Agent Payments**  
+> *A programmable policy enforcement and decision-audit layer for agentic payments on Avalanche.*  
 > **Networks**:  
 > - **Avalanche C-Chain Mainnet** (Chain ID `43114`): 生产合约部署与链上真实性存证 (Production Proof)  
 > - **Avalanche Fuji C-Chain** (Chain ID `43113`): 公开交互试用环境，无需真实 AVAX (Interactive Demo)  
@@ -28,7 +28,7 @@
   - **P0-3 Fuji 链上一键部署器**: 在前端控制台内置基于 MetaMask 的 Fuji 智能合约部署器与字节码验证机制，动态将部署地址持久化至应用。
   - **P0-4 & P0-5 彻底剔除伪造链上 Fallback**: 移除所有 `Math.random` 假哈希、虚拟区块高度和固定 Gas。所有三场景判定严格由 Fuji 真实交易 Receipt 及事件驱动（`PaymentExecuted` / `PaymentBlocked`）。
   - **P0-7 强健的 Avalanche 确认监听器**: 升级 `newAcceptedTransactions` WSS 监听器，增加 15s 超时保险与收据轮询降级机制，UI 明确标注延迟来源（`WSS` 或 `POLLING`）。
-    - **P0-8 Fail-Closed 商户验证服务**: 增加 Chain ID 43113 强制验证与严格参数验真，明确标注客户端防重放 Demo 说明。
+  - **P0-8 Fail-Closed 商户验证服务**: 增加 Chain ID 43113 强制验证与严格参数验真，明确标注客户端防重放 Demo 说明。
   - **P0-9 强化 CI 自动化**: 在 GitHub Actions 部署流程中嵌入 Foundry 工具链及 `forge test` 强制单测，单测不通过禁止发布前端。
   - **P0-10 客户端密钥绝对安全与合规时间线**:
     - **时间线声明**：合约部署交易完成于 12:26:10（环境准备阶段）；Scene A、Scene B、Scene C 等核心交互为 13:00 现场 Coding 开始后于 13:21 实时发起并确认的真实链上交易。
@@ -39,22 +39,22 @@
 ## 🌟 核心问题与解决方案
 
 - **痛点（The Spend Dilemma）**：在 2026 年，自主 AI Agent 正在接管工作流。但如果 Agent 每次微支付都需要人类在钱包上签名，Agent 就失去了自主性；如果把钱包私钥或无限资金交给 Agent，资金安全风险无法承受。
-- **解决方案（AvaxGuard）**：人类不授权钱包私钥（No Owner Key Exposure），而是通过 Avalanche 智能合约为 Agent 创建一个**可编程的链上支出策略沙盒（Spending Policy）**。Agent 在规则内自主消费，一旦越权，智能合约直接拦截并存证！
+- **解决方案（AvaFence）**：人类不授权钱包私钥（No Owner Key Exposure），而是通过 Avalanche 智能合约（`AvaxGuard.sol`）为 Agent 创建一个**可编程的链上支出策略沙盒（Spending Policy）**。Agent 在规则内自主消费，一旦越权，智能合约直接拦截并存证！
 
 ---
 
 ## ⚡ 三大真实 Demo 场景
 
-1. **Scene A — 合法自主支付（Legitimate Autonomous Payment）**：
-   - 任务：购买高精度 AVAX 订单簿实时深度数据。
-   - 策略：报价 0.002 AVAX（<= 0.003 单笔上限），规则全绿。
-   - 结果：`PaymentExecuted` 触发，Avalanche 常驻 WSS 测得真实 Accepted 延迟，商户验单放行，Agent 获得数据。
-2. **Scene B — 超限单笔拦截（Overspending Attempt）**：
-   - 任务：请求 0.010 AVAX 的高阶深度数据集（超过 0.003 单笔硬顶）。
-   - 结果：`PaymentBlocked(PER_TX_LIMIT_EXCEEDED)`，不转账、零资金受损，链上留存审计证据。
-3. **Scene C — 提示词注入攻击防御（Prompt Injection Defense）**：
-   - 场景：外部数据注入指令诱导 Agent 将 0.001 AVAX 转给恶意地址 `0x93FC18Ba40C72D8523A7AFe9e766d77994A1221A`。
-   - 结果：收款方不在商户白名单，合约判定 `PaymentBlocked(MERCHANT_NOT_ALLOWED)`，人类资金池固若金汤！
+1. **Scenario A — 正常 API 购买放行（Normal API Purchase -> ALLOW）**：
+   - 任务：购买高精度实时订单簿深度数据。
+   - 策略：付款金额 0.002 AVAX（<= 0.003 单笔上限），收款方为白名单商户，时间窗口与预算校验全部通过。
+   - 结果：`PaymentExecuted` 触发，Avalanche WSS/RPC 测得真实 Accepted 延迟，商户到账 0.002 AVAX，Agent 获得数据。
+2. **Scenario B — 未授权收款方拦截（Unauthorized Recipient -> BLOCK）**：
+   - 场景：不可信外部工具返回值篡改了支付目标地址为 `0xA2B1...B5dD`（模拟 Prompt Injection / 工具链投毒）。
+   - 结果：收款方不在策略白名单，合约判定 `PaymentBlocked(RECIPIENT_NOT_ALLOWED)`，资金受损 0 AVAX，向接收方转账 0 AVAX，链上不可篡改存证！
+3. **Scenario C — 单笔超额支出拦截（Per-Tx Overspend -> BLOCK）**：
+   - 任务：请求 0.010 AVAX 的批量数据集（超出 0.003 AVAX 单笔硬顶限制）。
+   - 结果：合约判定 `PaymentBlocked(PER_TX_LIMIT_EXCEEDED)`，不转账、资金受损 0 AVAX，链上留存审计证据。
 
 ---
 
@@ -78,9 +78,9 @@ AvaFence 采取“**主网链上存证，测试网公开交互**”的双轨架�
 | **AvaxGuard 智能合约** | `0xB6379ce69E73cC6d20E5284D14386F4fBF8Ed770` | ✅ 已部署 | [查看合约 (8,686 字节运行时字节码 / 17,374 字符)](https://testnet.snowtrace.io/address/0xB6379ce69E73cC6d20E5284D14386F4fBF8Ed770) |
 | **合约部署交易** | `0x741f45615cf4b5a9c98d085e3b70ede5673b11bf94f90d853c4633cb8a351ee1` | ✅ 成功 (区块 58476058) | [查看部署交易](https://testnet.snowtrace.io/tx/0x741f45615cf4b5a9c98d085e3b70ede5673b11bf94f90d853c4633cb8a351ee1) |
 | **支出策略创建 (PolicyCreated)** | `0xd46ed3bf9e58e1c4b7e4c2414775e110eb72093bd7de6c91461cc60dcc7b25cd` | ✅ 成功 (预算 0.02 AVAX) | [查看策略创建交易](https://testnet.snowtrace.io/tx/0xd46ed3bf9e58e1c4b7e4c2414775e110eb72093bd7de6c91461cc60dcc7b25cd) |
-| **Scene A: 合法自主微支付** | `0xefbff0a69c9888d68a6415e046ed7d664e1406878f40170fd38dcaa2df1378a7` | ✅ 放行 (`PaymentExecuted`) | [查看 Scene A 交易 (商户+0.002 AVAX)](https://testnet.snowtrace.io/tx/0xefbff0a69c9888d68a6415e046ed7d664e1406878f40170fd38dcaa2df1378a7) |
-| **Scene B: 超额单笔支出拦截** | `0xe6c790834d26d9af0b81251376e95cfacec77fe82211553664b56592bb480020` | 🛡️ 拦截 (`PER_TX_LIMIT_EXCEEDED`) | [查看 Scene B 拦截存证 (0 资金损失)](https://testnet.snowtrace.io/tx/0xe6c790834d26d9af0b81251376e95cfacec77fe82211553664b56592bb480020) |
-| **Scene C: 提示词注入攻击拦截** | `0x9a2e7f67788bbc4c754340974adb0dd206ed298cc21405a9ed2dec41fcc9c2d9` | 🛡️ 拦截 (`MERCHANT_NOT_ALLOWED`) | [查看 Scene C 拦截存证 (黑客到账 0 AVAX)](https://testnet.snowtrace.io/tx/0x9a2e7f67788bbc4c754340974adb0dd206ed298cc21405a9ed2dec41fcc9c2d9) |
+| **Scenario A: 合法自主微支付** | `0xefbff0a69c9888d68a6415e046ed7d664e1406878f40170fd38dcaa2df1378a7` | ✅ 放行 (`PaymentExecuted`) | [查看 Scenario A 交易 (收款方+0.002 AVAX)](https://testnet.snowtrace.io/tx/0xefbff0a69c9888d68a6415e046ed7d664e1406878f40170fd38dcaa2df1378a7) |
+| **Scenario B: 未授权收款方拦截** | `0x9a2e7f67788bbc4c754340974adb0dd206ed298cc21405a9ed2dec41fcc9c2d9` | 🛡️ 拦截 (`RECIPIENT_NOT_ALLOWED`) | [查看 Scenario B 拦截存证 (未授权收款方到账 0 AVAX)](https://testnet.snowtrace.io/tx/0x9a2e7f67788bbc4c754340974adb0dd206ed298cc21405a9ed2dec41fcc9c2d9) |
+| **Scenario C: 超额单笔支出拦截** | `0xe6c790834d26d9af0b81251376e95cfacec77fe82211553664b56592bb480020` | 🛡️ 拦截 (`PER_TX_LIMIT_EXCEEDED`) | [查看 Scenario C 拦截存证 (0 资金损失)](https://testnet.snowtrace.io/tx/0xe6c790834d26d9af0b81251376e95cfacec77fe82211553664b56592bb480020) |
 | **泄露策略撤销与资产回收** | `0x4309fe1653a1c09f16a056372527a12fb0724c4cab498c66596d9400179acf9f` | 🔐 成功 (`PolicyRevoked`) | [查看撤销退款存证 (0.018 AVAX 全额赎回)](https://testnet.snowtrace.io/tx/0x4309fe1653a1c09f16a056372527a12fb0724c4cab498c66596d9400179acf9f) |
 | **GitHub Actions CI 验证** | [Run ID: 35424563845](https://github.com/hamburgchan/avalanche-builder-test/actions/runs/35424563845) | ✅ 19/19 单测与密钥扫描全部通过 | [查看 GitHub Actions 运行记录](https://github.com/hamburgchan/avalanche-builder-test/actions/runs/35424563845) |
 

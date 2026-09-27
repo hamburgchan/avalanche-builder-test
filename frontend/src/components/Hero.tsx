@@ -1,53 +1,67 @@
 import React from 'react'
-import { ArrowRight, ShieldCheck } from 'lucide-react'
+import { ArrowRight, Play, Layers } from 'lucide-react'
+import { siteConfig } from '../config/site.config'
 
-export const Hero: React.FC = () => {
+interface HeroProps {
+  onTryDemo: () => void
+  onHowItWorks: () => void
+}
+
+export const Hero: React.FC<HeroProps> = ({ onTryDemo, onHowItWorks }) => {
   return (
-    <div className="relative pt-1 pb-1 text-center font-sans">
-      <div className="max-w-5xl mx-auto px-4">
-        {/* Brand Tag */}
-        <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 font-mono text-[11px] font-bold mb-2">
-          <span>AvaFence</span>
-          <span className="text-slate-500">·</span>
-          <span className="text-slate-300 font-medium">Financial Boundaries for Autonomous AI Agents</span>
+    <div className="relative pt-6 pb-6 text-center font-sans">
+      <div className="max-w-4xl mx-auto px-4">
+        {/* Network & Verification Badges */}
+        <div className="flex flex-wrap items-center justify-center gap-2 mb-3">
+          <span className="inline-flex items-center space-x-1 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 font-mono text-xs font-bold">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+            <span>{siteConfig.networkBadges.fujiDemo}</span>
+          </span>
+          <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-slate-300 font-mono text-[11px]">
+            <span>{siteConfig.networkBadges.mainnetStatus}</span>
+          </span>
         </div>
 
-        {/* Punchy Headline */}
-        <h1 className="text-2xl sm:text-3xl lg:text-[38px] font-black tracking-tight text-white leading-tight">
-          给 AI Agent 钱，<span className="text-red-500">但不给它你的钱包。</span>
+        {/* Brand Name */}
+        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight">
+          AvaFence
         </h1>
 
-        {/* Application-Oriented Subtitle */}
-        <p className="text-slate-200 text-xs sm:text-sm max-w-3xl mx-auto mt-1.5 leading-normal">
-          让 AI Agent 自主购买数据、API 和算力，同时把每一笔支出限制在人类设定的资金边界内。
+        {/* Brand Positioning */}
+        <div className="text-lg sm:text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-red-400 via-rose-300 to-red-500 mt-2">
+          {siteConfig.brandPositioning}
+        </div>
+
+        {/* Subtitle */}
+        <p className="text-slate-300 text-sm sm:text-base max-w-2xl mx-auto mt-2.5 leading-relaxed">
+          {siteConfig.subtitle}
         </p>
 
-        {/* English Secondary */}
-        <div className="text-[11px] sm:text-xs text-slate-400 font-mono mt-0.5">
-          Give AI agents spending autonomy — within programmable financial boundaries.
+        {/* Core Concept One-Liner */}
+        <div className="mt-2 text-xs sm:text-sm font-mono text-slate-400 max-w-xl mx-auto">
+          “Agent can request a payment. AvaFence independently decides whether the payment is allowed.”
         </div>
 
-        {/* Brand Philosophy Sentence */}
-        <div className="text-[11px] text-slate-400/90 font-mono mt-1 hidden sm:block">
-          Wallets control who can sign. <span className="text-white font-semibold">AvaFence controls what an AI agent is allowed to spend on.</span>
-        </div>
+        {/* Action CTAs */}
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={onTryDemo}
+            className="px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-red-600 via-rose-600 to-red-500 hover:from-red-500 hover:to-rose-500 shadow-lg shadow-red-600/30 transition transform active:scale-95 flex items-center space-x-2 cursor-pointer"
+          >
+            <Play className="w-4 h-4 fill-white" />
+            <span>Try the Fuji Demo</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
 
-        {/* Streamlined Single-Line Architecture Flow */}
-        <div className="mt-2.5 py-1.5 px-4 bg-slate-900/90 border border-slate-800 rounded-xl max-w-3xl mx-auto shadow-md">
-          <div className="flex items-center justify-between overflow-x-auto text-[11px] font-mono text-slate-300 gap-1 sm:gap-2">
-            <span className="font-semibold text-slate-200 whitespace-nowrap">HUMAN RULES</span>
-            <ArrowRight className="w-3.5 h-3.5 text-red-500 shrink-0" />
-            <span className="font-semibold text-slate-200 whitespace-nowrap">AGENT TASK</span>
-            <ArrowRight className="w-3.5 h-3.5 text-red-500 shrink-0" />
-            <span className="font-semibold text-slate-200 whitespace-nowrap">SPEND INTENT</span>
-            <ArrowRight className="w-3.5 h-3.5 text-red-500 shrink-0" />
-            <span className="font-bold text-red-400 flex items-center space-x-1 whitespace-nowrap bg-red-500/10 px-2 py-0.5 rounded border border-red-500/30">
-              <ShieldCheck className="w-3 h-3" />
-              <span>AVAFENCE</span>
-            </span>
-            <ArrowRight className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-            <span className="font-bold text-emerald-400 whitespace-nowrap">AVALANCHE SETTLE</span>
-          </div>
+          <button
+            type="button"
+            onClick={onHowItWorks}
+            className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-300 hover:text-white bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 transition flex items-center space-x-2 cursor-pointer"
+          >
+            <Layers className="w-4 h-4 text-slate-400" />
+            <span>How It Works</span>
+          </button>
         </div>
       </div>
     </div>

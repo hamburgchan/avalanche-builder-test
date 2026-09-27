@@ -21,7 +21,7 @@ const ORDERED_STEPS: StepItem[] = [
   { id: 1, label: '1. Policy Active', sublabel: '策略激活与未被 Owner 撤销' },
   { id: 2, label: '2. Not Expired', sublabel: '在策略设定的有效时间窗口内' },
   { id: 3, label: '3. Request Fresh', sublabel: '防重放保护：RequestId 未被执行' },
-  { id: 4, label: '4. Merchant Allowlist', sublabel: '收款方属于已授权白名单商户' },
+  { id: 4, label: '4. Recipient Allowlist', sublabel: '收款方属于已授权白名单 (Recipient in Allowlist)' },
   { id: 5, label: '5. Max / Tx Check', sublabel: '单笔支付未超 0.003 AVAX 硬顶' },
   { id: 6, label: '6. Daily Limit Check', sublabel: '当日累计支出未超日度预算上限' },
   { id: 7, label: '7. Budget Available', sublabel: '策略池剩余可用总预算充足' }

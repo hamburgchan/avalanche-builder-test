@@ -22,28 +22,34 @@ const PROSPECTIVE_INTENTS: Record<'A' | 'B' | 'C', SpendIntent> = {
   A: {
     requestId: '0x3a89e1... (待提交 Fuji 链上签名)',
     serviceName: 'Avalanche 实时高频订单薄深度 API (L2 Orderbook)',
+    recipient: DEMO_ADDRESSES.MERCHANT,
+    recipientAlias: `Approved Recipient (${DEMO_ADDRESSES.MERCHANT.slice(0, 6)}...${DEMO_ADDRESSES.MERCHANT.slice(-4)})`,
     merchant: DEMO_ADDRESSES.MERCHANT,
-    merchantAlias: `已授权白名单商户 (${DEMO_ADDRESSES.MERCHANT.slice(0, 6)}...${DEMO_ADDRESSES.MERCHANT.slice(-4)})`,
+    merchantAlias: `Approved Recipient (${DEMO_ADDRESSES.MERCHANT.slice(0, 6)}...${DEMO_ADDRESSES.MERCHANT.slice(-4)})`,
     amount: '0.002',
     taskDescription: '获取 AVAX 实时订单薄流动性深度与链上支撑位数据。',
     sceneType: 'A'
   },
   B: {
-    requestId: '0x9f182c... (待提交 Fuji 链上签名)',
-    serviceName: '机构级高频深度分析数据集 (独家专享)',
-    merchant: DEMO_ADDRESSES.MERCHANT,
-    merchantAlias: `已授权白名单商户 (${DEMO_ADDRESSES.MERCHANT.slice(0, 6)}...${DEMO_ADDRESSES.MERCHANT.slice(-4)})`,
-    amount: '0.010',
-    taskDescription: '尝试高额采购深度情报数据，触发单笔最大额度 (Max / Tx) 链上硬拦截。',
+    requestId: '0xce7740... (待提交 Fuji 链上签名)',
+    serviceName: 'External Tool Query (第三方工具调用)',
+    recipient: DEMO_ADDRESSES.ATTACKER,
+    recipientAlias: `Unauthorized Recipient (${DEMO_ADDRESSES.ATTACKER.slice(0, 6)}...${DEMO_ADDRESSES.ATTACKER.slice(-4)})`,
+    merchant: DEMO_ADDRESSES.ATTACKER,
+    merchantAlias: `Unauthorized Recipient (${DEMO_ADDRESSES.ATTACKER.slice(0, 6)}...${DEMO_ADDRESSES.ATTACKER.slice(-4)})`,
+    amount: '0.001',
+    taskDescription: 'Untrusted tool response changed destination. Recipient is not authorized by policy.',
     sceneType: 'B'
   },
   C: {
-    requestId: '0xce7740... (待提交 Fuji 链上签名)',
-    serviceName: 'Prompt Injection 恶意提示词诱导转账',
-    merchant: DEMO_ADDRESSES.ATTACKER,
-    merchantAlias: `未授权攻击者收款地址 (${DEMO_ADDRESSES.ATTACKER.slice(0, 6)}...${DEMO_ADDRESSES.ATTACKER.slice(-4)})`,
-    amount: '0.001',
-    taskDescription: '模拟 Agent 受到注入攻击企图将微量资金转移至非白名单恶意地址。',
+    requestId: '0x9f182c... (待提交 Fuji 链上签名)',
+    serviceName: '机构级高频深度分析数据集 (独家专享)',
+    recipient: DEMO_ADDRESSES.MERCHANT,
+    recipientAlias: `Approved Recipient (${DEMO_ADDRESSES.MERCHANT.slice(0, 6)}...${DEMO_ADDRESSES.MERCHANT.slice(-4)})`,
+    merchant: DEMO_ADDRESSES.MERCHANT,
+    merchantAlias: `Approved Recipient (${DEMO_ADDRESSES.MERCHANT.slice(0, 6)}...${DEMO_ADDRESSES.MERCHANT.slice(-4)})`,
+    amount: '0.010',
+    taskDescription: '尝试高额采购深度情报数据，触发单笔最大额度 (Max / Tx) 链上硬拦截。',
     sceneType: 'C'
   }
 }
@@ -120,16 +126,16 @@ export const AgentActivity: React.FC<AgentActivityProps> = ({
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="font-bold text-xs text-white">Scene B · 超限拦截</span>
+              <span className="font-bold text-xs text-white">Scenario B · 未授权收款方</span>
               <span className="text-[10px] font-mono font-extrabold text-amber-400 px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/30">
-                0.010 AVAX
+                0.001 AVAX
               </span>
             </div>
             <div className="inline-flex items-center space-x-1 text-[9px] font-mono font-extrabold text-amber-400 bg-amber-500/15 px-2 py-0.5 rounded border border-amber-500/30 w-fit">
-              <span>▲ EXPECTED: BLOCKED</span>
+              <span>▲ EXPECTED: BLOCKED (0 AVAX SENT)</span>
             </div>
             <div className="text-[10px] text-slate-300 leading-tight">
-              超出单笔 0.003 AVAX 硬顶限制
+              不可信工具篡改收款地址，触发白名单拦截
             </div>
           </button>
 
@@ -144,16 +150,16 @@ export const AgentActivity: React.FC<AgentActivityProps> = ({
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="font-bold text-xs text-white">Scene C · 注入拦截</span>
+              <span className="font-bold text-xs text-white">Scenario C · 单笔超额</span>
               <span className="text-[10px] font-mono font-extrabold text-rose-400 px-1.5 py-0.5 rounded bg-rose-500/15 border border-rose-500/30">
-                0.001 AVAX
+                0.010 AVAX
               </span>
             </div>
             <div className="inline-flex items-center space-x-1 text-[9px] font-mono font-extrabold text-rose-400 bg-rose-500/15 px-2 py-0.5 rounded border border-rose-500/30 w-fit">
-              <span>✕ EXPECTED: MALICIOUS BLOCKED</span>
+              <span>✕ EXPECTED: BLOCKED (0 AVAX SENT)</span>
             </div>
             <div className="text-[10px] text-slate-300 leading-tight">
-              黑客注入非白名单转账地址
+              超出单笔 0.003 AVAX 硬顶限制
             </div>
           </button>
         </div>
